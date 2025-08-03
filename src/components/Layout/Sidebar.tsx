@@ -136,16 +136,15 @@ const Sidebar = () => {
         <h1 className="text-xl font-title font-bold text-sidebar-primary">CT Guedes</h1>
         <p className="text-sm font-body text-sidebar-foreground/70 mt-1">Sistema de Obras</p>
         
-        {/* Caixa "Logado como" com design melhorado */}
-        <div className="mt-4 rounded-lg p-4" style={{ backgroundColor: '#d6d9c9' }}>
-          <p className="text-xs font-body text-sidebar-foreground/70 mb-2">Logado como:</p>
-          <div className="flex items-start space-x-3">
+        {/* Nova caixa de identificação de usuário */}
+        <div className="mt-4 rounded-xl p-5" style={{ backgroundColor: '#89846b' }}>
+          <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
-              <User className="w-5 h-5 text-sidebar-foreground/70" />
+              <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-body font-bold text-sidebar-foreground truncate">{user.name}</p>
-              <p className="text-xs font-body italic mt-1 truncate" style={{ color: '#89846b' }}>
+              <p className="text-base font-body font-bold text-white truncate">{user.name}</p>
+              <p className={`text-sm font-body italic mt-1 truncate ${getUserTypeColor(user.type)}`}>
                 {getUserTypeLabel(user.type)}
               </p>
             </div>

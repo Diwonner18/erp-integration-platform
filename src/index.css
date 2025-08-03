@@ -1,0 +1,120 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Importação das fontes Eymen Pro e Open Sans */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Nova paleta de cores CT Guedes */
+    --background: 85 20% 85%; /* #d6d9c9 - Fundo claro */
+    --foreground: 0 0% 25%; /* #3f3f3f - Textos escuros */
+
+    --card: 85 20% 85%; /* #d6d9c9 */
+    --card-foreground: 0 0% 25%; /* #3f3f3f */
+
+    --popover: 85 20% 85%; /* #d6d9c9 */
+    --popover-foreground: 0 0% 25%; /* #3f3f3f */
+
+    --primary: 50 15% 34%; /* #575547 - Títulos e destaques */
+    --primary-foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --secondary: 46 13% 53%; /* #89846b - Elementos médios */
+    --secondary-foreground: 0 0% 25%; /* #3f3f3f */
+
+    --muted: 48 7% 67%; /* #aaa79d - Cor neutra */
+    --muted-foreground: 50 15% 34%; /* #575547 */
+
+    --accent: 46 13% 53%; /* #89846b */
+    --accent-foreground: 0 0% 25%; /* #3f3f3f */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 48 7% 67%; /* #aaa79d */
+    --input: 48 7% 67%; /* #aaa79d */
+    --ring: 50 15% 34%; /* #575547 */
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 50 15% 34%; /* #575547 */
+    --sidebar-foreground: 85 20% 85%; /* #d6d9c9 */
+    --sidebar-primary: 46 13% 53%; /* #89846b */
+    --sidebar-primary-foreground: 85 20% 85%; /* #d6d9c9 */
+    --sidebar-accent: 48 7% 67%; /* #aaa79d */
+    --sidebar-accent-foreground: 0 0% 25%; /* #3f3f3f */
+    --sidebar-border: 48 7% 67%; /* #aaa79d */
+    --sidebar-ring: 46 13% 53%; /* #89846b */
+  }
+
+  .dark {
+    --background: 50 15% 34%; /* #575547 */
+    --foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --card: 50 15% 34%; /* #575547 */
+    --card-foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --popover: 50 15% 34%; /* #575547 */
+    --popover-foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --primary: 85 20% 85%; /* #d6d9c9 */
+    --primary-foreground: 50 15% 34%; /* #575547 */
+
+    --secondary: 46 13% 53%; /* #89846b */
+    --secondary-foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --muted: 48 7% 67%; /* #aaa79d */
+    --muted-foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --accent: 46 13% 53%; /* #89846b */
+    --accent-foreground: 85 20% 85%; /* #d6d9c9 */
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 48 7% 67%; /* #aaa79d */
+    --input: 48 7% 67%; /* #aaa79d */
+    --ring: 46 13% 53%; /* #89846b */
+
+    --sidebar-background: 0 0% 25%; /* #3f3f3f */
+    --sidebar-foreground: 85 20% 85%; /* #d6d9c9 */
+    --sidebar-primary: 46 13% 53%; /* #89846b */
+    --sidebar-primary-foreground: 85 20% 85%; /* #d6d9c9 */
+    --sidebar-accent: 48 7% 67%; /* #aaa79d */
+    --sidebar-accent-foreground: 85 20% 85%; /* #d6d9c9 */
+    --sidebar-border: 48 7% 67%; /* #aaa79d */
+    --sidebar-ring: 46 13% 53%; /* #89846b */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  /* Tipografia personalizada */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Eymen Pro', 'Open Sans', sans-serif;
+    font-weight: 600;
+    color: hsl(var(--primary));
+  }
+
+  .font-title {
+    font-family: 'Eymen Pro', 'Open Sans', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Open Sans', sans-serif;
+  }
+}

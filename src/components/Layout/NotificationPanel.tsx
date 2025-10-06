@@ -38,7 +38,7 @@ const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
       },
       {
         id: '2',
-        title: 'Agendamento Confirmado',
+        title: 'Programação Confirmada',
         message: 'Obra Comercial ABC confirmada para amanhã às 08:00',
         type: 'success',
         isRead: true,

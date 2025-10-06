@@ -38,7 +38,7 @@ const Sidebar = () => {
         { icon: Shield, label: 'Permissões', path: '/permissoes', show: hasPermission('canManageUsers') },
         { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: hasPermission('canApproveChanges') },
         { icon: Settings, label: 'Automação', path: '/automacao', show: hasPermission('canManageAutomation') },
-        { icon: Calendar, label: 'Agendamentos', path: '/agendamentos', show: true },
+        { icon: Calendar, label: 'Programação', path: '/programacao', show: true },
         { icon: FileText, label: 'Propostas', path: '/propostas', show: true },
         { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: true },
         { icon: BarChart3, label: 'Relatórios', path: '/relatorios', show: hasPermission('canViewAllReports') },
@@ -54,7 +54,7 @@ const Sidebar = () => {
     if (user.type === 'obras') {
       return [
         ...baseItems,
-        { icon: Calendar, label: 'Agendamentos', path: '/agendamentos', show: hasPermission('canConfirmSchedules') },
+        { icon: Calendar, label: 'Programação', path: '/programacao', show: hasPermission('canConfirmSchedules') },
         { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: hasPermission('canInsertMeasurements') },
         { icon: FileText, label: 'Alterações de Escopo', path: '/alteracoes-escopo', show: hasPermission('canSuggestScopeChanges') },
         { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
@@ -95,7 +95,7 @@ const Sidebar = () => {
     if (user.type === 'cliente') {
       return [
         ...baseItems,
-        { icon: Calendar, label: 'Solicitar Agendamento', path: '/solicitar-agendamento', show: hasPermission('canScheduleWorks') },
+        { icon: Calendar, label: 'Solicitar Programação', path: '/solicitar-agendamento', show: hasPermission('canScheduleWorks') },
         { icon: ClipboardList, label: 'Minhas Obras', path: '/minhas-obras', show: hasPermission('canViewOwnData') },
         { icon: FileText, label: 'Minhas Propostas', path: '/minhas-propostas', show: hasPermission('canViewOwnData') },
         { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: hasPermission('canViewOwnData') },

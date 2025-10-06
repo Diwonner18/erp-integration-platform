@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, MapPin, User, Clock } from 'lucide-react';
 
-interface AgendamentoDetailModalProps {
+interface ProgramacaoDetailModalProps {
   open: boolean;
   onClose: () => void;
-  agendamento: {
+  programacao: {
     id: number;
     cliente: string;
     metragem: string;
@@ -20,12 +20,12 @@ interface AgendamentoDetailModalProps {
   };
 }
 
-const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetailModalProps) => {
+const ProgramacaoDetailModal = ({ open, onClose, programacao }: ProgramacaoDetailModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Detalhes do Agendamento #{agendamento.id}</DialogTitle>
+          <DialogTitle>Detalhes da Programação #{programacao.id}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -34,13 +34,13 @@ const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetai
               <label className="text-sm font-medium text-slate-700">Cliente</label>
               <div className="flex items-center text-slate-900">
                 <User className="w-4 h-4 mr-2" />
-                {agendamento.cliente}
+                {programacao.cliente}
               </div>
             </div>
             
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Metragem</label>
-              <div className="text-slate-900">{agendamento.metragem}</div>
+              <div className="text-slate-900">{programacao.metragem}</div>
             </div>
           </div>
           
@@ -48,13 +48,13 @@ const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetai
             <label className="text-sm font-medium text-slate-700">Endereço</label>
             <div className="flex items-center text-slate-900">
               <MapPin className="w-4 h-4 mr-2" />
-              {agendamento.endereco}
+              {programacao.endereco}
             </div>
           </div>
           
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Escopo da Obra</label>
-            <div className="text-slate-900 bg-slate-50 p-3 rounded-md">{agendamento.escopo}</div>
+            <div className="text-slate-900 bg-slate-50 p-3 rounded-md">{programacao.escopo}</div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -62,7 +62,7 @@ const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetai
               <label className="text-sm font-medium text-slate-700">Data de Início</label>
               <div className="flex items-center text-slate-900">
                 <Calendar className="w-4 h-4 mr-2" />
-                {new Date(agendamento.dataInicio).toLocaleDateString('pt-BR')}
+                {new Date(programacao.dataInicio).toLocaleDateString('pt-BR')}
               </div>
             </div>
             
@@ -70,7 +70,7 @@ const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetai
               <label className="text-sm font-medium text-slate-700">Data de Fim</label>
               <div className="flex items-center text-slate-900">
                 <Calendar className="w-4 h-4 mr-2" />
-                {new Date(agendamento.dataFim).toLocaleDateString('pt-BR')}
+                {new Date(programacao.dataFim).toLocaleDateString('pt-BR')}
               </div>
             </div>
           </div>
@@ -78,12 +78,12 @@ const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetai
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Status</label>
-              <div className="text-slate-900">{agendamento.status}</div>
+              <div className="text-slate-900">{programacao.status}</div>
             </div>
             
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Prioridade</label>
-              <div className="text-slate-900">{agendamento.prioridade}</div>
+              <div className="text-slate-900">{programacao.prioridade}</div>
             </div>
           </div>
         </div>
@@ -98,4 +98,4 @@ const AgendamentoDetailModal = ({ open, onClose, agendamento }: AgendamentoDetai
   );
 };
 
-export default AgendamentoDetailModal;
+export default ProgramacaoDetailModal;

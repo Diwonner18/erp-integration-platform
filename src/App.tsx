@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
-import Agendamentos from "./pages/Agendamentos";
+import Programacao from "./pages/Programacao";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import NotFound from "./pages/NotFound";
@@ -110,9 +110,9 @@ const App = () => (
             } />
 
             {/* Shared routes */}
-            <Route path="/agendamentos" element={
+            <Route path="/programacao" element={
               <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
-                <Agendamentos />
+                <Programacao />
               </ProtectedRoute>
             } />
             <Route path="/relatorios" element={

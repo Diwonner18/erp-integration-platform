@@ -15,7 +15,7 @@ const Permissoes = () => {
       title: 'Equipe de Obras',
       icon: Settings,
       permissions: [
-        { name: 'Confirmar Agendamentos', enabled: true },
+        { name: 'Confirmar Programações', enabled: true },
         { name: 'Inserir Medições', enabled: true },
         { name: 'Sugerir Alterações de Escopo', enabled: true },
         { name: 'Acessar Dados Financeiros', enabled: false }

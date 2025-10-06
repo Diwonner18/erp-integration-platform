@@ -5,10 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
-interface EditAgendamentoModalProps {
+interface EditProgramacaoModalProps {
   open: boolean;
   onClose: () => void;
-  agendamento: {
+  programacao: {
     id: number;
     cliente: string;
     metragem: string;
@@ -19,27 +19,27 @@ interface EditAgendamentoModalProps {
     status: string;
     prioridade: string;
   };
-  onSave: (updatedAgendamento: any) => void;
+  onSave: (updatedProgramacao: any) => void;
 }
 
-const EditAgendamentoModal = ({ open, onClose, agendamento, onSave }: EditAgendamentoModalProps) => {
+const EditProgramacaoModal = ({ open, onClose, programacao, onSave }: EditProgramacaoModalProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    cliente: agendamento.cliente,
-    metragem: agendamento.metragem,
-    endereco: agendamento.endereco,
-    escopo: agendamento.escopo,
-    dataInicio: agendamento.dataInicio,
-    dataFim: agendamento.dataFim,
-    prioridade: agendamento.prioridade
+    cliente: programacao.cliente,
+    metragem: programacao.metragem,
+    endereco: programacao.endereco,
+    escopo: programacao.escopo,
+    dataInicio: programacao.dataInicio,
+    dataFim: programacao.dataFim,
+    prioridade: programacao.prioridade
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedAgendamento = { ...agendamento, ...formData };
-    onSave(updatedAgendamento);
+    const updatedProgramacao = { ...programacao, ...formData };
+    onSave(updatedProgramacao);
     toast({
-      title: "Agendamento atualizado",
+      title: "Programação atualizada",
       description: "As alterações foram salvas com sucesso.",
     });
     onClose();
@@ -49,7 +49,7 @@ const EditAgendamentoModal = ({ open, onClose, agendamento, onSave }: EditAgenda
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Agendamento #{agendamento.id}</DialogTitle>
+          <DialogTitle>Editar Programação #{programacao.id}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -158,4 +158,4 @@ const EditAgendamentoModal = ({ open, onClose, agendamento, onSave }: EditAgenda
   );
 };
 
-export default EditAgendamentoModal;
+export default EditProgramacaoModal;

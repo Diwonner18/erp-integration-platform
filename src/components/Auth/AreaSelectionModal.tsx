@@ -25,7 +25,7 @@ const AreaSelectionModal: React.FC<AreaSelectionModalProps> = ({
     {
       type: 'obras' as UserType,
       label: 'Obras',
-      description: 'Gestão de execução, agendamentos e medições',
+      description: 'Gestão de execução, programação e medições',
       icon: Building,
       color: 'border-orange-200 hover:border-orange-400'
     },

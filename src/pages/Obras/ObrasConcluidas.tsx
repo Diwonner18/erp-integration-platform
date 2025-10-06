@@ -1,22 +1,25 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Filter, Search } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
+import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 
 const ObrasConcluidas = () => {
-  const [filtroMes, setFiltroMes] = useState('');
-  const [filtroCliente, setFiltroCliente] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<FilterValues>({
+    obra: '',
+    dataInicial: null,
+    dataFinal: null,
+    status: ''
+  });
 
   const obrasConcluidas = [
     {
+      id: 1,
+      obraId: '1',
       nome: 'Instalação Elétrica Residencial',
       cliente: 'João Silva',
       endereco: 'Rua das Flores, 123',
@@ -24,9 +27,12 @@ const ObrasConcluidas = () => {
       dataInicio: '2024-01-15',
       dataFim: '2024-02-28',
       responsavel: 'Carlos Pereira',
-      statusFinal: 'Concluída com Sucesso'
+      statusFinal: 'Concluída com Sucesso',
+      status: 'concluida'
     },
     {
+      id: 2,
+      obraId: '2',
       nome: 'Reforma Comercial',
       cliente: 'Maria Santos',
       endereco: 'Av. Principal, 456',
@@ -34,9 +40,12 @@ const ObrasConcluidas = () => {
       dataInicio: '2024-02-01',
       dataFim: '2024-03-15',
       responsavel: 'Ana Costa',
-      statusFinal: 'Concluída com Sucesso'
+      statusFinal: 'Concluída com Sucesso',
+      status: 'concluida'
     },
     {
+      id: 3,
+      obraId: '3',
       nome: 'Instalação Industrial',
       cliente: 'Empresa ABC Ltda',
       endereco: 'Distrito Industrial, 789',
@@ -44,8 +53,19 @@ const ObrasConcluidas = () => {
       dataInicio: '2024-01-10',
       dataFim: '2024-04-20',
       responsavel: 'Roberto Lima',
-      statusFinal: 'Concluída com Sucesso'
+      statusFinal: 'Concluída com Sucesso',
+      status: 'concluida'
     }
+  ];
+
+  const obras = [
+    { id: '1', nome: 'Instalação Elétrica Residencial' },
+    { id: '2', nome: 'Reforma Comercial' },
+    { id: '3', nome: 'Instalação Industrial' }
+  ];
+
+  const statusOptions = [
+    { value: 'concluida', label: 'Concluída' }
   ];
 
   const exportarPDF = () => {
@@ -56,17 +76,36 @@ const ObrasConcluidas = () => {
     console.log('Exportando para Excel...');
   };
 
-  const filteredObras = obrasConcluidas.filter(obra => {
-    const matchesMes = !filtroMes || obra.dataFim.includes(`2024-${filtroMes}`);
-    const matchesCliente = !filtroCliente || obra.cliente.toLowerCase().includes(filtroCliente.toLowerCase());
-    const matchesTipo = !filtroTipo || obra.nome.toLowerCase().includes(filtroTipo.toLowerCase());
-    const matchesSearch = !searchTerm || 
-      obra.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      obra.endereco.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesMes && matchesCliente && matchesTipo && matchesSearch;
-  });
+  const filteredObras = useMemo(() => {
+    let result = obrasConcluidas;
+
+    // Aplicar filtros avançados individualmente
+    if (filters.obra) {
+      result = result.filter(obra => obra.obraId === filters.obra);
+    }
+
+    if (filters.dataInicial && filters.dataFinal) {
+      result = result.filter(obra => {
+        const obraDate = new Date(obra.dataFim);
+        return obraDate >= filters.dataInicial! && obraDate <= filters.dataFinal!;
+      });
+    }
+
+    if (filters.status) {
+      result = result.filter(obra => obra.status === filters.status);
+    }
+
+    // Aplicar busca textual
+    if (searchTerm) {
+      result = result.filter(obra => 
+        obra.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        obra.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        obra.endereco.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return result;
+  }, [obrasConcluidas, filters, searchTerm]);
 
   return (
     <MainLayout>
@@ -76,61 +115,26 @@ const ObrasConcluidas = () => {
           <p className="text-slate-600 mt-1">Histórico completo de obras finalizadas</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="mes">Mês</Label>
-                <Select value={filtroMes} onValueChange={setFiltroMes}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar mês" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="01">Janeiro</SelectItem>
-                    <SelectItem value="02">Fevereiro</SelectItem>
-                    <SelectItem value="03">Março</SelectItem>
-                    <SelectItem value="04">Abril</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="cliente">Cliente</Label>
-                <Input 
-                  placeholder="Nome do cliente"
-                  value={filtroCliente}
-                  onChange={(e) => setFiltroCliente(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="tipo">Tipo de Obra</Label>
-                <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo de obra" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="residencial">Residencial</SelectItem>
-                    <SelectItem value="comercial">Comercial</SelectItem>
-                    <SelectItem value="industrial">Industrial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="busca">Busca Geral</Label>
-                <Input 
-                  placeholder="Nome, cliente ou endereço"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AdvancedFilters
+          onFiltersChange={setFilters}
+          obras={obras}
+          statusOptions={statusOptions}
+        />
+
+        <div className="flex items-center space-x-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Input 
+              placeholder="Buscar por nome, cliente ou endereço..." 
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="text-sm text-slate-600">
+            Exibindo {filteredObras.length} de {obrasConcluidas.length} obras
+          </div>
+        </div>
 
         <Card>
           <CardHeader>

@@ -43,16 +43,20 @@ const BoletinsMedicao = () => {
   const filteredBoletins = useMemo(() => {
     let result = boletins;
 
-    // Aplicar filtros avançados se preenchidos
-    if (filters.obra && filters.dataInicial && filters.dataFinal && filters.status) {
+    // Aplicar filtros avançados individualmente
+    if (filters.obra) {
+      result = result.filter(boletim => boletim.obraId === filters.obra);
+    }
+
+    if (filters.dataInicial && filters.dataFinal) {
       result = result.filter(boletim => {
         const boletimDate = new Date(boletim.data);
-        const matchesObra = boletim.obraId === filters.obra;
-        const matchesDateRange = boletimDate >= filters.dataInicial! && boletimDate <= filters.dataFinal!;
-        const matchesStatus = boletim.status === filters.status;
-        
-        return matchesObra && matchesDateRange && matchesStatus;
+        return boletimDate >= filters.dataInicial! && boletimDate <= filters.dataFinal!;
       });
+    }
+
+    if (filters.status) {
+      result = result.filter(boletim => boletim.status === filters.status);
     }
 
     return result;

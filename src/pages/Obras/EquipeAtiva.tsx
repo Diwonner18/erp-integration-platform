@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,16 +8,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search, Filter, Users, Plus, Calendar } from 'lucide-react';
+import { Search, Users, Plus, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 
 const EquipeAtiva = () => {
   const { toast } = useToast();
-  const [filtroObra, setFiltroObra] = useState('');
-  const [filtroFuncao, setFiltroFuncao] = useState('');
-  const [filtroStatus, setFiltroStatus] = useState('');
-  const [filtroNome, setFiltroNome] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<FilterValues>({
+    obra: '',
+    dataInicial: null,
+    dataFinal: null,
+    status: ''
+  });
   const [showAlocacaoModal, setShowAlocacaoModal] = useState(false);
   const [alocacaoData, setAlocacaoData] = useState({
     funcionario: '',
@@ -29,6 +31,8 @@ const EquipeAtiva = () => {
 
   const funcionarios = [
     {
+      id: 1,
+      obraId: '1',
       nome: 'João Silva',
       funcao: 'Eletricista Senior',
       obraVinculada: 'Instalação Comercial - Loja XYZ',
@@ -37,6 +41,8 @@ const EquipeAtiva = () => {
       horasSemana: 40
     },
     {
+      id: 2,
+      obraId: '2',
       nome: 'Maria Santos',
       funcao: 'Técnica Elétrica',
       obraVinculada: 'Reforma Residencial - Pedro Costa',
@@ -45,6 +51,8 @@ const EquipeAtiva = () => {
       horasSemana: 44
     },
     {
+      id: 3,
+      obraId: '3',
       nome: 'Carlos Pereira',
       funcao: 'Supervisor de Obras',
       obraVinculada: 'Instalação Industrial - Fábrica Beta',
@@ -53,6 +61,8 @@ const EquipeAtiva = () => {
       horasSemana: 45
     },
     {
+      id: 4,
+      obraId: '3',
       nome: 'Ana Costa',
       funcao: 'Eletricista',
       obraVinculada: 'Instalação Industrial - Fábrica Beta',
@@ -61,6 +71,8 @@ const EquipeAtiva = () => {
       horasSemana: 40
     },
     {
+      id: 5,
+      obraId: '3',
       nome: 'Roberto Lima',
       funcao: 'Auxiliar Técnico',
       obraVinculada: 'Instalação Industrial - Fábrica Beta',
@@ -68,6 +80,17 @@ const EquipeAtiva = () => {
       status: 'inativo',
       horasSemana: 0
     }
+  ];
+
+  const obras = [
+    { id: '1', nome: 'Instalação Comercial - Loja XYZ' },
+    { id: '2', nome: 'Reforma Residencial - Pedro Costa' },
+    { id: '3', nome: 'Instalação Industrial - Fábrica Beta' }
+  ];
+
+  const statusOptions = [
+    { value: 'ativo', label: 'Ativo' },
+    { value: 'inativo', label: 'Inativo' }
   ];
 
   const [alocacoesDiarias, setAlocacoesDiarias] = useState([
@@ -101,20 +124,38 @@ const EquipeAtiva = () => {
     return 'text-slate-900';
   };
 
-  const filteredFuncionarios = funcionarios.filter(funcionario => {
-    const matchesNome = !filtroNome || funcionario.nome.toLowerCase().includes(filtroNome.toLowerCase());
-    const matchesObra = !filtroObra || funcionario.obraVinculada.toLowerCase().includes(filtroObra.toLowerCase());
-    const matchesFuncao = !filtroFuncao || funcionario.funcao.toLowerCase().includes(filtroFuncao.toLowerCase());
-    const matchesStatus = !filtroStatus || funcionario.status === filtroStatus;
-    const matchesSearch = !searchTerm || 
-      funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      funcionario.funcao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      funcionario.obraVinculada.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesNome && matchesObra && matchesFuncao && matchesStatus && matchesSearch;
-  });
+  const filteredFuncionarios = useMemo(() => {
+    let result = funcionarios;
 
-  const obras = [
+    // Aplicar filtros avançados individualmente
+    if (filters.obra) {
+      result = result.filter(funcionario => funcionario.obraId === filters.obra);
+    }
+
+    if (filters.dataInicial && filters.dataFinal) {
+      result = result.filter(funcionario => {
+        const funcionarioDate = new Date(funcionario.dataEntrada);
+        return funcionarioDate >= filters.dataInicial! && funcionarioDate <= filters.dataFinal!;
+      });
+    }
+
+    if (filters.status) {
+      result = result.filter(funcionario => funcionario.status === filters.status);
+    }
+
+    // Aplicar busca textual
+    if (searchTerm) {
+      result = result.filter(funcionario => 
+        funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        funcionario.funcao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        funcionario.obraVinculada.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return result;
+  }, [funcionarios, filters, searchTerm]);
+
+  const obrasAlocacao = [
     'Instalação Comercial - Loja XYZ',
     'Reforma Residencial - Pedro Costa',
     'Instalação Industrial - Fábrica Beta',
@@ -180,80 +221,26 @@ const EquipeAtiva = () => {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="nome">Nome</Label>
-                <Input 
-                  placeholder="Nome do funcionário"
-                  value={filtroNome}
-                  onChange={(e) => setFiltroNome(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="obra">Obra</Label>
-                <Select value={filtroObra} onValueChange={setFiltroObra}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar obra" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="comercial">Instalação Comercial</SelectItem>
-                    <SelectItem value="residencial">Reforma Residencial</SelectItem>
-                    <SelectItem value="industrial">Instalação Industrial</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="funcao">Função</Label>
-                <Select value={filtroFuncao} onValueChange={setFiltroFuncao}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar função" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="eletricista">Eletricista</SelectItem>
-                    <SelectItem value="tecnico">Técnico</SelectItem>
-                    <SelectItem value="supervisor">Supervisor</SelectItem>
-                    <SelectItem value="auxiliar">Auxiliar</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="busca">Busca Geral</Label>
-                <Input 
-                  placeholder="Nome, função ou obra"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <div className="text-sm text-slate-600">
-                  Exibindo {filteredFuncionarios.length} de {funcionarios.length} funcionários
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AdvancedFilters
+          onFiltersChange={setFilters}
+          obras={obras}
+          statusOptions={statusOptions}
+        />
+
+        <div className="flex items-center space-x-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Input 
+              placeholder="Buscar por nome, função ou obra..." 
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="text-sm text-slate-600">
+            Exibindo {filteredFuncionarios.length} de {funcionarios.length} funcionários
+          </div>
+        </div>
 
         <Card>
           <CardHeader>
@@ -367,7 +354,7 @@ const EquipeAtiva = () => {
                     <SelectValue placeholder="Selecione a obra" />
                   </SelectTrigger>
                   <SelectContent>
-                    {obras.map((obra) => (
+                    {obrasAlocacao.map((obra) => (
                       <SelectItem key={obra} value={obra}>
                         {obra}
                       </SelectItem>

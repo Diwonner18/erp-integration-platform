@@ -1,0 +1,343 @@
+{
+  "name": "WF-03 - Programação de Obras",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "programacao-obra",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Nova Programação",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "programacao-obra"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validação do payload de programação\nconst input = $input.first().json;\n\n// Campos obrigatórios\nconst camposObrigatorios = ['obra_id', 'data_programada', 'tipo'];\nconst camposFaltando = camposObrigatorios.filter(campo => !input[campo]);\n\nif (camposFaltando.length > 0) {\n  throw new Error(`Campos obrigatórios faltando: ${camposFaltando.join(', ')}`);\n}\n\n// Validar data\nconst dataProgramada = new Date(input.data_programada);\nif (isNaN(dataProgramada.getTime())) {\n  throw new Error('Data programada inválida');\n}\n\n// Tipos válidos\nconst tiposValidos = ['visita', 'execucao', 'medicao', 'entrega', 'outro'];\nif (!tiposValidos.includes(input.tipo)) {\n  throw new Error(`Tipo inválido. Tipos válidos: ${tiposValidos.join(', ')}`);\n}\n\nconst programacao = {\n  obra_id: input.obra_id,\n  data_programada: dataProgramada.toISOString().split('T')[0],\n  hora_inicio: input.hora_inicio || '08:00',\n  hora_fim: input.hora_fim || '17:00',\n  tipo: input.tipo,\n  descricao: input.descricao || '',\n  equipe: input.equipe || [],\n  responsavel: input.responsavel || null,\n  status: 'programada',\n  notificar_cliente: input.notificar_cliente !== false,\n  created_at: new Date().toISOString()\n};\n\nreturn { json: programacao };"
+      },
+      "id": "validar-payload",
+      "name": "Validar Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/obras",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "=eq.{{ $json.obra_id }}"
+            },
+            {
+              "name": "select",
+              "value": "id,cliente_nome,cliente_email,endereco,status"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "buscar-obra",
+      "name": "Buscar Dados da Obra",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-obra-existe",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-obra-existe",
+      "name": "Obra existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/programacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Validar Payload').first().json) }}",
+        "options": {}
+      },
+      "id": "criar-programacao",
+      "name": "Criar Programação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar dados para notificações\nconst programacao = $input.first().json[0] || $input.first().json;\nconst obra = $('Buscar Dados da Obra').first().json[0];\nconst dadosOriginais = $('Validar Payload').first().json;\n\nconst dataFormatada = new Date(programacao.data_programada).toLocaleDateString('pt-BR');\n\nconst notificacoes = [];\n\n// Notificação interna (sempre)\nnotificacoes.push({\n  tipo: 'interna',\n  destinatario: 'equipe',\n  titulo: `Nova programação - ${obra.cliente_nome}`,\n  mensagem: `Programação de ${programacao.tipo} agendada para ${dataFormatada} na obra ${obra.endereco}`,\n  dados: {\n    programacao_id: programacao.id,\n    obra_id: programacao.obra_id\n  }\n});\n\n// Notificação ao cliente (se configurado)\nif (dadosOriginais.notificar_cliente && obra.cliente_email) {\n  notificacoes.push({\n    tipo: 'email',\n    destinatario: obra.cliente_email,\n    titulo: `Programação de serviço - ${dataFormatada}`,\n    mensagem: `Prezado(a) ${obra.cliente_nome},\\n\\nInformamos que foi agendado um serviço de ${programacao.tipo} para o dia ${dataFormatada}.\\n\\nLocal: ${obra.endereco}\\nHorário: ${programacao.hora_inicio} às ${programacao.hora_fim}\\n\\nAtenciosamente,\\nCT Guedes`,\n    dados: {\n      programacao_id: programacao.id\n    }\n  });\n}\n\nreturn {\n  json: {\n    programacao: programacao,\n    obra: obra,\n    notificacoes: notificacoes\n  }\n};"
+      },
+      "id": "preparar-notificacoes",
+      "name": "Preparar Notificações",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/notificacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.notificacoes.map(n => ({ ...n, created_at: new Date().toISOString(), status: 'pendente' }))) }}",
+        "options": {}
+      },
+      "id": "salvar-notificacoes",
+      "name": "Salvar Notificações",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/obras",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "=eq.{{ $('Preparar Notificações').first().json.programacao.obra_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"status\": \"programada\",\n  \"ultima_programacao\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "atualizar-status-obra",
+      "name": "Atualizar Status Obra",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Programação criada com sucesso\",\n  \"programacao\": {{ JSON.stringify($('Preparar Notificações').first().json.programacao) }},\n  \"notificacoes_enviadas\": {{ $('Preparar Notificações').first().json.notificacoes.length }}\n}",
+        "options": {}
+      },
+      "id": "resposta-sucesso",
+      "name": "Resposta - Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"Obra não encontrada\",\n  \"obra_id\": \"{{ $('Validar Payload').first().json.obra_id }}\"\n}",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "id": "resposta-erro",
+      "name": "Resposta - Obra Não Encontrada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "Webhook - Nova Programação": {
+      "main": [
+        [
+          {
+            "node": "Validar Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Payload": {
+      "main": [
+        [
+          {
+            "node": "Buscar Dados da Obra",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Dados da Obra": {
+      "main": [
+        [
+          {
+            "node": "Obra existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obra existe?": {
+      "main": [
+        [
+          {
+            "node": "Criar Programação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta - Obra Não Encontrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Programação": {
+      "main": [
+        [
+          {
+            "node": "Preparar Notificações",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Notificações": {
+      "main": [
+        [
+          {
+            "node": "Salvar Notificações",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Atualizar Status Obra",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Notificações": {
+      "main": [
+        [
+          {
+            "node": "Resposta - Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "CT Guedes",
+      "id": "1"
+    },
+    {
+      "name": "Programação",
+      "id": "3"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

@@ -1,0 +1,222 @@
+{
+  "name": "WF-13 - Auditoria LGPD",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "registrar-audit",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Ação Sensível",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "registrar-audit"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Formatar log de auditoria para conformidade LGPD\nconst input = $input.first().json;\n\n// Campos obrigatórios\nconst camposObrigatorios = ['acao', 'usuario_id', 'usuario_email'];\nconst camposFaltando = camposObrigatorios.filter(campo => !input[campo]);\n\nif (camposFaltando.length > 0) {\n  throw new Error(`Campos obrigatórios faltando: ${camposFaltando.join(', ')}`);\n}\n\n// Lista de ações sensíveis que requerem auditoria\nconst acoesSensiveis = [\n  'ALTERAR_ESCOPO',\n  'ALTERAR_VALOR',\n  'DELETAR_PROGRAMACAO',\n  'AJUSTAR_MEDICAO',\n  'ALTERAR_CONTRATO',\n  'EXCLUIR_REGISTRO',\n  'ALTERAR_PERMISSAO',\n  'ACESSAR_DADOS_SENSIVEIS',\n  'EXPORTAR_DADOS',\n  'ALTERAR_USUARIO'\n];\n\n// Classificar nível de sensibilidade\nlet nivelSensibilidade = 'baixo';\nif (acoesSensiveis.includes(input.acao)) {\n  nivelSensibilidade = 'alto';\n} else if (input.acao.startsWith('VISUALIZAR_')) {\n  nivelSensibilidade = 'medio';\n}\n\n// Anonimizar dados pessoais sensíveis no registro\nconst dadosAntes = input.dados_antes || null;\nconst dadosDepois = input.dados_depois || null;\n\n// Função para mascarar dados sensíveis\nconst mascarar = (texto) => {\n  if (!texto) return texto;\n  if (typeof texto !== 'string') return texto;\n  \n  // Mascarar CPF\n  texto = texto.replace(/(\\d{3})\\.?(\\d{3})\\.?(\\d{3})\\-?(\\d{2})/g, '$1.***.***-$4');\n  // Mascarar telefone\n  texto = texto.replace(/(\\d{2})\\s?(\\d{4,5})\\-?(\\d{4})/g, '($1) ****-$3');\n  \n  return texto;\n};\n\nconst auditLog = {\n  // Identificação\n  id: `AUD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,\n  \n  // Ação realizada\n  acao: input.acao,\n  descricao: input.descricao || `Ação: ${input.acao}`,\n  nivel_sensibilidade: nivelSensibilidade,\n  \n  // Quem realizou\n  usuario_id: input.usuario_id,\n  usuario_email: input.usuario_email,\n  usuario_nome: input.usuario_nome || null,\n  usuario_tipo: input.usuario_tipo || 'interno',\n  \n  // Contexto técnico\n  ip_address: input.ip_address || 'não capturado',\n  user_agent: input.user_agent || null,\n  sessao_id: input.sessao_id || null,\n  \n  // Entidade afetada\n  entidade: input.entidade || null,\n  entidade_id: input.entidade_id || null,\n  \n  // Dados (para rastreabilidade)\n  dados_antes: dadosAntes ? JSON.stringify(dadosAntes) : null,\n  dados_depois: dadosDepois ? JSON.stringify(dadosDepois) : null,\n  \n  // Metadados\n  origem: input.origem || 'sistema',\n  modulo: input.modulo || null,\n  \n  // Timestamps\n  timestamp: new Date().toISOString(),\n  timestamp_unix: Date.now(),\n  \n  // Retenção (LGPD - configurável)\n  data_expiracao: new Date(Date.now() + (5 * 365 * 24 * 60 * 60 * 1000)).toISOString() // 5 anos\n};\n\n// Determinar se precisa notificar admin\nconst notificarAdmin = nivelSensibilidade === 'alto' || \n                       input.acao.includes('DELETAR') || \n                       input.acao.includes('EXCLUIR');\n\nreturn {\n  json: {\n    log: auditLog,\n    notificar_admin: notificarAdmin\n  }\n};"
+      },
+      "id": "formatar-log",
+      "name": "Formatar Log LGPD",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/audit_logs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.log) }}",
+        "options": {}
+      },
+      "id": "salvar-log",
+      "name": "Salvar Log no Banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-notificar",
+              "leftValue": "={{ $('Formatar Log LGPD').first().json.notificar_admin }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-notificar",
+      "name": "Notificar Admin?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/notificacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tipo\": \"alerta_seguranca\",\n  \"destinatario\": \"admin\",\n  \"titulo\": \"⚠️ Ação sensível registrada\",\n  \"mensagem\": \"Usuário {{ $('Formatar Log LGPD').first().json.log.usuario_email }} executou {{ $('Formatar Log LGPD').first().json.log.acao }} em {{ $('Formatar Log LGPD').first().json.log.entidade || 'sistema' }}\",\n  \"dados\": {{ JSON.stringify($('Formatar Log LGPD').first().json.log) }},\n  \"prioridade\": \"alta\",\n  \"status\": \"pendente\",\n  \"created_at\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "notificar-admin",
+      "name": "Notificar Administrador",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Log de auditoria registrado\",\n  \"audit_id\": \"{{ $('Formatar Log LGPD').first().json.log.id }}\",\n  \"nivel_sensibilidade\": \"{{ $('Formatar Log LGPD').first().json.log.nivel_sensibilidade }}\",\n  \"admin_notificado\": {{ $('Formatar Log LGPD').first().json.notificar_admin }}\n}",
+        "options": {}
+      },
+      "id": "resposta-sucesso",
+      "name": "Resposta - Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Ação Sensível": {
+      "main": [
+        [
+          {
+            "node": "Formatar Log LGPD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Log LGPD": {
+      "main": [
+        [
+          {
+            "node": "Salvar Log no Banco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Log no Banco": {
+      "main": [
+        [
+          {
+            "node": "Notificar Admin?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Admin?": {
+      "main": [
+        [
+          {
+            "node": "Notificar Administrador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta - Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Administrador": {
+      "main": [
+        [
+          {
+            "node": "Resposta - Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "CT Guedes",
+      "id": "1"
+    },
+    {
+      "name": "Segurança",
+      "id": "5"
+    },
+    {
+      "name": "LGPD",
+      "id": "6"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

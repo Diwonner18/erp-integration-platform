@@ -1,0 +1,334 @@
+{
+  "name": "WF-01 - Criação Automática de Obra",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "criar-obra",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Proposta Aprovada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "criar-obra"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validação e normalização do payload\nconst input = $input.first().json;\n\n// Campos obrigatórios\nconst camposObrigatorios = ['proposta_id', 'cliente', 'escopo', 'metragem', 'valor_total'];\nconst camposFaltando = camposObrigatorios.filter(campo => !input[campo]);\n\nif (camposFaltando.length > 0) {\n  throw new Error(`Campos obrigatórios faltando: ${camposFaltando.join(', ')}`);\n}\n\n// Normalizar dados\nconst obraNormalizada = {\n  proposta_id: input.proposta_id,\n  cliente_id: input.cliente?.id || input.cliente_id,\n  cliente_nome: input.cliente?.nome || input.cliente_nome,\n  cliente_email: input.cliente?.email || input.cliente_email,\n  escopo: input.escopo,\n  metragem: parseFloat(input.metragem) || 0,\n  valor_total: parseFloat(input.valor_total) || 0,\n  endereco: input.endereco || '',\n  data_inicio_prevista: input.data_inicio_prevista || null,\n  status: 'programacao_pendente',\n  created_at: new Date().toISOString()\n};\n\nreturn { json: obraNormalizada };"
+      },
+      "id": "validar-payload",
+      "name": "Validar e Normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/obras",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "proposta_id",
+              "value": "=eq.{{ $json.proposta_id }}"
+            },
+            {
+              "name": "select",
+              "value": "id,proposta_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "verificar-duplicata",
+      "name": "Verificar Duplicata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-duplicata",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-nao-existe",
+      "name": "Obra já existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/obras",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Validar e Normalizar').first().json) }}",
+        "options": {}
+      },
+      "id": "criar-obra",
+      "name": "Criar Obra",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gerar checklist base para a obra\nconst obra = $input.first().json[0] || $input.first().json;\n\nconst checklistBase = [\n  { item: 'Documentação do cliente', status: 'pendente', obrigatorio: true },\n  { item: 'Contrato assinado', status: 'pendente', obrigatorio: true },\n  { item: 'ART/RRT registrada', status: 'pendente', obrigatorio: true },\n  { item: 'Seguro da obra', status: 'pendente', obrigatorio: false },\n  { item: 'Alvará de construção', status: 'pendente', obrigatorio: false },\n  { item: 'Cronograma inicial', status: 'pendente', obrigatorio: true },\n  { item: 'Equipe definida', status: 'pendente', obrigatorio: true },\n  { item: 'Materiais solicitados', status: 'pendente', obrigatorio: false },\n  { item: 'Reunião de kick-off', status: 'pendente', obrigatorio: true }\n];\n\nconst checklistItems = checklistBase.map((item, index) => ({\n  obra_id: obra.id,\n  ordem: index + 1,\n  descricao: item.item,\n  status: item.status,\n  obrigatorio: item.obrigatorio,\n  created_at: new Date().toISOString()\n}));\n\nreturn {\n  json: {\n    obra: obra,\n    checklist: checklistItems\n  }\n};"
+      },
+      "id": "gerar-checklist",
+      "name": "Gerar Checklist",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/obra_checklist",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.checklist) }}",
+        "options": {}
+      },
+      "id": "salvar-checklist",
+      "name": "Salvar Checklist",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Obra criada com sucesso\",\n  \"obra\": {{ JSON.stringify($('Gerar Checklist').first().json.obra) }},\n  \"checklist_items\": {{ $('Gerar Checklist').first().json.checklist.length }}\n}",
+        "options": {}
+      },
+      "id": "resposta-sucesso",
+      "name": "Resposta - Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"Obra já existe para esta proposta\",\n  \"proposta_id\": \"{{ $('Validar e Normalizar').first().json.proposta_id }}\"\n}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "id": "resposta-duplicata",
+      "name": "Resposta - Duplicata",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/audit_logs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"acao\": \"OBRA_CRIADA_AUTOMATICAMENTE\",\n  \"entidade\": \"obras\",\n  \"entidade_id\": \"{{ $('Gerar Checklist').first().json.obra.id }}\",\n  \"dados\": {{ JSON.stringify($('Gerar Checklist').first().json.obra) }},\n  \"origem\": \"n8n-wf-01\",\n  \"created_at\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "registrar-audit",
+      "name": "Registrar Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Proposta Aprovada": {
+      "main": [
+        [
+          {
+            "node": "Validar e Normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar e Normalizar": {
+      "main": [
+        [
+          {
+            "node": "Verificar Duplicata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Duplicata": {
+      "main": [
+        [
+          {
+            "node": "Obra já existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obra já existe?": {
+      "main": [
+        [
+          {
+            "node": "Criar Obra",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta - Duplicata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Obra": {
+      "main": [
+        [
+          {
+            "node": "Gerar Checklist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Checklist": {
+      "main": [
+        [
+          {
+            "node": "Salvar Checklist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Registrar Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Checklist": {
+      "main": [
+        [
+          {
+            "node": "Resposta - Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "CT Guedes",
+      "id": "1"
+    },
+    {
+      "name": "Obras",
+      "id": "2"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

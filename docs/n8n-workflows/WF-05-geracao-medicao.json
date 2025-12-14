@@ -1,0 +1,407 @@
+{
+  "name": "WF-05 - Geração de Medição",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gerar-medicao",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Programação Executada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "gerar-medicao"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validação do payload de medição\nconst input = $input.first().json;\n\n// Campos obrigatórios\nconst camposObrigatorios = ['obra_id', 'periodo_inicio', 'periodo_fim'];\nconst camposFaltando = camposObrigatorios.filter(campo => !input[campo]);\n\nif (camposFaltando.length > 0) {\n  throw new Error(`Campos obrigatórios faltando: ${camposFaltando.join(', ')}`);\n}\n\nconst medicaoRequest = {\n  obra_id: input.obra_id,\n  periodo_inicio: input.periodo_inicio,\n  periodo_fim: input.periodo_fim,\n  aplicar_igpm: input.aplicar_igpm !== false,\n  taxa_igpm: parseFloat(input.taxa_igpm) || 0,\n  observacoes: input.observacoes || ''\n};\n\nreturn { json: medicaoRequest };"
+      },
+      "id": "validar-payload",
+      "name": "Validar Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/programacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "obra_id",
+              "value": "=eq.{{ $json.obra_id }}"
+            },
+            {
+              "name": "status",
+              "value": "=eq.executada"
+            },
+            {
+              "name": "data_programada",
+              "value": "=gte.{{ $json.periodo_inicio }}"
+            },
+            {
+              "name": "data_programada",
+              "value": "=lte.{{ $json.periodo_fim }}"
+            },
+            {
+              "name": "select",
+              "value": "*"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "buscar-programacoes",
+      "name": "Buscar Programações Executadas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/obras",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "=eq.{{ $('Validar Payload').first().json.obra_id }}"
+            },
+            {
+              "name": "select",
+              "value": "id,cliente_nome,cliente_email,valor_total,metragem,escopo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "buscar-obra",
+      "name": "Buscar Dados da Obra",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 500],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/valores_unitarios",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "ativo",
+              "value": "=eq.true"
+            },
+            {
+              "name": "select",
+              "value": "id,servico,unidade,valor"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "buscar-valores",
+      "name": "Buscar Valores Unitários",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 700],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calcular valores da medição\nconst request = $('Validar Payload').first().json;\nconst programacoes = $('Buscar Programações Executadas').first().json;\nconst obra = $('Buscar Dados da Obra').first().json[0];\nconst valoresUnitarios = $('Buscar Valores Unitários').first().json;\n\nif (!programacoes || programacoes.length === 0) {\n  return {\n    json: {\n      erro: true,\n      mensagem: 'Nenhuma programação executada encontrada no período'\n    }\n  };\n}\n\n// Agrupar quantidades por serviço\nconst servicosExecutados = {};\n\nprogramacoes.forEach(prog => {\n  if (prog.servicos_executados) {\n    prog.servicos_executados.forEach(serv => {\n      const key = serv.servico_id || serv.servico;\n      if (!servicosExecutados[key]) {\n        servicosExecutados[key] = {\n          servico: serv.servico,\n          unidade: serv.unidade || 'm²',\n          quantidade: 0\n        };\n      }\n      servicosExecutados[key].quantidade += parseFloat(serv.quantidade) || 0;\n    });\n  }\n});\n\n// Aplicar valores unitários\nlet valorBruto = 0;\nconst itens = [];\n\nObject.values(servicosExecutados).forEach(serv => {\n  const valorUnit = valoresUnitarios.find(v => \n    v.servico.toLowerCase() === serv.servico.toLowerCase()\n  );\n  \n  const valor = valorUnit ? valorUnit.valor : 0;\n  const subtotal = serv.quantidade * valor;\n  \n  itens.push({\n    servico: serv.servico,\n    unidade: serv.unidade,\n    quantidade: serv.quantidade,\n    valor_unitario: valor,\n    subtotal: subtotal\n  });\n  \n  valorBruto += subtotal;\n});\n\n// Se não houver serviços detalhados, usar valor proporcional\nif (itens.length === 0 && obra.valor_total > 0) {\n  const percentualExecutado = programacoes.length / 10; // Estimativa simples\n  valorBruto = obra.valor_total * percentualExecutado;\n  \n  itens.push({\n    servico: 'Serviços executados no período',\n    unidade: 'vb',\n    quantidade: 1,\n    valor_unitario: valorBruto,\n    subtotal: valorBruto\n  });\n}\n\n// Aplicar IGP-M se configurado\nlet valorCorrigido = valorBruto;\nlet correcaoIgpm = 0;\n\nif (request.aplicar_igpm && request.taxa_igpm > 0) {\n  correcaoIgpm = valorBruto * (request.taxa_igpm / 100);\n  valorCorrigido = valorBruto + correcaoIgpm;\n}\n\nconst medicao = {\n  obra_id: request.obra_id,\n  numero: `MED-${Date.now()}`,\n  periodo_inicio: request.periodo_inicio,\n  periodo_fim: request.periodo_fim,\n  programacoes_ids: programacoes.map(p => p.id),\n  itens: itens,\n  valor_bruto: Math.round(valorBruto * 100) / 100,\n  taxa_igpm: request.taxa_igpm || 0,\n  correcao_igpm: Math.round(correcaoIgpm * 100) / 100,\n  valor_total: Math.round(valorCorrigido * 100) / 100,\n  status: 'em_elaboracao',\n  observacoes: request.observacoes,\n  cliente_nome: obra.cliente_nome,\n  cliente_email: obra.cliente_email,\n  created_at: new Date().toISOString()\n};\n\nreturn { json: medicao };"
+      },
+      "id": "calcular-medicao",
+      "name": "Calcular Valores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-erro",
+              "leftValue": "={{ $json.erro }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-tem-dados",
+      "name": "Tem dados?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/medicoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "criar-medicao",
+      "name": "Criar Medição",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/notificacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=[\n  {\n    \"tipo\": \"interna\",\n    \"destinatario\": \"financeiro\",\n    \"titulo\": \"Nova medição gerada\",\n    \"mensagem\": \"Medição {{ $('Calcular Valores').first().json.numero }} no valor de R$ {{ $('Calcular Valores').first().json.valor_total.toLocaleString('pt-BR') }} aguarda aprovação\",\n    \"status\": \"pendente\",\n    \"created_at\": \"{{ new Date().toISOString() }}\"\n  },\n  {\n    \"tipo\": \"interna\",\n    \"destinatario\": \"engenharia\",\n    \"titulo\": \"Medição para revisão\",\n    \"mensagem\": \"Medição {{ $('Calcular Valores').first().json.numero }} gerada automaticamente - verificar itens\",\n    \"status\": \"pendente\",\n    \"created_at\": \"{{ new Date().toISOString() }}\"\n  }\n]",
+        "options": {}
+      },
+      "id": "notificar-aprovadores",
+      "name": "Notificar Aprovadores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURE_SUA_CREDENCIAL",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Medição gerada com sucesso\",\n  \"medicao\": {{ JSON.stringify($('Calcular Valores').first().json) }}\n}",
+        "options": {}
+      },
+      "id": "resposta-sucesso",
+      "name": "Resposta - Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"{{ $json.mensagem }}\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "resposta-erro",
+      "name": "Resposta - Sem Dados",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 600]
+    }
+  ],
+  "connections": {
+    "Webhook - Programação Executada": {
+      "main": [
+        [
+          {
+            "node": "Validar Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Payload": {
+      "main": [
+        [
+          {
+            "node": "Buscar Programações Executadas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Dados da Obra",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Valores Unitários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Programações Executadas": {
+      "main": [
+        [
+          {
+            "node": "Calcular Valores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Dados da Obra": {
+      "main": [
+        [
+          {
+            "node": "Calcular Valores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Valores Unitários": {
+      "main": [
+        [
+          {
+            "node": "Calcular Valores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Valores": {
+      "main": [
+        [
+          {
+            "node": "Tem dados?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem dados?": {
+      "main": [
+        [
+          {
+            "node": "Criar Medição",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta - Sem Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Medição": {
+      "main": [
+        [
+          {
+            "node": "Notificar Aprovadores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Aprovadores": {
+      "main": [
+        [
+          {
+            "node": "Resposta - Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "CT Guedes",
+      "id": "1"
+    },
+    {
+      "name": "Medição",
+      "id": "4"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1"
+}

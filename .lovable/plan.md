@@ -1,16 +1,18 @@
 
 
-## Plano: Adicionar logotipo nas paginas de Login, Cadastro e Sidebar
+## Plano: Remover dados mock e PDFs falsos
 
-### Acoes
+### Locais com dados mock identificados
 
-1. **Copiar o logotipo** para `src/assets/logotipo.png`
+**1. `src/pages/Cliente/MeusRelatorios.tsx`**
+- Cards de estatisticas (linhas 148-190): valores hardcoded "R$ 45.200", "7", "R$ 12.800", "R$ 8.400" — substituir por estado vazio (R$ 0, 0 obras, etc.)
+- Historico de Investimentos (linhas 200-204): array hardcoded com 4 meses — substituir por array vazio com empty state
+- Relatorios Disponiveis / PDFs falsos (linhas 224-228): array hardcoded com 4 PDFs — substituir por array vazio com empty state
 
-2. **Login.tsx** (linhas 77-79): Substituir `<h1>CT Guedes</h1>` por `<img>` importado do asset, com tamanho adequado (~180px largura), centralizado, com `alt="CT Guedes"`
+**2. `src/pages/Cliente/SolicitarAgendamento.tsx`**
+- Agendamentos Recentes (linhas 182-186): array hardcoded com 3 agendamentos — substituir por array vazio com empty state
 
-3. **Cadastro.tsx** (linhas 63-65): Mesma substituicao
+### Abordagem
 
-4. **Sidebar.tsx** (linha 136): Substituir o `<h1>CT Guedes</h1>` pelo logo em tamanho menor (~120px), adaptado ao fundo escuro com `brightness` ou `invert` CSS filter se necessario (logo e preto, sidebar e escura)
-
-Manter o subtitulo "Sistema de Gestao de Obras" abaixo do logo em todos os locais.
+Seguir a politica do projeto: arrays vazios, estados limpos, mensagens de "Nenhum dado encontrado" com icones — exatamente como ja funciona em MinhasObras, MinhasPropostas e MeusPagamentos.
 

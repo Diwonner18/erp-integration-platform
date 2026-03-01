@@ -65,12 +65,7 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
     tipo: 'fixa' as 'fixa' | 'recorrente' | 'pontual'
   });
 
-  const obras = [
-    'Obra Residencial Silva',
-    'Complexo Comercial ABC',
-    'Reforma Escritório Costa',
-    'Instalação Industrial Mendes'
-  ];
+  const obras: string[] = [];
 
   const {
     register,
@@ -160,7 +155,7 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
         valorFinal: calcularValorFinal()
       };
       
-      console.log('Medição completa:', medicaoCompleta);
+      
       
       toast({
         title: 'Medição criada',

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,6 @@ import {
   ArrowUpCircle, 
   ArrowDownCircle, 
   DollarSign, 
-  TrendingUp, 
-  AlertTriangle, 
   Calendar,
   Download,
   FileSpreadsheet,
@@ -28,19 +26,8 @@ const ControleFinanceiro = () => {
     });
   };
 
-  const contasReceber = [
-    { id: 1, cliente: 'ABC Construções', valor: 25400, vencimento: '2024-02-15', status: 'pendente', obra: 'Edifício Central' },
-    { id: 2, cliente: 'Silva Engenharia', valor: 18200, vencimento: '2024-02-20', status: 'atrasado', obra: 'Residencial Vista' },
-    { id: 3, cliente: 'Costa & Filhos', valor: 32100, vencimento: '2024-02-25', status: 'pendente', obra: 'Shopping Norte' },
-    { id: 4, cliente: 'Mendes Construtora', valor: 15800, vencimento: '2024-03-05', status: 'pendente', obra: 'Torre Empresarial' },
-  ];
-
-  const contasPagar = [
-    { id: 1, fornecedor: 'Materiais Silva', valor: 8500, vencimento: '2024-02-18', status: 'pendente', categoria: 'Materiais' },
-    { id: 2, fornecedor: 'Equipamentos Ltda', valor: 12300, vencimento: '2024-02-22', status: 'atrasado', categoria: 'Equipamentos' },
-    { id: 3, fornecedor: 'Transportes ABC', valor: 3200, vencimento: '2024-02-28', status: 'pendente', categoria: 'Logística' },
-    { id: 4, fornecedor: 'Combustíveis Total', valor: 2100, vencimento: '2024-03-01', status: 'pendente', categoria: 'Combustível' },
-  ];
+  const [contasReceber] = useState<any[]>([]);
+  const [contasPagar] = useState<any[]>([]);
 
   const totalReceber = contasReceber.reduce((acc, conta) => acc + conta.valor, 0);
   const totalPagar = contasPagar.reduce((acc, conta) => acc + conta.valor, 0);
@@ -75,8 +62,8 @@ const ControleFinanceiro = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Controle Financeiro</h1>
-            <p className="text-slate-600 mt-1">Gestão de contas a pagar e receber</p>
+            <h1 className="text-3xl font-bold text-primary">Controle Financeiro</h1>
+            <p className="text-muted-foreground mt-1">Gestão de contas a pagar e receber</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => handleExportar('contas a receber')}>
@@ -90,7 +77,6 @@ const ControleFinanceiro = () => {
           </div>
         </div>
 
-        {/* Resumo Financeiro */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -133,13 +119,12 @@ const ControleFinanceiro = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">Contas vencendo hoje</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Contas a Receber */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -152,40 +137,42 @@ const ControleFinanceiro = () => {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Obra</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contasReceber.map((conta) => (
-                  <TableRow key={conta.id}>
-                    <TableCell className="font-medium">{conta.cliente}</TableCell>
-                    <TableCell>{conta.obra}</TableCell>
-                    <TableCell className="font-semibold text-green-600">
-                      {formatarMoeda(conta.valor)}
-                    </TableCell>
-                    <TableCell>{formatarData(conta.vencimento)}</TableCell>
-                    <TableCell>{getStatusBadge(conta.status)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+            {contasReceber.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ArrowUpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">Nenhuma conta a receber</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Obra</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {contasReceber.map((conta: any) => (
+                    <TableRow key={conta.id}>
+                      <TableCell className="font-medium">{conta.cliente}</TableCell>
+                      <TableCell>{conta.obra}</TableCell>
+                      <TableCell className="font-semibold text-green-600">{formatarMoeda(conta.valor)}</TableCell>
+                      <TableCell>{formatarData(conta.vencimento)}</TableCell>
+                      <TableCell>{getStatusBadge(conta.status)}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
-        {/* Contas a Pagar */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -198,36 +185,39 @@ const ControleFinanceiro = () => {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contasPagar.map((conta) => (
-                  <TableRow key={conta.id}>
-                    <TableCell className="font-medium">{conta.fornecedor}</TableCell>
-                    <TableCell>{conta.categoria}</TableCell>
-                    <TableCell className="font-semibold text-red-600">
-                      {formatarMoeda(conta.valor)}
-                    </TableCell>
-                    <TableCell>{formatarData(conta.vencimento)}</TableCell>
-                    <TableCell>{getStatusBadge(conta.status)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+            {contasPagar.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ArrowDownCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">Nenhuma conta a pagar</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {contasPagar.map((conta: any) => (
+                    <TableRow key={conta.id}>
+                      <TableCell className="font-medium">{conta.fornecedor}</TableCell>
+                      <TableCell>{conta.categoria}</TableCell>
+                      <TableCell className="font-semibold text-red-600">{formatarMoeda(conta.valor)}</TableCell>
+                      <TableCell>{formatarData(conta.vencimento)}</TableCell>
+                      <TableCell>{getStatusBadge(conta.status)}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

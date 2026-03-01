@@ -19,12 +19,7 @@ const ModelosContrato = () => {
     description: ''
   });
 
-  const [modelos, setModelos] = useState([
-    { id: 1, name: 'Contrato Padrão - Residencial', type: 'Contrato', updated: '2024-01-10', description: 'Modelo padrão para obras residenciais' },
-    { id: 2, name: 'Contrato Padrão - Comercial', type: 'Contrato', updated: '2024-01-08', description: 'Modelo padrão para obras comerciais' },
-    { id: 3, name: 'Aditivo - Alteração de Escopo', type: 'Aditivo', updated: '2024-01-05', description: 'Modelo para alterações de escopo' },
-    { id: 4, name: 'Termo de Aceite Digital', type: 'Termo', updated: '2024-01-03', description: 'Termo de aceite para propostas digitais' }
-  ]);
+  const [modelos, setModelos] = useState<any[]>([]);
 
   const handleAddModelo = () => {
     setFormData({ name: '', type: '', description: '' });

@@ -27,11 +27,7 @@ const HorasExtras = () => {
     tipoHora: ''
   });
 
-  const [registros, setRegistros] = useState([
-    { id: 1, funcionario: 'João Silva', horas: '4h', valor: 'R$ 120', obra: 'Residencial - ABC', status: 'aprovada', date: '2024-01-15', tipoHora: 'dobra' },
-    { id: 2, funcionario: 'Pedro Santos', horas: '2h', valor: 'R$ 60', obra: 'Comercial - Silva', status: 'pendente', date: '2024-01-14', tipoHora: 'continuacao' },
-    { id: 3, funcionario: 'Carlos Lima', horas: '6h', valor: 'R$ 180', obra: 'Industrial - Costa', status: 'aprovada', date: '2024-01-12', tipoHora: 'diaria' }
-  ]);
+  const [registros, setRegistros] = useState<any[]>([]);
 
   const tiposHora = {
     diaria: { valor: 25, descricao: 'Jornada normal de trabalho (8 horas)' },

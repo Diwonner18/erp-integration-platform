@@ -14,32 +14,17 @@ const Permissoes = () => {
     {
       title: 'Equipe de Obras',
       icon: Settings,
-      permissions: [
-        { name: 'Confirmar Programações', enabled: true },
-        { name: 'Inserir Medições', enabled: true },
-        { name: 'Sugerir Alterações de Escopo', enabled: true },
-        { name: 'Acessar Dados Financeiros', enabled: false }
-      ]
+      permissions: [] as { name: string; enabled: boolean }[]
     },
     {
       title: 'Equipe Financeira',
       icon: Shield,
-      permissions: [
-        { name: 'Emitir Boletins de Medição', enabled: true },
-        { name: 'Acessar Dados Financeiros', enabled: true },
-        { name: 'Exportar Relatórios', enabled: true },
-        { name: 'Gerenciar Usuários', enabled: false }
-      ]
+      permissions: [] as { name: string; enabled: boolean }[]
     },
     {
       title: 'Equipe Comercial',
       icon: Users,
-      permissions: [
-        { name: 'Criar Propostas', enabled: true },
-        { name: 'Gerenciar Contratos', enabled: true },
-        { name: 'Gerenciar Valores Unitários', enabled: true },
-        { name: 'Aprovar Alterações', enabled: false }
-      ]
+      permissions: [] as { name: string; enabled: boolean }[]
     }
   ]);
 
@@ -71,9 +56,6 @@ const Permissoes = () => {
       description: 'Suas alterações foram salvas',
     });
     
-    setTimeout(() => {
-      console.log('Permissões sincronizadas com backend');
-    }, 100);
   };
 
   const handleManualSave = () => {

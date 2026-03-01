@@ -29,86 +29,16 @@ const EquipeAtiva = () => {
     funcao: ''
   });
 
-  const funcionarios = [
-    {
-      id: 1,
-      obraId: '1',
-      nome: 'João Silva',
-      funcao: 'Eletricista Senior',
-      obraVinculada: 'Instalação Comercial - Loja XYZ',
-      dataEntrada: '2024-01-15',
-      status: 'ativo',
-      horasSemana: 40
-    },
-    {
-      id: 2,
-      obraId: '2',
-      nome: 'Maria Santos',
-      funcao: 'Técnica Elétrica',
-      obraVinculada: 'Reforma Residencial - Pedro Costa',
-      dataEntrada: '2024-01-20',
-      status: 'ativo',
-      horasSemana: 44
-    },
-    {
-      id: 3,
-      obraId: '3',
-      nome: 'Carlos Pereira',
-      funcao: 'Supervisor de Obras',
-      obraVinculada: 'Instalação Industrial - Fábrica Beta',
-      dataEntrada: '2024-01-10',
-      status: 'ativo',
-      horasSemana: 45
-    },
-    {
-      id: 4,
-      obraId: '3',
-      nome: 'Ana Costa',
-      funcao: 'Eletricista',
-      obraVinculada: 'Instalação Industrial - Fábrica Beta',
-      dataEntrada: '2024-01-25',
-      status: 'ativo',
-      horasSemana: 40
-    },
-    {
-      id: 5,
-      obraId: '3',
-      nome: 'Roberto Lima',
-      funcao: 'Auxiliar Técnico',
-      obraVinculada: 'Instalação Industrial - Fábrica Beta',
-      dataEntrada: '2024-02-01',
-      status: 'inativo',
-      horasSemana: 0
-    }
-  ];
+  const funcionarios: any[] = [];
 
-  const obras = [
-    { id: '1', nome: 'Instalação Comercial - Loja XYZ' },
-    { id: '2', nome: 'Reforma Residencial - Pedro Costa' },
-    { id: '3', nome: 'Instalação Industrial - Fábrica Beta' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const statusOptions = [
     { value: 'ativo', label: 'Ativo' },
     { value: 'inativo', label: 'Inativo' }
   ];
 
-  const [alocacoesDiarias, setAlocacoesDiarias] = useState([
-    {
-      id: 1,
-      funcionario: 'João Silva',
-      obra: 'Instalação Comercial - Loja XYZ',
-      data: '2024-01-15',
-      funcao: 'Eletricista Senior'
-    },
-    {
-      id: 2,
-      funcionario: 'Maria Santos',
-      obra: 'Reforma Residencial - Pedro Costa',
-      data: '2024-01-15',
-      funcao: 'Técnica Elétrica'
-    }
-  ]);
+  const [alocacoesDiarias, setAlocacoesDiarias] = useState<any[]>([]);
 
   const getStatusBadge = (status: string) => {
     return status === 'ativo' ? (
@@ -155,21 +85,9 @@ const EquipeAtiva = () => {
     return result;
   }, [funcionarios, filters, searchTerm]);
 
-  const obrasAlocacao = [
-    'Instalação Comercial - Loja XYZ',
-    'Reforma Residencial - Pedro Costa',
-    'Instalação Industrial - Fábrica Beta',
-    'Instalação Residencial - Casa Silva',
-    'Reforma Comercial - Escritório ABC'
-  ];
+  const obrasAlocacao: string[] = [];
 
-  const funcoes = [
-    'Eletricista Senior',
-    'Técnica Elétrica',
-    'Supervisor de Obras',
-    'Eletricista',
-    'Auxiliar Técnico'
-  ];
+  const funcoes: string[] = [];
 
   const funcionariosList = funcionarios.map(f => f.nome);
 

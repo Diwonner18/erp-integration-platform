@@ -16,64 +16,18 @@ const ObrasConcluidas = () => {
     status: ''
   });
 
-  const obrasConcluidas = [
-    {
-      id: 1,
-      obraId: '1',
-      nome: 'Instalação Elétrica Residencial',
-      cliente: 'João Silva',
-      endereco: 'Rua das Flores, 123',
-      metragem: '120 m²',
-      dataInicio: '2024-01-15',
-      dataFim: '2024-02-28',
-      responsavel: 'Carlos Pereira',
-      statusFinal: 'Concluída com Sucesso',
-      status: 'concluida'
-    },
-    {
-      id: 2,
-      obraId: '2',
-      nome: 'Reforma Comercial',
-      cliente: 'Maria Santos',
-      endereco: 'Av. Principal, 456',
-      metragem: '200 m²',
-      dataInicio: '2024-02-01',
-      dataFim: '2024-03-15',
-      responsavel: 'Ana Costa',
-      statusFinal: 'Concluída com Sucesso',
-      status: 'concluida'
-    },
-    {
-      id: 3,
-      obraId: '3',
-      nome: 'Instalação Industrial',
-      cliente: 'Empresa ABC Ltda',
-      endereco: 'Distrito Industrial, 789',
-      metragem: '500 m²',
-      dataInicio: '2024-01-10',
-      dataFim: '2024-04-20',
-      responsavel: 'Roberto Lima',
-      statusFinal: 'Concluída com Sucesso',
-      status: 'concluida'
-    }
-  ];
+  const obrasConcluidas: any[] = [];
 
-  const obras = [
-    { id: '1', nome: 'Instalação Elétrica Residencial' },
-    { id: '2', nome: 'Reforma Comercial' },
-    { id: '3', nome: 'Instalação Industrial' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const statusOptions = [
     { value: 'concluida', label: 'Concluída' }
   ];
 
   const exportarPDF = () => {
-    console.log('Exportando para PDF...');
   };
 
   const exportarExcel = () => {
-    console.log('Exportando para Excel...');
   };
 
   const filteredObras = useMemo(() => {

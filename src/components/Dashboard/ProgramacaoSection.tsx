@@ -17,42 +17,7 @@ interface ProgramacaoItem {
 }
 
 const ProgramacaoSection = () => {
-  // Mock data para demonstração
-  const programacao: ProgramacaoItem[] = [
-    {
-      id: '1',
-      obra: 'Residencial Silva',
-      cliente: 'João Silva',
-      etapa: 'Alvenaria - 2º Pavimento',
-      dataAgendamento: '2024-01-22',
-      horario: '08:00',
-      local: 'Rua das Flores, 123',
-      status: 'confirmado',
-      responsavel: 'Carlos Santos'
-    },
-    {
-      id: '2',
-      obra: 'Comercial ABC',
-      cliente: 'ABC Ltda',
-      etapa: 'Instalações Elétricas',
-      dataAgendamento: '2024-01-22',
-      horario: '14:00',
-      local: 'Av. Principal, 456',
-      status: 'agendado',
-      responsavel: 'Maria Costa'
-    },
-    {
-      id: '3',
-      obra: 'Reforma Escritório',
-      cliente: 'Tech Solutions',
-      etapa: 'Pintura Final',
-      dataAgendamento: '2024-01-23',
-      horario: '09:00',
-      local: 'Centro Empresarial, Sala 203',
-      status: 'em-andamento',
-      responsavel: 'Pedro Lima'
-    }
-  ];
+  const programacao: ProgramacaoItem[] = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

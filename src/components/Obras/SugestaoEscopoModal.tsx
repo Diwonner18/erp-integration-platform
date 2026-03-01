@@ -33,12 +33,7 @@ const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const obras = [
-    'Obra Residencial Silva',
-    'Complexo Comercial ABC',
-    'Reforma Escritório Costa',
-    'Instalação Industrial Mendes'
-  ];
+  const obras: string[] = [];
 
   const {
     register,

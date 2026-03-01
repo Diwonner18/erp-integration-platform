@@ -27,8 +27,8 @@ const RelatoriosFinanceiros = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Relatórios Financeiros</h1>
-            <p className="text-slate-600 mt-1">Análises e relatórios financeiros detalhados</p>
+            <h1 className="text-3xl font-bold text-primary">Relatórios Financeiros</h1>
+            <p className="text-muted-foreground mt-1">Análises e relatórios financeiros detalhados</p>
           </div>
           <Button onClick={handleExportarTudo}>
             <Download className="w-4 h-4 mr-2" />
@@ -45,21 +45,9 @@ const RelatoriosFinanceiros = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { cliente: 'ABC Construções', valor: 'R$ 45.200', percentual: '35%' },
-                  { cliente: 'Silva Engenharia', valor: 'R$ 32.800', percentual: '26%' },
-                  { cliente: 'Costa & Filhos', valor: 'R$ 28.100', percentual: '22%' },
-                  { cliente: 'Outros', valor: 'R$ 21.200', percentual: '17%' }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">{item.cliente}</span>
-                    <div className="text-right">
-                      <span className="font-semibold">{item.valor}</span>
-                      <span className="text-xs text-slate-500 ml-2">({item.percentual})</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">Sem dados de receita</p>
               </div>
             </CardContent>
           </Card>
@@ -72,21 +60,9 @@ const RelatoriosFinanceiros = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { mes: 'Janeiro', valor: 'R$ 127.300', crescimento: '+12%' },
-                  { mes: 'Dezembro', valor: 'R$ 113.800', crescimento: '+8%' },
-                  { mes: 'Novembro', valor: 'R$ 105.400', crescimento: '+5%' },
-                  { mes: 'Outubro', valor: 'R$ 100.200', crescimento: '+3%' }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">{item.mes}</span>
-                    <div className="text-right">
-                      <span className="font-semibold">{item.valor}</span>
-                      <span className="text-xs text-green-600 ml-2">{item.crescimento}</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-muted-foreground">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">Sem dados de performance</p>
               </div>
             </CardContent>
           </Card>

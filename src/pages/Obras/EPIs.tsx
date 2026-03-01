@@ -28,38 +28,7 @@ const EPIs = () => {
     observacoes: ''
   });
 
-  const [registrosEPI, setRegistrosEPI] = useState([
-    {
-      id: 1,
-      tipoEPI: 'Capacete de Segurança',
-      colaborador: 'João Silva',
-      obra: 'Instalação Comercial - Loja XYZ',
-      dataEntrega: '2024-01-15',
-      responsavel: 'Carlos Supervisor',
-      status: 'entregue',
-      observacoes: 'Capacete novo, cor branca'
-    },
-    {
-      id: 2,
-      tipoEPI: 'Luvas de Proteção',
-      colaborador: 'Maria Santos',
-      obra: 'Reforma Residencial - Pedro Costa',
-      dataEntrega: '2024-01-14',
-      responsavel: 'Ana Coordenadora',
-      status: 'devolvido',
-      observacoes: 'Devolvido após conclusão da tarefa'
-    },
-    {
-      id: 3,
-      tipoEPI: 'Óculos de Proteção',
-      colaborador: 'Carlos Pereira',
-      obra: 'Instalação Industrial - Fábrica Beta',
-      dataEntrega: '2024-01-12',
-      responsavel: 'Roberto Líder',
-      status: 'perdido',
-      observacoes: 'Relatado perda durante atividade externa'
-    }
-  ]);
+  const [registrosEPI, setRegistrosEPI] = useState<any[]>([]);
 
   const tiposEPI = [
     'Capacete de Segurança',
@@ -72,29 +41,9 @@ const EPIs = () => {
     'Protetor Auricular'
   ];
 
-  const obras = [
-    'Instalação Comercial - Loja XYZ',
-    'Reforma Residencial - Pedro Costa',
-    'Instalação Industrial - Fábrica Beta',
-    'Instalação Residencial - Casa Silva',
-    'Reforma Comercial - Escritório ABC'
-  ];
-
-  const colaboradores = [
-    'João Silva',
-    'Maria Santos',
-    'Carlos Pereira',
-    'Ana Costa',
-    'Roberto Lima',
-    'Pedro Oliveira'
-  ];
-
-  const responsaveis = [
-    'Carlos Supervisor',
-    'Ana Coordenadora',
-    'Roberto Líder',
-    'Fernando Gerente'
-  ];
+  const obras: string[] = [];
+  const colaboradores: string[] = [];
+  const responsaveis: string[] = [];
 
   const handleNovoRegistro = () => {
     setFormData({

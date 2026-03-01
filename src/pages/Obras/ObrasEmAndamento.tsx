@@ -19,57 +19,9 @@ const ObrasEmAndamento = () => {
   const [showObservacoesFase, setShowObservacoesFase] = useState(false);
   const [obraSelecionada, setObraSelecionada] = useState<{ id: string; nome: string } | null>(null);
 
-  const obrasEmAndamento = [
-    {
-      id: 1,
-      obraId: '1',
-      nome: 'Instalação Elétrica Comercial',
-      cliente: 'Loja XYZ',
-      endereco: 'Rua Comercial, 789',
-      etapaAtual: 'Instalação de Quadros',
-      progresso: 65,
-      status: 'executando',
-      alertaAtraso: false,
-      dataPrevista: '2024-02-15',
-      equipeResponsavel: ['João Silva', 'Maria Santos'],
-      observacoes: 'Obra dentro do prazo'
-    },
-    {
-      id: 2,
-      obraId: '2',
-      nome: 'Reforma Residencial',
-      cliente: 'Pedro Costa',
-      endereco: 'Av. das Palmeiras, 321',
-      etapaAtual: 'Fiação Interna',
-      progresso: 40,
-      status: 'atrasada',
-      alertaAtraso: true,
-      dataPrevista: '2024-01-30',
-      equipeResponsavel: ['Carlos Pereira'],
-      observacoes: 'Atraso devido ao fornecimento de materiais'
-    },
-    {
-      id: 3,
-      obraId: '3',
-      nome: 'Instalação Industrial',
-      cliente: 'Fábrica Beta',
-      endereco: 'Zona Industrial, 654',
-      etapaAtual: 'Instalação de Painéis',
-      progresso: 85,
-      status: 'adiantada',
-      alertaAtraso: false,
-      dataPrevista: '2024-02-28',
-      equipeResponsavel: ['Ana Costa', 'Roberto Lima', 'José Santos'],
-      observacoes: 'Obra adiantada'
-    }
-  ];
+  const obrasEmAndamento: any[] = [];
 
-  const obras = [
-    { id: '1', nome: 'Instalação Elétrica Comercial' },
-    { id: '2', nome: 'Reforma Residencial' },
-    { id: '3', nome: 'Instalação Industrial' },
-    { id: '4', nome: 'Construção Residencial Norte' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const statusOptions = [
     { value: 'executando', label: 'Em Execução' },
@@ -101,7 +53,7 @@ const ObrasEmAndamento = () => {
   }, [obrasEmAndamento, filters]);
 
   const verDetalhes = (obra: string) => {
-    console.log('Ver detalhes da obra:', obra);
+  };
   };
 
   const handleObservacoesFase = (obraId: string, obraNome: string) => {

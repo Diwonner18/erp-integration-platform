@@ -19,19 +19,9 @@ const BoletinsMedicao = () => {
     status: ''
   });
 
-  const boletins = [
-    { id: 1, obraId: '1', cliente: 'ABC Construções', valor: 'R$ 8.500', periodo: 'Jan/2024', status: 'emitido', numero: 'BM-001', data: '2024-01-15' },
-    { id: 2, obraId: '2', cliente: 'Silva Engenharia', valor: 'R$ 12.300', periodo: 'Jan/2024', status: 'pendente', numero: 'BM-002', data: '2024-01-10' },
-    { id: 3, obraId: '3', cliente: 'Costa & Filhos', valor: 'R$ 5.800', periodo: 'Jan/2024', status: 'emitido', numero: 'BM-003', data: '2024-01-08' },
-    { id: 4, obraId: '4', cliente: 'Mendes Construtora', valor: 'R$ 15.600', periodo: 'Dez/2023', status: 'pago', numero: 'BM-004', data: '2023-12-28' }
-  ];
+  const [boletins, setBoletins] = useState<any[]>([]);
 
-  const obras = [
-    { id: '1', nome: 'Obra ABC Construções' },
-    { id: '2', nome: 'Obra Silva Engenharia' },
-    { id: '3', nome: 'Obra Costa & Filhos' },
-    { id: '4', nome: 'Obra Mendes Construtora' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const statusOptions = [
     { value: 'emitido', label: 'Emitido' },

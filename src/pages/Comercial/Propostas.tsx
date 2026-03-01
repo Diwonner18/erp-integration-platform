@@ -28,19 +28,9 @@ const Propostas = () => {
     status: ''
   });
 
-  const [propostas, setPropostas] = useState([
-    { id: 1, obraId: '1', client: 'ABC Construções', value: 'R$ 45.000', status: 'pendente', date: '2024-01-15' },
-    { id: 2, obraId: '2', client: 'Silva Engenharia', value: 'R$ 32.500', status: 'aprovada', date: '2024-01-10' },
-    { id: 3, obraId: '3', client: 'Costa & Filhos', value: 'R$ 78.000', status: 'em_analise', date: '2024-01-08' },
-    { id: 4, obraId: '4', client: 'Mendes Construtora', value: 'R$ 22.800', status: 'rejeitada', date: '2024-01-05' }
-  ]);
+  const [propostas, setPropostas] = useState<any[]>([]);
 
-  const obras = [
-    { id: '1', nome: 'Obra ABC Construções' },
-    { id: '2', nome: 'Obra Silva Engenharia' },
-    { id: '3', nome: 'Obra Costa & Filhos' },
-    { id: '4', nome: 'Obra Mendes Construtora' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const advancedStatusOptions = [
     { value: 'pendente', label: 'Pendente' },

@@ -13,48 +13,13 @@ import { Textarea } from '@/components/ui/textarea';
 const ObrasAgendadas = () => {
   const [editandoObra, setEditandoObra] = useState<any>(null);
 
-  const obrasAgendadas = [
-    {
-      id: 1,
-      nome: 'Instalação Elétrica Escritório',
-      cliente: 'Empresa Alfa',
-      endereco: 'Centro Empresarial, Sala 205',
-      escopo: 'Instalação completa de sistema elétrico',
-      responsavel: 'João Silva',
-      dataInicio: '2024-02-20',
-      observacoes: 'Cliente solicitou início após horário comercial',
-      pendencias: 'Aguardando aprovação do condomínio'
-    },
-    {
-      id: 2,
-      nome: 'Reforma Elétrica Residencial',
-      cliente: 'Família Oliveira',
-      endereco: 'Rua das Acácias, 456',
-      escopo: 'Troca de fiação antiga e instalação de novos pontos',
-      responsavel: 'Maria Santos',
-      dataInicio: '2024-02-25',
-      observacoes: 'Casa ocupada, trabalho aos finais de semana',
-      pendencias: 'Definir detalhes dos novos pontos'
-    },
-    {
-      id: 3,
-      nome: 'Instalação Industrial',
-      cliente: 'Metalúrgica Gama',
-      endereco: 'Distrito Industrial, Galpão 12',
-      escopo: 'Sistema elétrico para nova linha de produção',
-      responsavel: 'Carlos Pereira',
-      dataInicio: '2024-03-05',
-      observacoes: 'Obra de grande porte, equipe ampliada',
-      pendencias: 'Aguardando entrega dos equipamentos especiais'
-    }
-  ];
+  const [obrasAgendadas, setObrasAgendadas] = useState<any[]>([]);
 
   const editarAgendamento = (obra: any) => {
     setEditandoObra(obra);
   };
 
   const salvarEdicao = () => {
-    console.log('Salvando edição:', editandoObra);
     setEditandoObra(null);
   };
 

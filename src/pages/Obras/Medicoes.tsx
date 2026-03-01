@@ -23,39 +23,7 @@ const Medicoes = () => {
     status: ''
   });
 
-  // Estado reativo para medições
-  const [medicoes, setMedicoes] = useState([
-    { 
-      id: 1,
-      obraId: '1',
-      obra: 'Obra Residencial Silva', 
-      periodo: 'Jan/2024', 
-      percentual: 75, 
-      valor: 'R$ 18.500',
-      status: 'pendente',
-      data: '2024-01-20'
-    },
-    { 
-      id: 2,
-      obraId: '2',
-      obra: 'Complexo Comercial ABC', 
-      periodo: 'Jan/2024', 
-      percentual: 100, 
-      valor: 'R$ 32.000',
-      status: 'aprovada',
-      data: '2024-01-18'
-    },
-    { 
-      id: 3,
-      obraId: '3',
-      obra: 'Reforma Escritório Costa', 
-      periodo: 'Dez/2023', 
-      percentual: 50, 
-      valor: 'R$ 12.800',
-      status: 'aprovada',
-      data: '2024-01-15'
-    }
-  ]);
+  const [medicoes, setMedicoes] = useState<any[]>([]);
 
   // Estados para modais
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -64,12 +32,7 @@ const Medicoes = () => {
   const [actionType, setActionType] = useState<'aprovar' | 'rejeitar' | ''>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const obras = [
-    { id: '1', nome: 'Obra Residencial Silva' },
-    { id: '2', nome: 'Complexo Comercial ABC' },
-    { id: '3', nome: 'Reforma Escritório Costa' },
-    { id: '4', nome: 'Instalação Industrial Beta' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const statusOptions = [
     { value: 'pendente', label: 'Pendente' },

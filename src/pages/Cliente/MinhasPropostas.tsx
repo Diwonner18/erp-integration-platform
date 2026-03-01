@@ -12,47 +12,7 @@ import { FileText, Download, Check, X, Clock, AlertTriangle } from 'lucide-react
 
 const MinhasPropostas = () => {
   const { toast } = useToast();
-  const [propostas, setPropostas] = useState([
-    {
-      id: 1,
-      numero: 'PROP-2024-001',
-      servico: 'Instalação Elétrica Completa',
-      valor: 'R$ 15.800',
-      data: '2024-01-20',
-      vencimento: '2024-02-03',
-      status: 'pendente',
-      descricao: 'Instalação elétrica completa para residência de 120m², incluindo quadro principal, distribuição e pontos de iluminação.',
-      dataAceitacao: null,
-      clienteNome: 'João Silva',
-      justificativaRecusa: null
-    },
-    {
-      id: 2,
-      numero: 'PROP-2024-002',
-      servico: 'Sistema de Automação Residencial',
-      valor: 'R$ 8.500',
-      data: '2024-01-15',
-      vencimento: '2024-01-29',
-      status: 'aceita',
-      descricao: 'Implementação de sistema de automação com controle de iluminação, temperatura e segurança.',
-      dataAceitacao: '2024-01-16',
-      clienteNome: 'João Silva',
-      justificativaRecusa: null
-    },
-    {
-      id: 3,
-      numero: 'PROP-2023-045',
-      servico: 'Manutenção Preventiva Anual',
-      valor: 'R$ 2.400',
-      data: '2023-12-20',
-      vencimento: '2024-01-05',
-      status: 'vencida',
-      descricao: 'Contrato de manutenção preventiva anual com 4 visitas técnicas programadas.',
-      dataAceitacao: null,
-      clienteNome: 'João Silva',
-      justificativaRecusa: null
-    }
-  ]);
+  const [propostas, setPropostas] = useState<any[]>([]);
 
   const [showRecusaModal, setShowRecusaModal] = useState(false);
   const [propostaSelecionada, setPropostaSelecionada] = useState<any>(null);

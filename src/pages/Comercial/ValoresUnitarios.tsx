@@ -19,12 +19,7 @@ const ValoresUnitarios = () => {
     value: ''
   });
 
-  const [valores, setValores] = useState([
-    { id: 1, service: 'Instalação Elétrica Residencial', client: 'ABC Construções', value: 'R$ 85/m²' },
-    { id: 2, service: 'Instalação Hidráulica', client: 'Silva Engenharia', value: 'R$ 65/m²' },
-    { id: 3, service: 'Sistema de Automação', client: 'Costa & Filhos', value: 'R$ 150/ponto' },
-    { id: 4, service: 'Manutenção Preventiva', client: 'Geral', value: 'R$ 120/visita' }
-  ]);
+  const [valores, setValores] = useState<any[]>([]);
 
   const handleAddValor = () => {
     setFormData({ service: '', client: '', value: '' });

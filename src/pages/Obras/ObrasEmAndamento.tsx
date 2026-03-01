@@ -54,7 +54,6 @@ const ObrasEmAndamento = () => {
 
   const verDetalhes = (obra: string) => {
   };
-  };
 
   const handleObservacoesFase = (obraId: string, obraNome: string) => {
     setObraSelecionada({ id: obraId, nome: obraNome });

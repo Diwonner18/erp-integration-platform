@@ -392,19 +392,11 @@ const EPIs = () => {
                   <Label className="text-slate-700">
                     Responsável pela Entrega *
                   </Label>
-                  <Select 
-                    value={formData.responsavel} 
-                    onValueChange={(value) => setFormData({...formData, responsavel: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {responsaveis.map((responsavel) => (
-                        <SelectItem key={responsavel} value={responsavel}>{responsavel}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    placeholder="Digite o responsável pela entrega"
+                    value={formData.responsavel}
+                    onChange={(e) => setFormData({...formData, responsavel: e.target.value})}
+                  />
                 </div>
 
                 <div>

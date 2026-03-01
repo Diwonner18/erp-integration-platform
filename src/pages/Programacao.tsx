@@ -431,12 +431,7 @@ const Programacao = () => {
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Responsável Técnico
                     </label>
-                    <select className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                      <option value="">Selecione o responsável</option>
-                      <option value="engenheiro1">Eng. Carlos Silva</option>
-                      <option value="engenheiro2">Eng. Ana Santos</option>
-                      <option value="engenheiro3">Eng. João Pedro</option>
-                    </select>
+                    <Input placeholder="Digite o Responsável Técnico" required />
                   </div>
                 </div>
                 

@@ -178,26 +178,9 @@ const SolicitarAgendamento = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { servico: 'Manutenção Preventiva', data: '2024-01-20', status: 'confirmado' },
-                    { servico: 'Instalação Elétrica', data: '2024-01-15', status: 'concluido' },
-                    { servico: 'Reparo Emergencial', data: '2024-01-10', status: 'concluido' }
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-slate-900">{item.servico}</p>
-                        <p className="text-sm text-slate-600">{item.data}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        item.status === 'concluido' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {item.status === 'concluido' ? 'Concluído' : 'Confirmado'}
-                      </span>
-                    </div>
-                  ))}
+                <div className="text-center py-8 text-slate-500">
+                  <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Nenhum agendamento registrado</p>
                 </div>
               </CardContent>
             </Card>

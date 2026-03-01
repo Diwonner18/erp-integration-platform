@@ -61,7 +61,7 @@ const Dashboard = () => {
 
     if (user.type === 'obras' || user.type === 'admin') {
       actions.push(
-        { icon: Calendar, label: 'Confirmar Agendamentos', path: '/agendamentos', description: 'Validar programação de obras' },
+        { icon: Calendar, label: 'Confirmar Agendamentos', path: '/programacao', description: 'Validar programação de obras' },
         { icon: ClipboardList, label: 'Inserir Medições', path: '/medicoes', description: 'Alimentar andamento da obra' },
         { icon: FileText, label: 'Sugerir Alterações', path: '/alteracoes-escopo', description: 'Propor mudanças no escopo' }
       );

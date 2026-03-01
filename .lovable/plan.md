@@ -1,18 +1,14 @@
 
 
-## Plano
+## Plano: Corrigir 404 em "Confirmar Agendamentos"
 
-### 1. Trocar Select por Input nos campos "Cliente"
+### Problema
 
-**2 arquivos:**
+No `Dashboard.tsx`, a acao rapida "Confirmar Agendamentos" navega para `/agendamentos`, mas essa rota nao existe no `App.tsx`. A rota correta para programacao/agendamentos e `/programacao`.
 
-- **`NovaPropostaModal.tsx`** (linha 69-81): Substituir o `<Select>` com opções mock por `<Input>` com `placeholder="Nome do cliente"`. O valor já é `formData.cliente`, basta trocar para `onChange={(e) => setFormData({...formData, cliente: e.target.value})}`.
+### Correcao
 
-- **`NovoBoletimModal.tsx`** (linha 75-87): Mesma troca — `<Select>` por `<Input>` com placeholder e onChange.
+**1 arquivo: `src/pages/Dashboard.tsx`**
 
-Isso remove os clientes mock (ABC Construções, Silva Engenharia, etc.) e permite o usuário digitar livremente.
-
-### 2. Limpar notificações mock
-
-**`NotificationPanel.tsx`** (linhas 28-75): Substituir `getNotificationsForUser()` por uma função que retorna array vazio `[]`. Manter toda a estrutura de renderização, mark as read, e empty state (que já existe na linha 148-152).
+Alterar o `path` de `/agendamentos` para `/programacao` na acao rapida "Confirmar Agendamentos" (dentro de `getQuickActions`, bloco `obras`).
 

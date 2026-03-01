@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import logotipo from '@/assets/logotipo.png';
 
 const Cadastro = () => {
   const [name, setName] = useState('');
@@ -61,8 +62,8 @@ const Cadastro = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
-            <h1 className="text-2xl font-title font-bold text-primary">CT Guedes</h1>
-            <p className="text-sm font-body text-muted-foreground">Sistema de Gestão de Obras</p>
+            <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto" />
+            <p className="text-sm font-body text-muted-foreground mt-2">Sistema de Gestão de Obras</p>
           </div>
           <CardTitle className="font-title text-primary">Criar Conta</CardTitle>
           <CardDescription className="font-body">

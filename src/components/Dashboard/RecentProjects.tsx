@@ -12,36 +12,36 @@ const RecentProjects = () => {
       case 'Aguardando Aprovação':
         return 'bg-yellow-100 text-yellow-800';
       case 'Planejamento':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/10 text-primary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-      <div className="p-6 border-b border-slate-200">
-        <h3 className="text-lg font-semibold text-slate-900">Projetos Recentes</h3>
+    <div className="bg-card rounded-lg shadow-sm border border-border">
+      <div className="p-6 border-b border-border">
+        <h3 className="text-lg font-semibold font-title text-foreground">Projetos Recentes</h3>
       </div>
       
       <div className="p-6 space-y-4">
         {recentProjects.map((project) => (
-          <div key={project.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+          <div key={project.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h4 className="font-medium text-slate-900 mb-2">{project.title}</h4>
+                <h4 className="font-medium text-foreground mb-2">{project.title}</h4>
                 
-                <div className="flex items-center text-sm text-slate-600 mb-2">
+                <div className="flex items-center text-sm text-muted-foreground mb-2">
                   <User className="w-4 h-4 mr-2" />
                   {project.client}
                 </div>
                 
-                <div className="flex items-center text-sm text-slate-600 mb-2">
+                <div className="flex items-center text-sm text-muted-foreground mb-2">
                   <MapPin className="w-4 h-4 mr-2" />
                   {project.location}
                 </div>
                 
-                <div className="flex items-center text-sm text-slate-600 mb-3">
+                <div className="flex items-center text-sm text-muted-foreground mb-3">
                   <Calendar className="w-4 h-4 mr-2" />
                   {new Date(project.date).toLocaleDateString('pt-BR')}
                 </div>
@@ -51,11 +51,11 @@ const RecentProjects = () => {
                     {project.status}
                   </span>
                   
-                  <div className="flex items-center text-sm text-slate-600">
+                  <div className="flex items-center text-sm text-muted-foreground">
                     <span className="mr-2">Progresso:</span>
-                    <div className="w-24 bg-slate-200 rounded-full h-2">
+                    <div className="w-24 bg-muted rounded-full h-2">
                       <div 
-                        className="bg-blue-600 h-2 rounded-full" 
+                        className="bg-primary h-2 rounded-full" 
                         style={{ width: `${project.progress}%` }}
                       ></div>
                     </div>

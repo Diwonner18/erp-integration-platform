@@ -1,4 +1,3 @@
-
 import React from 'react';
 import MainLayout from '../components/Layout/MainLayout';
 import StatsCard from '../components/Dashboard/StatsCard';
@@ -149,10 +148,10 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
-          <h1 className="text-2xl font-bold">{getUserTypeLabel(user?.type || '')}</h1>
-          <p className="text-blue-100 mt-1">{getUserDescription(user?.type || '')}</p>
-          <div className="mt-4 text-sm text-blue-200">
+        <div className="bg-gradient-to-r from-primary to-primary/80 rounded-lg p-6 text-primary-foreground">
+          <h1 className="text-2xl font-bold font-title">{getUserTypeLabel(user?.type || '')}</h1>
+          <p className="text-primary-foreground/70 mt-1">{getUserDescription(user?.type || '')}</p>
+          <div className="mt-4 text-sm text-primary-foreground/60">
             Bem-vindo, {user?.name}!
           </div>
         </div>
@@ -164,8 +163,8 @@ const Dashboard = () => {
         </div>
 
         {quickActions.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+            <h3 className="text-lg font-semibold font-title text-foreground mb-4">
               Ações Rápidas - {getUserTypeLabel(user?.type || '')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -173,13 +172,13 @@ const Dashboard = () => {
                 <button
                   key={index}
                   onClick={() => navigate(action.path)}
-                  className="flex flex-col items-start p-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors group text-left"
+                  className="flex flex-col items-start p-4 border border-border rounded-lg hover:border-primary hover:bg-accent/20 transition-colors group text-left"
                 >
                   <div className="flex items-center mb-2">
-                    <action.icon className="w-6 h-6 mr-3 text-slate-400 group-hover:text-blue-500" />
-                    <span className="font-medium text-slate-700 group-hover:text-blue-600">{action.label}</span>
+                    <action.icon className="w-6 h-6 mr-3 text-muted-foreground group-hover:text-primary" />
+                    <span className="font-medium text-foreground group-hover:text-primary">{action.label}</span>
                   </div>
-                  <span className="text-sm text-slate-500 group-hover:text-slate-600">{action.description}</span>
+                  <span className="text-sm text-muted-foreground">{action.description}</span>
                 </button>
               ))}
             </div>
@@ -192,11 +191,11 @@ const Dashboard = () => {
           </div>
           
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">
+            <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+              <h3 className="text-lg font-semibold font-title text-foreground mb-4">
                 Resumo {user?.type === 'cliente' ? 'Pessoal' : 'Mensal'}
               </h3>
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Sem dados disponíveis</p>
               </div>

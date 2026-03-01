@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,8 +63,8 @@ const ObrasEmAndamento = () => {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Obras em Andamento</h1>
-          <p className="text-slate-600 mt-1">Acompanhamento de obras ativas</p>
+          <h1 className="text-3xl font-bold font-title text-foreground">Obras em Andamento</h1>
+          <p className="text-muted-foreground mt-1">Acompanhamento de obras ativas</p>
         </div>
 
         <AdvancedFilters
@@ -74,7 +73,7 @@ const ObrasEmAndamento = () => {
           statusOptions={statusOptions}
         />
 
-        <div className="text-sm text-slate-600 mb-4">
+        <div className="text-sm text-muted-foreground mb-4">
           Exibindo {filteredObras.length} de {obrasEmAndamento.length} obras
         </div>
 
@@ -85,7 +84,7 @@ const ObrasEmAndamento = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-xl">{obra.nome}</CardTitle>
-                    <p className="text-slate-600 mt-1">{obra.cliente} - {obra.endereco}</p>
+                    <p className="text-muted-foreground mt-1">{obra.cliente} - {obra.endereco}</p>
                   </div>
                   {obra.alertaAtraso && (
                     <Badge variant="destructive" className="flex items-center gap-1">
@@ -98,14 +97,14 @@ const ObrasEmAndamento = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-semibold text-sm text-slate-700 mb-2">Etapa Atual</h4>
-                    <p className="text-slate-900">{obra.etapaAtual}</p>
+                    <h4 className="font-semibold text-sm text-foreground mb-2">Etapa Atual</h4>
+                    <p className="text-foreground">{obra.etapaAtual}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm text-slate-700 mb-2">Data Prevista</h4>
+                    <h4 className="font-semibold text-sm text-foreground mb-2">Data Prevista</h4>
                     <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-slate-500" />
-                      <span className={obra.alertaAtraso ? 'text-red-600' : 'text-slate-900'}>
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className={obra.alertaAtraso ? 'text-red-600' : 'text-foreground'}>
                         {obra.dataPrevista}
                       </span>
                     </div>
@@ -114,23 +113,23 @@ const ObrasEmAndamento = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold text-sm text-slate-700">Progresso</h4>
+                    <h4 className="font-semibold text-sm text-foreground">Progresso</h4>
                     <span className="text-sm font-medium">{obra.progresso}%</span>
                   </div>
                   <Progress value={obra.progresso} className="h-2" />
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-sm text-slate-700 mb-2">Equipe Responsável</h4>
+                  <h4 className="font-semibold text-sm text-foreground mb-2">Equipe Responsável</h4>
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-slate-500" />
-                    <span className="text-slate-900">{obra.equipeResponsavel.join(', ')}</span>
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-foreground">{obra.equipeResponsavel.join(', ')}</span>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-sm text-slate-700 mb-2">Observações</h4>
-                  <p className="text-slate-600 text-sm">{obra.observacoes}</p>
+                  <h4 className="font-semibold text-sm text-foreground mb-2">Observações</h4>
+                  <p className="text-muted-foreground text-sm">{obra.observacoes}</p>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">

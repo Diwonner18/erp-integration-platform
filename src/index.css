@@ -41,7 +41,7 @@ All colors MUST be HSL.
     --input: 48 7% 67%; /* #aaa79d */
     --ring: 50 15% 34%; /* #575547 */
 
-    --radius: 0.5rem;
+    --radius: 0.35rem;
 
     --sidebar-background: 50 15% 34%; /* #575547 */
     --sidebar-foreground: 85 20% 85%; /* #d6d9c9 */

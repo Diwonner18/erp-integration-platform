@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -140,8 +139,8 @@ const Propostas = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Propostas</h1>
-            <p className="text-slate-600 mt-1">Gerenciar propostas e contratos</p>
+            <h1 className="text-3xl font-bold font-title text-foreground">Propostas</h1>
+            <p className="text-muted-foreground mt-1">Gerenciar propostas e contratos</p>
           </div>
           <Button 
             onClick={() => setShowNovaPropostaModal(true)}
@@ -161,7 +160,7 @@ const Propostas = () => {
 
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input 
               id="search-input"
               placeholder="Buscar propostas... (Ctrl+F)" 
@@ -172,11 +171,11 @@ const Propostas = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-slate-500" />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150"
+              className="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-150"
             >
               {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -187,7 +186,7 @@ const Propostas = () => {
           </div>
         </div>
 
-        <div className="text-sm text-slate-600 mb-4">
+        <div className="text-sm text-muted-foreground mb-4">
           Exibindo {filteredPropostas.length} de {propostas.length} propostas
         </div>
 
@@ -197,13 +196,13 @@ const Propostas = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center transition-colors duration-150">
-                      <FileText className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center transition-colors duration-150">
+                      <FileText className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">{proposta.client}</h3>
-                      <p className="text-sm text-slate-600">Valor: {proposta.value}</p>
-                      <p className="text-xs text-slate-500">Data: {proposta.date}</p>
+                      <h3 className="font-semibold text-foreground">{proposta.client}</h3>
+                      <p className="text-sm text-muted-foreground">Valor: {proposta.value}</p>
+                      <p className="text-xs text-muted-foreground">Data: {proposta.date}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -261,22 +260,22 @@ const Propostas = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Cliente</label>
-                    <p className="text-slate-900">{selectedProposta.client}</p>
+                    <label className="text-sm font-medium text-foreground">Cliente</label>
+                    <p className="text-foreground">{selectedProposta.client}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Valor</label>
-                    <p className="text-slate-900">{selectedProposta.value}</p>
+                    <label className="text-sm font-medium text-foreground">Valor</label>
+                    <p className="text-foreground">{selectedProposta.value}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Status</label>
-                    <p className="text-slate-900">{getStatusLabel(selectedProposta.status)}</p>
+                    <label className="text-sm font-medium text-foreground">Status</label>
+                    <p className="text-foreground">{getStatusLabel(selectedProposta.status)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Data</label>
-                    <p className="text-slate-900">{selectedProposta.date}</p>
+                    <label className="text-sm font-medium text-foreground">Data</label>
+                    <p className="text-foreground">{selectedProposta.date}</p>
                   </div>
                 </div>
                 <div className="flex justify-end pt-4">

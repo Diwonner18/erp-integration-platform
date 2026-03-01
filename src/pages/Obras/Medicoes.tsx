@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -173,8 +172,8 @@ const Medicoes = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Medições</h1>
-            <p className="text-slate-600 mt-1">Controle de medições das obras</p>
+            <h1 className="text-3xl font-bold font-title text-foreground">Medições</h1>
+            <p className="text-muted-foreground mt-1">Controle de medições das obras</p>
           </div>
           <Button onClick={() => setShowModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -190,7 +189,7 @@ const Medicoes = () => {
 
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input 
               placeholder="Buscar medições..." 
               className="pl-10"
@@ -198,7 +197,7 @@ const Medicoes = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-muted-foreground">
             Exibindo {filteredMedicoes.length} de {medicoes.length} medições
           </div>
         </div>
@@ -209,15 +208,15 @@ const Medicoes = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Ruler className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Ruler className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">{medicao.obra}</h3>
-                      <p className="text-sm text-slate-600">
+                      <h3 className="font-semibold text-foreground">{medicao.obra}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {medicao.periodo} - {medicao.percentual}% executado
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Valor: {medicao.valor} | Data: {medicao.data}
                       </p>
                     </div>

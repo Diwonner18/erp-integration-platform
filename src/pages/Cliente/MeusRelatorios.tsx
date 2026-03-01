@@ -151,7 +151,7 @@ const MeusRelatorios = () => {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 45.200</div>
+              <div className="text-2xl font-bold">R$ 0</div>
               <p className="text-xs text-muted-foreground">Este ano</p>
             </CardContent>
           </Card>
@@ -162,7 +162,7 @@ const MeusRelatorios = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">7</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">Concluídas</p>
             </CardContent>
           </Card>
@@ -173,7 +173,7 @@ const MeusRelatorios = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">R$ 12.800</div>
+              <div className="text-2xl font-bold text-green-600">R$ 0</div>
               <p className="text-xs text-muted-foreground">Em eficiência</p>
             </CardContent>
           </Card>
@@ -184,8 +184,8 @@ const MeusRelatorios = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 8.400</div>
-              <p className="text-xs text-muted-foreground">Em 15 dias</p>
+              <div className="text-2xl font-bold">R$ 0</div>
+              <p className="text-xs text-muted-foreground">Nenhum pendente</p>
             </CardContent>
           </Card>
         </div>
@@ -196,21 +196,9 @@ const MeusRelatorios = () => {
               <CardTitle>Histórico de Investimentos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { mes: 'Janeiro 2024', valor: 'R$ 15.800', obras: 2 },
-                  { mes: 'Dezembro 2023', valor: 'R$ 8.500', obras: 1 },
-                  { mes: 'Novembro 2023', valor: 'R$ 12.300', obras: 2 },
-                  { mes: 'Outubro 2023', valor: 'R$ 8.600', obras: 2 }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-slate-900">{item.mes}</p>
-                      <p className="text-sm text-slate-600">{item.obras} obra(s) realizadas</p>
-                    </div>
-                    <span className="font-semibold text-slate-900">{item.valor}</span>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-slate-500">
+                <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Nenhum investimento registrado</p>
               </div>
             </CardContent>
           </Card>
@@ -220,23 +208,9 @@ const MeusRelatorios = () => {
               <CardTitle>Relatórios Disponíveis</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { nome: 'Resumo Anual 2024', tipo: 'PDF', data: '2024-01-20' },
-                  { nome: 'Histórico de Obras', tipo: 'PDF', data: '2024-01-15' },
-                  { nome: 'Análise de Economia', tipo: 'PDF', data: '2024-01-10' },
-                  { nome: 'Cronograma de Pagamentos', tipo: 'Excel', data: '2024-01-08' }
-                ].map((relatorio, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium text-slate-900">{relatorio.nome}</p>
-                      <p className="text-sm text-slate-600">{relatorio.tipo} • {relatorio.data}</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-slate-500">
+                <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Nenhum relatório disponível</p>
               </div>
             </CardContent>
           </Card>

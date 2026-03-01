@@ -3,6 +3,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import logotipo from '@/assets/logotipo.png';
 import { 
   Calendar, 
   ClipboardList, 
@@ -133,7 +134,7 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
-        <h1 className="text-xl font-title font-bold text-sidebar-primary">CT Guedes</h1>
+        <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />
         <p className="text-sm font-body text-sidebar-foreground/70 mt-1">Sistema de Obras</p>
         
         {/* Nova caixa de identificação de usuário */}

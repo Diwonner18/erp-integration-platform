@@ -24,54 +24,8 @@ interface NotificationPanelProps {
 const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
   const { user } = useAuth();
   
-  // Mock notifications based on user type
   const getNotificationsForUser = (): Notification[] => {
-    const baseNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Nova Medição Disponível',
-        message: 'Medição da Obra Residencial Silva foi atualizada',
-        type: 'info',
-        isRead: false,
-        timestamp: '2 horas atrás',
-        icon: FileText
-      },
-      {
-        id: '2',
-        title: 'Programação Confirmada',
-        message: 'Obra Comercial ABC confirmada para amanhã às 08:00',
-        type: 'success',
-        isRead: true,
-        timestamp: '5 horas atrás',
-        icon: Calendar
-      }
-    ];
-
-    if (user?.type === 'admin') {
-      baseNotifications.unshift({
-        id: '3',
-        title: 'Aprovação Pendente',
-        message: '3 alterações de escopo aguardando aprovação',
-        type: 'warning',
-        isRead: false,
-        timestamp: '1 hora atrás',
-        icon: AlertCircle
-      });
-    }
-
-    if (user?.type === 'financeira') {
-      baseNotifications.unshift({
-        id: '4',
-        title: 'Pagamento em Atraso',
-        message: 'Cliente XYZ possui pagamento vencido há 5 dias',
-        type: 'error',
-        isRead: false,
-        timestamp: '30 minutos atrás',
-        icon: AlertCircle
-      });
-    }
-
-    return baseNotifications;
+    return [];
   };
 
   const [notifications, setNotifications] = React.useState<Notification[]>(getNotificationsForUser());

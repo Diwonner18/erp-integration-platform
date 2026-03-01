@@ -1,24 +1,16 @@
 
 
-## Plano: Modernizar pagina de Cadastro
+## Plano: Adicionar logotipo nas paginas de Login, Cadastro e Sidebar
 
-A pagina de Cadastro usa classes hardcoded (`bg-slate-50`, `text-blue-600`, `text-slate-600`) em vez do design system do projeto. A pagina de Login ja esta correta (`bg-background`, `text-primary`, `shadow-lg`, `font-title`, `font-body`).
+### Acoes
 
-### Alteracao: `src/pages/Cadastro.tsx`
+1. **Copiar o logotipo** para `src/assets/logotipo.png`
 
-Alinhar o estilo com a pagina de Login:
+2. **Login.tsx** (linhas 77-79): Substituir `<h1>CT Guedes</h1>` por `<img>` importado do asset, com tamanho adequado (~180px largura), centralizado, com `alt="CT Guedes"`
 
-1. **Container**: `bg-slate-50` → `bg-background` (remove o fundo branco destoante)
-2. **Card**: adicionar `shadow-lg` para profundidade
-3. **Titulo "CT Guedes"**: `text-blue-600` → `text-primary` + adicionar `font-title font-bold`
-4. **Subtitulo**: `text-slate-600` → `text-muted-foreground` + `font-body`
-5. **CardTitle**: adicionar `font-title text-primary`
-6. **CardDescription**: adicionar `font-body`
-7. **Labels**: adicionar `font-body text-primary`
-8. **Inputs**: adicionar `className="font-body"`
-9. **Button**: adicionar `font-body`
-10. **Link "Faca login"**: `text-blue-600` → `text-primary` + `font-medium`
-11. **Texto rodape**: `text-slate-600` → `text-muted-foreground` + `font-body`
+3. **Cadastro.tsx** (linhas 63-65): Mesma substituicao
 
-Nenhuma cor nova, nenhum layout novo -- apenas substituir classes hardcoded pelas variaveis do design system, exatamente como o Login.tsx ja faz.
+4. **Sidebar.tsx** (linha 136): Substituir o `<h1>CT Guedes</h1>` pelo logo em tamanho menor (~120px), adaptado ao fundo escuro com `brightness` ou `invert` CSS filter se necessario (logo e preto, sidebar e escura)
+
+Manter o subtitulo "Sistema de Gestao de Obras" abaixo do logo em todos os locais.
 

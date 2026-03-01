@@ -37,65 +37,9 @@ const MateriaisEquipamentos = () => {
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [deleteType, setDeleteType] = useState<string>('');
 
-  const [materiais, setMateriais] = useState([
-    {
-      id: 1,
-      nome: 'Cabo Flexível 2,5mm',
-      categoria: 'Fios e Cabos',
-      quantidade: 50,
-      unidade: 'M',
-      valorUnitario: 'R$ 4,50',
-      estoque: 'adequado'
-    },
-    {
-      id: 2,
-      nome: 'Disjuntor Bipolar 25A',
-      categoria: 'Disjuntores',
-      quantidade: 12,
-      unidade: 'UN',
-      valorUnitario: 'R$ 35,00',
-      estoque: 'baixo'
-    },
-    {
-      id: 3,
-      nome: 'Tomada 2P+T 10A',
-      categoria: 'Tomadas e Interruptores',
-      quantidade: 30,
-      unidade: 'UN',
-      valorUnitario: 'R$ 8,90',
-     estoque: 'adequado'
-    }
-  ]);
+  const [materiais, setMateriais] = useState<any[]>([]);
 
-  const [equipamentos, setEquipamentos] = useState([
-    {
-      id: 1,
-      nome: 'Multímetro Digital',
-      categoria: 'Instrumentos de Medição',
-      marca: 'Fluke',
-      modelo: '87V',
-      numeroSerie: 'FL123456',
-      status: 'disponivel'
-    },
-    {
-      id: 2,
-      nome: 'Furadeira de Impacto',
-      categoria: 'Ferramentas Elétricas',
-      marca: 'Bosch',
-      modelo: 'GSB 13 RE',
-      numeroSerie: 'BS789012',
-      status: 'em_uso'
-    },
-    {
-      id: 3,
-      nome: 'Alicate Amperímetro',
-      categoria: 'Instrumentos de Medição',
-      marca: 'Hikari',
-      modelo: 'HA-3300',
-      numeroSerie: 'HK345678',
-      status: 'manutencao'
-    }
-  ]);
+  const [equipamentos, setEquipamentos] = useState<any[]>([]);
 
   const filteredMateriais = materiais.filter(material => 
     material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||

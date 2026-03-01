@@ -9,32 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Aprovacoes = () => {
   const { toast } = useToast();
-  const [pendingApprovals, setPendingApprovals] = useState([
-    {
-      id: 1,
-      title: 'Nova Forma de Pagamento - PIX',
-      description: 'Cliente ABC Construções solicita inclusão do PIX como forma de pagamento',
-      type: 'critical',
-      icon: Shield,
-      date: '2 horas atrás'
-    },
-    {
-      id: 2,
-      title: 'Alteração de Escopo - Obra Silva',
-      description: 'Equipe de obras sugere alteração no escopo do projeto residencial',
-      type: 'warning',
-      icon: FileText,
-      date: '1 dia atrás'
-    },
-    {
-      id: 3,
-      title: 'Novo Usuário - Equipe Comercial',
-      description: 'Solicitação de criação de usuário para Carlos Mendes',
-      type: 'normal',
-      icon: CheckSquare,
-      date: '3 dias atrás'
-    }
-  ]);
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
 
   const handleApprove = (item: any) => {
     // Update otimista - interface atualiza primeiro
@@ -45,10 +20,6 @@ const Aprovacoes = () => {
       description: `"${item.title}" foi aprovado com sucesso`,
     });
 
-    // Simula chamada API em background (sem loading)
-    setTimeout(() => {
-      console.log('Aprovação sincronizada com backend');
-    }, 100);
   };
 
   const handleReject = (item: any) => {
@@ -61,10 +32,6 @@ const Aprovacoes = () => {
       variant: 'destructive',
     });
 
-    // Simula chamada API em background (sem loading)
-    setTimeout(() => {
-      console.log('Rejeição sincronizada com backend');
-    }, 100);
   };
 
   return (

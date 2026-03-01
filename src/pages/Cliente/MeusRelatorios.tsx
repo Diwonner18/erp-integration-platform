@@ -23,19 +23,7 @@ interface Reembolso {
 const MeusRelatorios = () => {
   const { toast } = useToast();
   const [showReembolsoModal, setShowReembolsoModal] = useState(false);
-  const [reembolsos, setReembolsos] = useState<Reembolso[]>([
-    // Mock data
-    {
-      id: '1',
-      obraId: '1',
-      obraNome: 'Instalação Elétrica Residencial',
-      tiposDespesa: 'material',
-      valor: 450.00,
-      descricao: 'Compra de materiais complementares para instalação',
-      dataLancamento: '2024-01-20 10:30',
-      status: 'pendente'
-    }
-  ]);
+  const [reembolsos, setReembolsos] = useState<Reembolso[]>([]);
   
   const [novoReembolso, setNovoReembolso] = useState({
     obraId: '',
@@ -44,11 +32,7 @@ const MeusRelatorios = () => {
     descricao: ''
   });
 
-  const obras = [
-    { id: '1', nome: 'Instalação Elétrica Residencial' },
-    { id: '2', nome: 'Sistema de Automação' },
-    { id: '3', nome: 'Manutenção Preventiva' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const tiposDespesa = [
     { value: 'material', label: 'Material' },

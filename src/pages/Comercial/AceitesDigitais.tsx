@@ -16,12 +16,7 @@ const AceitesDigitais = () => {
   const [selectedAceite, setSelectedAceite] = useState(null);
   const [actionType, setActionType] = useState('');
 
-  const [aceites, setAceites] = useState([
-    { id: 1, client: 'ABC Construções', proposal: 'Proposta #001', status: 'aceito', date: '2024-01-15', value: 'R$ 45.000,00' },
-    { id: 2, client: 'Silva Engenharia', proposal: 'Proposta #002', status: 'pendente', date: '2024-01-12', value: 'R$ 32.000,00' },
-    { id: 3, client: 'Costa & Filhos', proposal: 'Proposta #003', status: 'aceito', date: '2024-01-10', value: 'R$ 67.000,00' },
-    { id: 4, client: 'Mendes Construtora', proposal: 'Proposta #004', status: 'pendente', date: '2024-01-08', value: 'R$ 28.000,00' }
-  ]);
+  const [aceites, setAceites] = useState<any[]>([]);
 
   const handleVisualizarAceite = (aceite: any) => {
     setSelectedAceite(aceite);

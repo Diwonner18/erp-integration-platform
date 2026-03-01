@@ -3,35 +3,7 @@ import React from 'react';
 import { Calendar, MapPin, User } from 'lucide-react';
 
 const RecentProjects = () => {
-  const recentProjects = [
-    {
-      id: 1,
-      title: 'Reforma Residencial - Casa Silva',
-      client: 'João Silva',
-      location: 'Bairro Centro, São Paulo',
-      status: 'Em Andamento',
-      date: '2024-01-15',
-      progress: 75
-    },
-    {
-      id: 2,
-      title: 'Construção Comercial - Loja ABC',
-      client: 'Empresa ABC Ltda',
-      location: 'Vila Madalena, São Paulo',
-      status: 'Aguardando Aprovação',
-      date: '2024-01-20',
-      progress: 25
-    },
-    {
-      id: 3,
-      title: 'Ampliação Residencial - Casa Santos',
-      client: 'Maria Santos',
-      location: 'Jardim Paulista, São Paulo',
-      status: 'Planejamento',
-      date: '2024-01-25',
-      progress: 10
-    }
-  ];
+  const recentProjects: any[] = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

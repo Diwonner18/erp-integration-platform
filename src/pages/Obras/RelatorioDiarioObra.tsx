@@ -80,12 +80,7 @@ const RelatorioDiarioObra = () => {
     observacoes: ''
   });
 
-  // Dados mockados
-  const obras = [
-    'Obra Residencial - Rua A, 123',
-    'Edifício Comercial - Av. B, 456',
-    'Casa Térrea - Rua C, 789'
-  ];
+  const obras: string[] = [];
 
   const refeicoesList = [
     { id: 'cafe', label: 'Café da Manhã' },
@@ -103,27 +98,7 @@ const RelatorioDiarioObra = () => {
     'Neblina'
   ];
 
-  const [relatorios] = useState<RelatorioData[]>([
-    {
-      id: '1',
-      obra: 'Obra Residencial - Rua A, 123',
-      data: new Date('2024-01-15'),
-      responsavel: 'João Silva',
-      refeicoes: ['cafe', 'almoco'],
-      colaboradores: [
-        { id: '1', nome: 'Pedro Santos', tipoPagamento: 'diaria', valor: 120 },
-        { id: '2', nome: 'Maria Costa', tipoPagamento: 'hora', valor: 15, horas: 8 }
-      ],
-      temperatura: '28°C',
-      condicaoClimatica: 'Ensolarado',
-      lancamentoInicio: '07:00',
-      lancamentoFim: '12:00',
-      acabamentoInicio: '13:00',
-      acabamentoFim: '17:00',
-      obraInterrompida: false,
-      observacoes: 'Dia produtivo, sem intercorrências.'
-    }
-  ]);
+  const [relatorios] = useState<any[]>([]);
 
   const handleRefeicaoChange = (refeicaoId: string, checked: boolean) => {
     setFormData(prev => ({

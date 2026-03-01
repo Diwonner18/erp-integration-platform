@@ -24,38 +24,7 @@ const LancamentoDespesas = () => {
     observacoes: ''
   });
 
-  const [despesas] = useState([
-    {
-      id: 1,
-      descricao: 'Combustível para veículos',
-      valor: 'R$ 350,00',
-      categoria: 'Transporte',
-      vinculo: 'obra',
-      obra: 'Residencial Silva',
-      data: '2024-01-20',
-      status: 'aprovada'
-    },
-    {
-      id: 2,
-      descricao: 'Material de escritório',
-      valor: 'R$ 127,50',
-      categoria: 'Administrativo',
-      vinculo: 'data',
-      dataEspecifica: '2024-01-18',
-      data: '2024-01-18',
-      status: 'pendente'
-    },
-    {
-      id: 3,
-      descricao: 'Ferramentas especiais',
-      valor: 'R$ 890,00',
-      categoria: 'Equipamentos',
-      vinculo: 'obra',
-      obra: 'Comercial ABC',
-      data: '2024-01-15',
-      status: 'aprovada'
-    }
-  ]);
+  const [despesas, setDespesas] = useState<any[]>([]);
 
   const handleAddDespesa = () => {
     setFormData({

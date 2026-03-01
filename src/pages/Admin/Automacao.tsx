@@ -9,36 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Automacao = () => {
   const { toast } = useToast();
-  const [automations, setAutomations] = useState([
-    {
-      title: 'Envio Automático de Propostas',
-      description: 'Envio automático de propostas por email após aprovação',
-      icon: FileText,
-      status: true,
-      lastRun: '2 horas atrás'
-    },
-    {
-      title: 'Geração de Boletins de Medição',
-      description: 'Criação automática de boletins baseada nas medições inseridas',
-      icon: Zap,
-      status: true,
-      lastRun: '1 dia atrás'
-    },
-    {
-      title: 'Notificações de Vencimento',
-      description: 'Alertas automáticos para pagamentos em atraso',
-      icon: Clock,
-      status: false,
-      lastRun: '5 dias atrás'
-    },
-    {
-      title: 'Backup Automático',
-      description: 'Backup diário dos dados do sistema',
-      icon: Settings,
-      status: true,
-      lastRun: '6 horas atrás'
-    }
-  ]);
+  const [automations, setAutomations] = useState<any[]>([]);
 
   const handleToggleAutomation = (index: number) => {
     const automation = automations[index];
@@ -56,10 +27,6 @@ const Automacao = () => {
       description: `"${automation.title}" foi ${newStatus ? 'ativada' : 'pausada'} com sucesso`,
     });
 
-    // Simula chamada API em background
-    setTimeout(() => {
-      console.log('Automação sincronizada com backend');
-    }, 100);
   };
 
   return (
@@ -70,6 +37,13 @@ const Automacao = () => {
           <p className="text-slate-600 mt-1">Gerenciar fluxos automáticos do sistema</p>
         </div>
 
+        {automations.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Zap className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p className="font-medium">Nenhuma automação configurada</p>
+            <p className="text-sm">Configure automações para otimizar seus fluxos</p>
+          </div>
+        ) : (
         <div className="grid gap-6">
           {automations.map((automation, index) => (
             <Card key={index} className="transition-all duration-150 hover:shadow-md">
@@ -122,6 +96,7 @@ const Automacao = () => {
             </Card>
           ))}
         </div>
+        )}
       </div>
     </MainLayout>
   );

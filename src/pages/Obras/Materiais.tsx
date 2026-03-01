@@ -20,44 +20,7 @@ const Materiais = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [materiais, setMateriais] = useState([
-    {
-      id: 1,
-      nome: 'Cabo Flexível 2,5mm',
-      categoria: 'Fios e Cabos',
-      quantidade: 50,
-      unidade: 'M',
-      valorUnitario: 'R$ 4,50',
-      estoque: 'adequado'
-    },
-    {
-      id: 2,
-      nome: 'Disjuntor Bipolar 25A',
-      categoria: 'Disjuntores',
-      quantidade: 12,
-      unidade: 'UN',
-      valorUnitario: 'R$ 35,00',
-      estoque: 'baixo'
-    },
-    {
-      id: 3,
-      nome: 'Tomada 2P+T 10A',
-      categoria: 'Tomadas e Interruptores',
-      quantidade: 30,
-      unidade: 'UN',
-      valorUnitario: 'R$ 8,90',
-      estoque: 'adequado'
-    },
-    {
-      id: 4,
-      nome: 'Eletroduto PVC 25mm',
-      categoria: 'Eletrodutos',
-      quantidade: 5,
-      unidade: 'M',
-      valorUnitario: 'R$ 12,50',
-      estoque: 'critico'
-    }
-  ]);
+  const [materiais, setMateriais] = useState<any[]>([]);
 
   const filteredMateriais = materiais.filter(material => 
     material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -7,94 +7,29 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Clock, TrendingDown, UserX, Download, Bell } from 'lucide-react';
 
 const CentralAlertas = () => {
-  const alertas = [
-    {
-      id: 1,
-      tipo: 'atraso',
-      titulo: 'Obra com Atraso Crítico',
-      descricao: 'Reforma Residencial - Pedro Costa está 5 dias atrasada',
-      prioridade: 'alta',
-      dataAlerta: '2024-02-01',
-      responsavel: 'Maria Santos',
-      detalhes: 'Atraso devido ao fornecimento de materiais especiais'
-    },
-    {
-      id: 2,
-      tipo: 'produtividade',
-      titulo: 'Baixa Produtividade Detectada',
-      descricao: 'Instalação Comercial - Loja XYZ com 35% abaixo da meta',
-      prioridade: 'media',
-      dataAlerta: '2024-02-02',
-      responsavel: 'João Silva',
-      detalhes: 'Equipe reduzida devido a afastamentos médicos'
-    },
-    {
-      id: 3,
-      tipo: 'cancelamento',
-      titulo: 'Etapa Cancelada',
-      descricao: 'Instalação de sistema de automação foi cancelada pelo cliente',
-      prioridade: 'media',
-      dataAlerta: '2024-02-03',
-      responsavel: 'Carlos Pereira',
-      detalhes: 'Cliente decidiu postergar esta etapa para o próximo ano'
-    },
-    {
-      id: 4,
-      tipo: 'sobrecarga',
-      titulo: 'Funcionário com Carga Horária Excessiva',
-      descricao: 'Carlos Pereira está trabalhando 50h/semana',
-      prioridade: 'alta',
-      dataAlerta: '2024-02-04',
-      responsavel: 'Recursos Humanos',
-      detalhes: 'Necessário redistribuir tarefas ou contratar apoio temporário'
-    },
-    {
-      id: 5,
-      tipo: 'atraso',
-      titulo: 'Risco de Atraso',
-      descricao: 'Instalação Industrial pode atrasar devido ao clima',
-      prioridade: 'baixa',
-      dataAlerta: '2024-02-05',
-      responsavel: 'Roberto Lima',
-      detalhes: 'Previsão de chuvas intensas na próxima semana'
-    }
-  ];
+  const alertas: any[] = [];
 
   const getPrioridadeColor = (prioridade: string) => {
     switch (prioridade) {
-      case 'alta':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'media':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'baixa':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'alta': return 'bg-red-100 text-red-800 border-red-200';
+      case 'media': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'baixa': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getTipoIcon = (tipo: string) => {
     switch (tipo) {
-      case 'atraso':
-        return <Clock className="w-5 h-5" />;
-      case 'produtividade':
-        return <TrendingDown className="w-5 h-5" />;
-      case 'cancelamento':
-        return <AlertTriangle className="w-5 h-5" />;
-      case 'sobrecarga':
-        return <UserX className="w-5 h-5" />;
-      default:
-        return <AlertTriangle className="w-5 h-5" />;
+      case 'atraso': return <Clock className="w-5 h-5" />;
+      case 'produtividade': return <TrendingDown className="w-5 h-5" />;
+      case 'cancelamento': return <AlertTriangle className="w-5 h-5" />;
+      case 'sobrecarga': return <UserX className="w-5 h-5" />;
+      default: return <AlertTriangle className="w-5 h-5" />;
     }
   };
 
-  const exportarAlertas = () => {
-    console.log('Exportando alertas...');
-  };
-
-  const notificarResponsavel = (alerta: any) => {
-    console.log('Notificando responsável:', alerta.responsavel);
-  };
+  const exportarAlertas = () => {};
+  const notificarResponsavel = (alerta: any) => {};
 
   return (
     <MainLayout>

@@ -34,8 +34,8 @@ const ExportarDados = () => {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Exportar Dados</h1>
-          <p className="text-slate-600 mt-1">Gerar planilhas e relatórios para NF e auditoria</p>
+          <h1 className="text-3xl font-bold text-primary">Exportar Dados</h1>
+          <p className="text-muted-foreground mt-1">Gerar planilhas e relatórios para NF e auditoria</p>
         </div>
 
         <div className="grid gap-6">
@@ -47,28 +47,10 @@ const ExportarDados = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { nome: 'Medições Janeiro 2024', cliente: 'ABC Construções', valor: 'R$ 8.500' },
-                  { nome: 'Medições Janeiro 2024', cliente: 'Silva Engenharia', valor: 'R$ 12.300' },
-                  { nome: 'Medições Janeiro 2024', cliente: 'Costa & Filhos', valor: 'R$ 5.800' },
-                  { nome: 'Medições Janeiro 2024', cliente: 'Mendes Construtora', valor: 'R$ 15.600' }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium text-slate-900">{item.cliente}</h4>
-                      <p className="text-sm text-slate-600">{item.nome}</p>
-                      <p className="text-xs text-slate-500">Valor: {item.valor}</p>
-                    </div>
-                    <Button 
-                      size="sm"
-                      onClick={() => handleDownloadExcel(item.cliente)}
-                    >
-                      <Download className="w-4 h-4 mr-1" />
-                      Excel
-                    </Button>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-muted-foreground">
+                <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">Nenhuma medição disponível para exportação</p>
+                <p className="text-sm">Crie medições para gerar planilhas de NF</p>
               </div>
             </CardContent>
           </Card>
@@ -96,7 +78,6 @@ const ExportarDados = () => {
                   >
                     <div className="text-left">
                       <div className="font-medium">{relatorio}</div>
-                      <div className="text-xs text-slate-500">Janeiro 2024</div>
                     </div>
                     <Download className="w-4 h-4" />
                   </Button>
@@ -116,23 +97,19 @@ const ExportarDados = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Período</label>
+                    <label className="text-sm font-medium text-muted-foreground">Período</label>
                     <select className="w-full mt-1 p-2 border rounded-md">
-                      <option>Janeiro 2024</option>
-                      <option>Dezembro 2023</option>
-                      <option>Novembro 2023</option>
+                      <option>Selecione o período</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Cliente</label>
+                    <label className="text-sm font-medium text-muted-foreground">Cliente</label>
                     <select className="w-full mt-1 p-2 border rounded-md">
                       <option>Todos os clientes</option>
-                      <option>ABC Construções</option>
-                      <option>Silva Engenharia</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-slate-700">Formato</label>
+                    <label className="text-sm font-medium text-muted-foreground">Formato</label>
                     <select className="w-full mt-1 p-2 border rounded-md">
                       <option>Excel (.xlsx)</option>
                       <option>PDF (.pdf)</option>

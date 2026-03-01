@@ -17,13 +17,7 @@ const GerenciarUsuarios = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
 
-  const [usuarios, setUsuarios] = useState([
-    { id: 1, name: 'João Silva', email: 'joao@ctguedes.com', type: 'admin', status: 'ativo' },
-    { id: 2, name: 'Maria Santos', email: 'maria@ctguedes.com', type: 'obras', status: 'ativo' },
-    { id: 3, name: 'Pedro Costa', email: 'pedro@ctguedes.com', type: 'financeira', status: 'ativo' },
-    { id: 4, name: 'Ana Lima', email: 'ana@ctguedes.com', type: 'comercial', status: 'ativo' },
-    { id: 5, name: 'Cliente ABC', email: 'contato@abc.com', type: 'cliente', status: 'ativo' }
-  ]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
 
   // Filtros em tempo real
   const filteredUsers = useMemo(() => {
@@ -59,10 +53,6 @@ const GerenciarUsuarios = () => {
       description: `${user.name} foi removido do sistema`,
     });
 
-    // Simula chamada API em background
-    setTimeout(() => {
-      console.log('Exclusão sincronizada com backend');
-    }, 100);
   };
 
   const userTypeLabels = {
@@ -130,6 +120,13 @@ const GerenciarUsuarios = () => {
           Exibindo {filteredUsers.length} de {usuarios.length} usuários
         </div>
 
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p className="font-medium">Nenhum usuário encontrado</p>
+            <p className="text-sm">Use o botão acima para criar o primeiro usuário</p>
+          </div>
+        ) : (
         <div className="grid gap-4">
           {filteredUsers.map((user) => (
             <Card key={user.id} className="transition-all duration-150 hover:shadow-md hover:scale-[1.02]">
@@ -175,6 +172,7 @@ const GerenciarUsuarios = () => {
             </Card>
           ))}
         </div>
+        )}
 
         <GerenciarUsuarioModal
           isOpen={showModal}

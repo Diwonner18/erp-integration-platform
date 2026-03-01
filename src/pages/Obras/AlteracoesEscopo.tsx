@@ -19,38 +19,7 @@ const AlteracoesEscopo = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [alteracoes, setAlteracoes] = useState([
-    {
-      id: 1,
-      titulo: 'Adicionar tomadas extras na sala',
-      obra: 'Obra Residencial Silva',
-      tipo: 'adicao',
-      status: 'pendente',
-      prioridade: 'media',
-      data: '2024-01-20',
-      impactoValor: 'R$ 800,00'
-    },
-    {
-      id: 2,
-      titulo: 'Modificar localização do quadro elétrico',
-      obra: 'Complexo Comercial ABC',
-      tipo: 'modificacao',
-      status: 'aprovada',
-      prioridade: 'alta',
-      data: '2024-01-18',
-      impactoValor: 'R$ 1.200,00'
-    },
-    {
-      id: 3,
-      titulo: 'Remover pontos de iluminação desnecessários',
-      obra: 'Reforma Escritório Costa',
-      tipo: 'remocao',
-      status: 'rejeitada',
-      prioridade: 'baixa',
-      data: '2024-01-15',
-      impactoValor: '-R$ 400,00'
-    }
-  ]);
+  const [alteracoes, setAlteracoes] = useState<any[]>([]);
 
   const filteredAlteracoes = alteracoes.filter(alteracao => 
     alteracao.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||

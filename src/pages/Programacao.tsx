@@ -34,50 +34,11 @@ const Programacao = () => {
     status: ''
   });
 
-  const [aceites, setAceites] = useState<AceiteProgramacao[]>([
-    // Mock data - em produção viria do banco
-    {
-      id: '1',
-      programacaoId: 1,
-      nomeCliente: 'João Silva',
-      dataAceite: '2024-01-16 14:30',
-      comentario: 'Programação confirmada. Aguardando início dos trabalhos.'
-    }
-  ]);
+  const [aceites, setAceites] = useState<AceiteProgramacao[]>([]);
 
-  const [programacoes, setProgramacoes] = useState([
-    {
-      id: 1,
-      obraId: '1',
-      cliente: 'João Silva',
-      metragem: '120m²',
-      endereco: 'Rua das Flores, 123 - Centro, São Paulo',
-      escopo: 'Reforma completa da casa',
-      dataInicio: '2024-02-01',
-      dataFim: '2024-04-15',
-      status: 'agendado',
-      prioridade: 'Alta'
-    },
-    {
-      id: 2,
-      obraId: '2',
-      cliente: 'Maria Santos',
-      metragem: '80m²',
-      endereco: 'Av. Paulista, 456 - Bela Vista, São Paulo',
-      escopo: 'Ampliação de cômodos',
-      dataInicio: '2024-02-15',
-      dataFim: '2024-03-30',
-      status: 'executando',
-      prioridade: 'Média'
-    }
-  ]);
+  const [programacoes, setProgramacoes] = useState<any[]>([]);
 
-  const obras = [
-    { id: '1', nome: 'Reforma João Silva' },
-    { id: '2', nome: 'Ampliação Maria Santos' },
-    { id: '3', nome: 'Construção Comercial Norte' },
-    { id: '4', nome: 'Instalação Industrial Sul' }
-  ];
+  const obras: { id: string; nome: string }[] = [];
 
   const statusOptions = [
     { value: 'agendado', label: 'Agendado' },

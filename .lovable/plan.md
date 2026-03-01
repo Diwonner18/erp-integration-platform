@@ -1,25 +1,14 @@
 
 
-## Plano: Corrigir legibilidade do banner + erro de build
+## Plano: Trocar Select por Input no campo "Responsável Técnico"
 
-### 1. Banner do Dashboard com texto ilegivel (`src/pages/Dashboard.tsx`)
+Dois arquivos possuem o campo "selecione o responsável" como lista de seleção:
 
-O gradiente `from-primary to-primary/80` usa tons de oliva escuro, e os textos `text-primary-foreground` (que e um bege claro) ficam com baixo contraste, especialmente os subtextos com opacidade (`/70`, `/60`).
+### 1. `src/pages/Programacao.tsx` (linha 430-440)
+- Substituir o `<select>` nativo com opções hardcoded (Eng. Carlos Silva, Eng. Ana Santos, Eng. João Pedro) por um `<Input>` com placeholder "Digite o Responsável Técnico".
 
-**Solucao**: Trocar o fundo do banner para um tom mais escuro e solido, usando `bg-sidebar` (que e `#575547`, o tom mais escuro da paleta) com texto `text-sidebar-foreground` (bege claro `#d6d9c9`). Isso garante contraste forte. Os subtextos usarao `text-sidebar-foreground/80` em vez de `/70` e `/60`.
+### 2. `src/pages/Obras/EPIs.tsx` (linha 391-408)
+- Substituir o `<Select>` (Radix) por um `<Input>` com placeholder "Digite o responsável pela entrega", mantendo o binding com `formData.responsavel` via `onChange`.
 
-```
-bg-sidebar rounded-lg p-6 text-sidebar-foreground
-h1: text-sidebar-foreground (bege claro sobre fundo escuro)
-p: text-sidebar-foreground/80
-span: text-sidebar-foreground/70
-```
-
-### 2. Erro de build (`src/pages/Obras/ObrasConcluidas.tsx`)
-
-O arquivo importa `@tanstack/react-table` que nao esta instalado. O arquivo ja nao usa nenhuma funcionalidade do react-table (nao chama `useReactTable`, usa `<Table>` do shadcn). Basta remover os imports nao utilizados das linhas 9-14 e 68.
-
-### Arquivos afetados
-- `src/pages/Dashboard.tsx` — banner gradient
-- `src/pages/Obras/ObrasConcluidas.tsx` — imports quebrados
+Nenhuma lógica ou layout será alterado — apenas o tipo do campo muda de seleção para digitação livre.
 

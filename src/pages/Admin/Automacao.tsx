@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +14,6 @@ const Automacao = () => {
     const automation = automations[index];
     const newStatus = !automation.status;
     
-    // Update otimista - interface atualiza instantaneamente
     setAutomations(prev => {
       const newAutomations = [...prev];
       newAutomations[index].status = newStatus;
@@ -26,15 +24,14 @@ const Automacao = () => {
       title: `Automação ${newStatus ? 'ativada' : 'pausada'}`,
       description: `"${automation.title}" foi ${newStatus ? 'ativada' : 'pausada'} com sucesso`,
     });
-
   };
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Controle de Automação</h1>
-          <p className="text-slate-600 mt-1">Gerenciar fluxos automáticos do sistema</p>
+          <h1 className="text-3xl font-bold font-title text-foreground">Controle de Automação</h1>
+          <p className="text-muted-foreground mt-1">Gerenciar fluxos automáticos do sistema</p>
         </div>
 
         {automations.length === 0 ? (
@@ -82,7 +79,7 @@ const Automacao = () => {
                 <CardDescription>{automation.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between text-sm text-slate-600">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>Última execução: {automation.lastRun}</span>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium transition-colors duration-150 ${
                     automation.status 

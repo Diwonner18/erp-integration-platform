@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -77,8 +76,8 @@ const GerenciarUsuarios = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Gerenciar Usuários</h1>
-            <p className="text-slate-600 mt-1">Controle total sobre usuários do sistema</p>
+            <h1 className="text-3xl font-bold font-title text-foreground">Gerenciar Usuários</h1>
+            <p className="text-muted-foreground mt-1">Controle total sobre usuários do sistema</p>
           </div>
           <Button 
             onClick={handleNewUser} 
@@ -91,7 +90,7 @@ const GerenciarUsuarios = () => {
 
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input 
               placeholder="Buscar usuários..." 
               className="pl-10 transition-all duration-150 focus:ring-2"
@@ -101,11 +100,11 @@ const GerenciarUsuarios = () => {
           </div>
           
           <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-slate-500" />
+            <Filter className="w-4 h-4 text-muted-foreground" />
             <select 
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150"
+              className="px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-150"
             >
               {filterOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -116,7 +115,7 @@ const GerenciarUsuarios = () => {
           </div>
         </div>
 
-        <div className="text-sm text-slate-600 mb-4">
+        <div className="text-sm text-muted-foreground mb-4">
           Exibindo {filteredUsers.length} de {usuarios.length} usuários
         </div>
 
@@ -133,12 +132,12 @@ const GerenciarUsuarios = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center transition-colors duration-150">
-                      <Users className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center transition-colors duration-150">
+                      <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">{user.name}</h3>
-                      <p className="text-sm text-slate-600">{user.email}</p>
+                      <h3 className="font-semibold text-foreground">{user.name}</h3>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">

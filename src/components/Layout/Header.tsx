@@ -131,7 +131,7 @@ const Header = () => {
         {alerts.length > 0 && (
           <div className="px-6 pb-2">
             {alerts.map((alert) => (
-              <Alert key={alert.id} className={`mb-2 ${alert.type === 'warning' ? 'border-orange-200 bg-orange-50' : 'border-blue-200 bg-blue-50'}`}>
+              <Alert key={alert.id} className={`mb-2 ${alert.type === 'warning' ? 'border-destructive/30 bg-destructive/10' : 'border-primary/30 bg-primary/10'}`}>
                 {alert.type === 'warning' ? <AlertTriangle className="h-4 w-4" /> : <Calendar className="h-4 w-4" />}
                 <AlertDescription className="font-body text-sm">
                   {alert.message}

@@ -47,10 +47,8 @@ const Dashboard = () => {
 
   const getQuickActions = () => {
     if (!user) return [];
-
     const actions = [];
 
-    // Administrador Pai - Acesso total
     if (user.type === 'admin') {
       actions.push(
         { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', description: 'Criar e remover usuários' },
@@ -61,7 +59,6 @@ const Dashboard = () => {
       );
     }
 
-    // Equipe de Obras
     if (user.type === 'obras' || user.type === 'admin') {
       actions.push(
         { icon: Calendar, label: 'Confirmar Agendamentos', path: '/agendamentos', description: 'Validar programação de obras' },
@@ -70,7 +67,6 @@ const Dashboard = () => {
       );
     }
 
-    // Equipe Financeira
     if (user.type === 'financeira' || user.type === 'admin') {
       actions.push(
         { icon: Wallet, label: 'Boletins de Medição', path: '/boletins-medicao', description: 'Lançar medições para faturamento' },
@@ -79,7 +75,6 @@ const Dashboard = () => {
       );
     }
 
-    // Equipe Comercial
     if (user.type === 'comercial' || user.type === 'admin') {
       actions.push(
         { icon: FileText, label: 'Criar Propostas', path: '/propostas', description: 'Elaborar contratos e orçamentos' },
@@ -88,7 +83,6 @@ const Dashboard = () => {
       );
     }
 
-    // Cliente CT Guedes
     if (user.type === 'cliente') {
       actions.push(
         { icon: Calendar, label: 'Solicitar Agendamento', path: '/solicitar-agendamento', description: 'Programar nova obra' },
@@ -106,152 +100,45 @@ const Dashboard = () => {
     if (!user) return [];
 
     const baseStats = [
-      {
-        title: 'Obras Ativas',
-        value: 12,
-        icon: Calendar,
-        change: '+2 este mês',
-        changeType: 'positive' as const
-      }
+      { title: 'Obras Ativas', value: 0, icon: Calendar, change: 'Sem dados', changeType: 'neutral' as const }
     ];
 
     switch (user.type) {
       case 'admin':
         return [
           ...baseStats,
-          {
-            title: 'Usuários no Sistema',
-            value: 24,
-            icon: Users,
-            change: '+3 novos usuários',
-            changeType: 'positive' as const
-          },
-          {
-            title: 'Aprovações Pendentes',
-            value: 5,
-            icon: CheckSquare,
-            change: '2 críticas',
-            changeType: 'warning' as const
-          },
-          {
-            title: 'Receita Total',
-            value: 'R$ 285.400',
-            icon: Wallet,
-            change: '+22% vs mês anterior',
-            changeType: 'positive' as const
-          }
+          { title: 'Usuários no Sistema', value: 0, icon: Users, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Aprovações Pendentes', value: 0, icon: CheckSquare, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Receita Total', value: 'R$ 0', icon: Wallet, change: 'Sem dados', changeType: 'neutral' as const }
         ];
-      
       case 'obras':
         return [
           ...baseStats,
-          {
-            title: 'Agendamentos Hoje',
-            value: 8,
-            icon: Calendar,
-            change: '6 confirmados',
-            changeType: 'positive' as const
-          },
-          {
-            title: 'Medições Pendentes',
-            value: 15,
-            icon: ClipboardList,
-            change: 'Para esta semana',
-            changeType: 'neutral' as const
-          },
-          {
-            title: 'Alterações Sugeridas',
-            value: 3,
-            icon: FileText,
-            change: 'Aguardando aprovação',
-            changeType: 'neutral' as const
-          }
+          { title: 'Agendamentos Hoje', value: 0, icon: Calendar, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Medições Pendentes', value: 0, icon: ClipboardList, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Alterações Sugeridas', value: 0, icon: FileText, change: 'Sem dados', changeType: 'neutral' as const }
         ];
-      
       case 'financeira':
         return [
           ...baseStats,
-          {
-            title: 'Medições do Mês',
-            value: 'R$ 85.400',
-            icon: ClipboardList,
-            change: '+15% vs mês anterior',
-            changeType: 'positive' as const
-          },
-          {
-            title: 'Valores em Atraso',
-            value: 'R$ 12.300',
-            icon: Wallet,
-            change: '3 clientes',
-            changeType: 'warning' as const
-          },
-          {
-            title: 'Retenções',
-            value: 'R$ 8.900',
-            icon: BarChart3,
-            change: 'A receber',
-            changeType: 'neutral' as const
-          }
+          { title: 'Medições do Mês', value: 'R$ 0', icon: ClipboardList, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Valores em Atraso', value: 'R$ 0', icon: Wallet, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Retenções', value: 'R$ 0', icon: BarChart3, change: 'Sem dados', changeType: 'neutral' as const }
         ];
-      
       case 'comercial':
         return [
           ...baseStats,
-          {
-            title: 'Propostas Pendentes',
-            value: 8,
-            icon: FileText,
-            change: '3 aguardando resposta',
-            changeType: 'neutral' as const
-          },
-          {
-            title: 'Aceites este Mês',
-            value: 12,
-            icon: CheckSquare,
-            change: 'R$ 142.000 aprovados',
-            changeType: 'positive' as const
-          },
-          {
-            title: 'Contratos Ativos',
-            value: 28,
-            icon: Package,
-            change: '+4 este mês',
-            changeType: 'positive' as const
-          }
+          { title: 'Propostas Pendentes', value: 0, icon: FileText, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Aceites este Mês', value: 0, icon: CheckSquare, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Contratos Ativos', value: 0, icon: Package, change: 'Sem dados', changeType: 'neutral' as const }
         ];
-      
       case 'cliente':
         return [
-          {
-            title: 'Minhas Obras',
-            value: 3,
-            icon: Calendar,
-            change: '1 em andamento',
-            changeType: 'positive' as const
-          },
-          {
-            title: 'Próximos Agendamentos',
-            value: 2,
-            icon: ClipboardList,
-            change: 'Esta semana',
-            changeType: 'neutral' as const
-          },
-          {
-            title: 'Propostas Abertas',
-            value: 1,
-            icon: FileText,
-            change: 'Aguardando resposta',
-            changeType: 'warning' as const
-          },
-          {
-            title: 'Valor Investido',
-            value: 'R$ 45.200',
-            icon: Wallet,
-            change: 'Este ano',
-            changeType: 'neutral' as const
-          }
+          { title: 'Minhas Obras', value: 0, icon: Calendar, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Próximos Agendamentos', value: 0, icon: ClipboardList, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Propostas Abertas', value: 0, icon: FileText, change: 'Sem dados', changeType: 'neutral' as const },
+          { title: 'Valor Investido', value: 'R$ 0', icon: Wallet, change: 'Sem dados', changeType: 'neutral' as const }
         ];
-      
       default:
         return baseStats;
     }
@@ -262,7 +149,6 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header personalizado por tipo de usuário */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
           <h1 className="text-2xl font-bold">{getUserTypeLabel(user?.type || '')}</h1>
           <p className="text-blue-100 mt-1">{getUserDescription(user?.type || '')}</p>
@@ -271,21 +157,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats Grid personalizadas por usuário */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {userStats.map((stat, index) => (
-            <StatsCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              change={stat.change}
-              changeType={stat.changeType}
-            />
+            <StatsCard key={index} title={stat.title} value={stat.value} icon={stat.icon} change={stat.change} changeType={stat.changeType} />
           ))}
         </div>
 
-        {/* Ações Rápidas baseadas em permissões */}
         {quickActions.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">
@@ -300,146 +177,28 @@ const Dashboard = () => {
                 >
                   <div className="flex items-center mb-2">
                     <action.icon className="w-6 h-6 mr-3 text-slate-400 group-hover:text-blue-500" />
-                    <span className="font-medium text-slate-700 group-hover:text-blue-600">
-                      {action.label}
-                    </span>
+                    <span className="font-medium text-slate-700 group-hover:text-blue-600">{action.label}</span>
                   </div>
-                  <span className="text-sm text-slate-500 group-hover:text-slate-600">
-                    {action.description}
-                  </span>
+                  <span className="text-sm text-slate-500 group-hover:text-slate-600">{action.description}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Rest of dashboard content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RecentProjects />
           </div>
           
           <div className="space-y-6">
-            {/* Seção específica por tipo de usuário */}
-            {user?.type === 'admin' && (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Aprovações Críticas</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
-                    <div>
-                      <p className="font-medium text-slate-900">Nova Forma de Pagamento</p>
-                      <p className="text-sm text-slate-600">PIX para Cliente ABC - Requer aprovação</p>
-                    </div>
-                    <Shield className="w-5 h-5 text-red-600" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div>
-                      <p className="font-medium text-slate-900">Alteração Contratual</p>
-                      <p className="text-sm text-slate-600">Escopo personalizado - Obra Silva</p>
-                    </div>
-                    <FileText className="w-5 h-5 text-yellow-600" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {user?.type === 'cliente' && (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Minhas Obras</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div>
-                      <p className="font-medium text-slate-900">Obra Residencial</p>
-                      <p className="text-sm text-slate-600">85% concluída - Em andamento</p>
-                    </div>
-                    <Calendar className="w-5 h-5 text-green-600" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div>
-                      <p className="font-medium text-slate-900">Proposta Galpão</p>
-                      <p className="text-sm text-slate-600">Aguardando sua aprovação</p>
-                    </div>
-                    <FileText className="w-5 h-5 text-blue-600" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Stats específicas */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 Resumo {user?.type === 'cliente' ? 'Pessoal' : 'Mensal'}
               </h3>
-              <div className="space-y-4">
-                {user?.type === 'financeira' && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Valores a Receber</span>
-                      <span className="font-semibold text-green-600">R$ 127.300</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Retenções</span>
-                      <span className="font-semibold text-yellow-600">R$ 8.900</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Em Atraso</span>
-                      <span className="font-semibold text-red-600">R$ 12.300</span>
-                    </div>
-                  </>
-                )}
-                
-                {user?.type === 'cliente' && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Valor Total Investido</span>
-                      <span className="font-semibold text-blue-600">R$ 45.200</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Próximo Pagamento</span>
-                      <span className="font-semibold text-slate-900">R$ 8.400</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Economia Gerada</span>
-                      <span className="font-semibold text-green-600">R$ 12.800</span>
-                    </div>
-                  </>
-                )}
-
-                {(user?.type === 'obras' || user?.type === 'admin') && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Obras Concluídas</span>
-                      <span className="font-semibold text-green-600">23</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Em Andamento</span>
-                      <span className="font-semibold text-blue-600">12</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Agendadas</span>
-                      <span className="font-semibold text-slate-900">8</span>
-                    </div>
-                  </>
-                )}
-
-                {user?.type === 'comercial' && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Propostas Enviadas</span>
-                      <span className="font-semibold text-blue-600">18</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Taxa de Conversão</span>
-                      <span className="font-semibold text-green-600">67%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-600">Valor Médio</span>
-                      <span className="font-semibold text-slate-900">R$ 11.850</span>
-                    </div>
-                  </>
-                )}
+              <div className="text-center py-8 text-slate-500">
+                <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Sem dados disponíveis</p>
               </div>
             </div>
           </div>

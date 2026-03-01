@@ -148,10 +148,10 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-primary to-primary/80 rounded-lg p-6 text-primary-foreground">
-          <h1 className="text-2xl font-bold font-title">{getUserTypeLabel(user?.type || '')}</h1>
-          <p className="text-primary-foreground/70 mt-1">{getUserDescription(user?.type || '')}</p>
-          <div className="mt-4 text-sm text-primary-foreground/60">
+        <div className="bg-sidebar rounded-lg p-6 text-sidebar-foreground">
+          <h1 className="text-2xl font-bold font-title text-sidebar-foreground">{getUserTypeLabel(user?.type || '')}</h1>
+          <p className="text-sidebar-foreground/80 mt-1">{getUserDescription(user?.type || '')}</p>
+          <div className="mt-4 text-sm text-sidebar-foreground/70">
             Bem-vindo, {user?.name}!
           </div>
         </div>

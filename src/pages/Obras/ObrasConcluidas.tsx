@@ -7,12 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Download, Search } from 'lucide-react';
 import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import {
   ChevronDown,
   MoreHorizontal,
 } from 'lucide-react';
@@ -65,7 +59,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useState as us2, useMemo } from 'react';
+import { useMemo } from 'react';
 
 const ObrasConcluidas = () => {
   const [searchTerm, setSearchTerm] = useState('');

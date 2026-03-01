@@ -1,204 +1,128 @@
 
 
-# Auditoria Completa de Seguranca - CT Guedes
+# Plano: Remover Todos os Dados Mock e Manter Funcionalidades
 
-## Estado Atual do Sistema
+## Escopo
 
-O sistema CT Guedes opera 100% como **protopipo frontend** sem backend real. Nao existe conexao Supabase (`supabase/` vazio), sem Edge Functions, sem banco de dados, sem autenticacao real. Todo o estado e persistido em `localStorage`.
-
----
-
-## Vulnerabilidades Encontradas
-
-### CRITICA - Senhas em Texto Plano no localStorage
-
-**Arquivo:** `src/contexts/AuthContext.tsx` linhas 218, 224, 244-245, 318-324
-
-**Risco:** Todas as senhas (incluindo `admin123` hardcoded para Carla) sao armazenadas em texto plano no `localStorage`. Qualquer pessoa com acesso ao DevTools (F12) pode ler todas as senhas de todos os usuarios cadastrados. Um script XSS conseguiria exfiltrar tudo.
-
-**Severidade:** CRITICA
+Remover dados mock de ~35 arquivos, substituindo por arrays vazios ou estados zerados. Todas as funcionalidades de criacao, edicao e exclusao continuam funcionando -- o usuario comeca com o sistema "limpo" e popula conforme usa.
 
 ---
 
-### CRITICA - Autenticacao Simulada no Frontend
+## Categorias de Alteracao
 
-**Arquivo:** `src/contexts/AuthContext.tsx` linhas 241-268
+### 1. Paginas com useState com dados mock -> useState([])
 
-**Risco:** Login e verificado comparando email+senha diretamente no `localStorage` do navegador. Um atacante pode:
-- Editar o `localStorage` para se autenticar como qualquer usuario
-- Modificar `ct-guedes-user` para mudar seu `type` para `admin`
-- Criar usuarios arbitrarios diretamente no `localStorage`
+Estes arquivos tem `useState([...dados...])` que serao trocados por `useState([])`:
 
-**Severidade:** CRITICA
+| Arquivo | Estado mock |
+|---------|-------------|
+| `Admin/Aprovacoes.tsx` | `pendingApprovals` |
+| `Admin/Automacao.tsx` | `automations` |
+| `Admin/GerenciarUsuarios.tsx` | `usuarios` |
+| `Admin/Permissoes.tsx` | `permissions` (manter estrutura de roles, zerar customizacoes) |
+| `Comercial/Propostas.tsx` | `propostas` |
+| `Comercial/AceitesDigitais.tsx` | `aceites` |
+| `Comercial/ModelosContrato.tsx` | `modelos` |
+| `Comercial/ValoresUnitarios.tsx` | `valores` |
+| `Obras/Medicoes.tsx` | `medicoes` |
+| `Obras/HorasExtras.tsx` | `registros` |
+| `Obras/EPIs.tsx` | `registrosEPI` |
+| `Obras/AlteracoesEscopo.tsx` | `alteracoes` |
+| `Obras/Materiais.tsx` | `materiais` |
+| `Obras/MateriaisEquipamentos.tsx` | `materiais` + `equipamentos` |
+| `Obras/EquipeAtiva.tsx` | `alocacoesDiarias` |
+| `Programacao.tsx` | `programacoes` |
+| `Cliente/MinhasPropostas.tsx` | `propostas` |
+| `Financeiro/LancamentoDespesas.tsx` | `despesas` |
+| `Cliente/MeusRelatorios.tsx` | `reembolsos` (remover mock inicial) |
+| `Obras/RelatorioDiarioObra.tsx` | `relatorios` |
 
----
+### 2. Paginas com const arrays inline (nao reativas) -> arrays vazios ou remocao
 
-### CRITICA - Autorizacao Apenas no Frontend (Broken Access Control)
+| Arquivo | Dados mock |
+|---------|-------------|
+| `Obras/ObrasEmAndamento.tsx` | `obrasEmAndamento` (const) + `obras` (filtro) |
+| `Obras/ObrasAgendadas.tsx` | `obrasAgendadas` (const) |
+| `Obras/ObrasConcluidas.tsx` | `obrasConcluidas` + `obras` |
+| `Obras/CentralAlertas.tsx` | `alertas` (const) |
+| `Financeiro/ControleFinanceiro.tsx` | `contasReceber` + `contasPagar` |
+| `Financeiro/ControleRetencoes.tsx` | array inline no JSX |
+| `Financeiro/RelatoriosFinanceiros.tsx` | arrays inline no JSX |
+| `Financeiro/ExportarDados.tsx` | arrays inline no JSX |
+| `Financeiro/BoletinsMedicao.tsx` | `boletins` (const) |
+| `Cliente/MeusPagamentos.tsx` | array inline no JSX |
+| `Cliente/MinhasObras.tsx` | `obras` (const) |
+| `Shared/Relatorios.tsx` | `allData` (useMemo) |
+| `Comercial/RelatoriosComerciais.tsx` | hardcoded numbers |
 
-**Arquivo:** `src/components/Auth/ProtectedRoute.tsx`, `src/contexts/AuthContext.tsx` linha 347-356
+### 3. Componentes com dados mock
 
-**Risco:** Roles e permissoes sao verificados apenas no React. Sem backend, nao existe enforcement real. Um usuario pode manipular o `localStorage` para obter qualquer role, incluindo admin. A verificacao especial de `carla@ctguedes.com.br` (linha 349) e trivialmente burlavel.
+| Arquivo | Dados mock |
+|---------|-------------|
+| `Dashboard/RecentProjects.tsx` | `recentProjects` |
+| `Dashboard/ProgramacaoSection.tsx` | `programacao` |
 
-**Severidade:** CRITICA
+### 4. Dashboard.tsx - Stats hardcoded
 
----
+Substituir todos os numeros hardcoded (12, 24, 5, R$ 285.400, etc.) por `0` e textos como "Sem dados" nos paineis laterais de Aprovacoes Criticas e Minhas Obras.
 
-### ALTA - Escalacao de Privilegio via Dominio de Email
+### 5. Listas de obras/funcionarios usadas como opcoes em selects/filtros
 
-**Arquivo:** `src/contexts/AuthContext.tsx` linhas 57-79, 306-311
+Arquivos como `Medicoes.tsx`, `EquipeAtiva.tsx`, `EPIs.tsx`, `Programacao.tsx`, `NovaMedicaoModal.tsx`, `SugestaoEscopoModal.tsx`, `RelatorioDiarioObra.tsx` tem `const obras = [...]` usados como opcoes de select.
 
-**Risco:** Qualquer pessoa que cadastre um email `@ctguedes.com.br` recebe role `admin` temporario (linha 310). Alem disso, prefixos como `admin@`, `diretor@` automaticamente concedem admin. Sem validacao de dominio real no backend, qualquer atacante pode registrar com email falso.
-
-**Severidade:** ALTA
-
----
-
-### ALTA - Senha Admin Hardcoded
-
-**Arquivo:** `src/contexts/AuthContext.tsx` linha 218
-
-**Risco:** `password: 'admin123'` esta exposto no codigo-fonte publico. Qualquer pessoa pode fazer login como admin Carla.
-
-**Severidade:** ALTA
-
----
-
-### MEDIA - IDs Previsiveis (Date.now)
-
-**Arquivo:** `src/contexts/AuthContext.tsx` linha 315
-
-**Risco:** IDs de usuario gerados com `Date.now().toString()` sao sequenciais e previsiveis, facilitando enumeracao e IDOR quando backend for implementado.
-
-**Severidade:** MEDIA
-
----
-
-### MEDIA - Formularios sem Validacao Zod
-
-**Arquivos afetados:**
-- `src/pages/Login.tsx` - validacao basica manual
-- `src/pages/Cadastro.tsx` - validacao basica manual
-- `src/pages/Configuracoes.tsx` - sem validacao
-- `src/components/Comercial/NovaPropostaModal.tsx` - nao verificado
-- `src/components/Comercial/EditPropostaModal.tsx` - nao verificado
-- `src/components/Obras/EditEquipamentoModal.tsx` - nao verificado
-- `src/components/Obras/EditMaterialModal.tsx` - nao verificado
-- `src/components/Financeiro/NovoBoletimModal.tsx` - nao verificado
-
-**Formularios JA com Zod (5 modais):** GerenciarUsuarioModal, NovaMedicaoModal, AdicionarMaterialModal, SugestaoEscopoModal, SolicitarAgendamento.
-
-**Risco:** Inputs sem validacao rigorosa podem causar dados corrompidos e, quando backend existir, potenciais injection attacks.
-
-**Severidade:** MEDIA
+**Estrategia**: Converter para `useState([])` -- os selects ficarao vazios ate o usuario criar obras. Isso e consistente com "sem dados mock".
 
 ---
 
-### MEDIA - Console.log com Dados Operacionais
+## Empty States
 
-**Arquivos:** 12 arquivos com `console.log` expondo dados de operacoes (medicoes, pagamentos, observacoes, detalhes de retencao).
+Para cada pagina que ficara vazia, garantir que exista uma mensagem tipo:
 
-**Risco:** Dados de negocio visiveis no DevTools. Quando dados reais entrarem, informacoes sensiveis podem vazar.
-
-**Severidade:** MEDIA
-
----
-
-### BAIXA - dangerouslySetInnerHTML
-
-**Arquivo:** `src/components/ui/chart.tsx` linha 79
-
-**Risco:** Usado apenas para CSS themes gerado internamente (sem input do usuario). Seguro no contexto atual.
-
-**Severidade:** BAIXA (informativo)
-
----
-
-### BAIXA - Sem Chamadas Externas
-
-Nenhum `fetch()` ou `axios` encontrado no codigo. O sistema nao faz requisicoes HTTP. Os templates n8n em `/docs/n8n-workflows/` sao apenas JSON para importacao manual.
-
-**Severidade:** N/A (ponto positivo)
-
----
-
-## Pontos Seguros
-
-- Nenhuma API key ou secret exposta no codigo
-- Nenhuma chamada HTTP externa (sem risco de SSRF/data leak)
-- `dangerouslySetInnerHTML` usado apenas com dados internos
-- 5 modais ja usam Zod + react-hook-form corretamente
-- Rotas protegidas com ProtectedRoute (valido como camada UI)
-- Sem dependencias externas suspeitas
-
----
-
-## Resumo por Categoria
-
-| # | Categoria | Status |
-|---|-----------|--------|
-| 1 | Autenticacao | CRITICO - Simulada, sem backend |
-| 2 | Autorizacao | CRITICO - Apenas frontend, burlavel |
-| 3 | Backend/RLS | INEXISTENTE - Sem Supabase |
-| 4 | Validacao de Input | PARCIAL - 5/10+ modais com Zod |
-| 5 | Integracoes/Webhooks | N/A - Nenhuma chamada externa |
-| 6 | LGPD/Dados Sensiveis | CRITICO - Senhas em texto plano |
-| 7 | Logs/Observabilidade | MEDIA - Console.logs com dados |
-
----
-
-## Plano de Remediacao (Ordem de Prioridade)
-
-### Fase 1: Eliminar Vulnerabilidades Criticas
-
-1. **Habilitar Lovable Cloud / Supabase** - Criar banco real
-2. **Migrar autenticacao para Supabase Auth** - Elimina senhas em localStorage, admin hardcoded, hash automatico
-3. **Criar tabela `user_roles`** separada (nunca na tabela profiles) com enum `app_role` e funcao `has_role()` SECURITY DEFINER
-4. **Implementar RLS** em todas as tabelas com politicas baseadas em `has_role()`
-
-### Fase 2: Fortalecer Validacao
-
-5. **Adicionar Zod** nos modais restantes (Login, Cadastro, Configuracoes, NovaPropostaModal, EditPropostaModal, EditEquipamentoModal, EditMaterialModal, NovoBoletimModal)
-6. **Remover todos os `console.log`** com dados operacionais
-
-### Fase 3: Preparar para Producao
-
-7. **Criar Edge Functions** para webhooks n8n com CORS restrito e validacao de payload
-8. **Gerar IDs com UUID** (via Supabase `gen_random_uuid()`)
-9. **Implementar audit_logs** para LGPD
-10. **Configurar headers de seguranca** (CSP, X-Frame-Options)
-
----
-
-## Detalhes Tecnicos
-
-### Estrutura da tabela user_roles
-
-```text
-user_roles
-├── id: UUID (PK)
-├── user_id: UUID (FK -> auth.users, ON DELETE CASCADE, NOT NULL)
-└── role: app_role ENUM ('admin','obras','financeira','comercial','cliente')
-    UNIQUE(user_id, role)
-    RLS ENABLED
+```
+<div className="text-center py-12 text-slate-500">
+  <Icon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+  <p className="font-medium">Nenhum registro encontrado</p>
+  <p className="text-sm">Use o botao acima para criar o primeiro</p>
+</div>
 ```
 
-### Funcao has_role (SECURITY DEFINER)
+Paginas que ja tem empty state: `Aprovacoes.tsx`, `MeusRelatorios.tsx` (reembolsos).  
+Paginas que precisam de empty state: maioria das listagens acima.
 
-Evita recursao infinita nas policies RLS. Consulta `user_roles` sem passar por RLS da propria tabela.
+---
 
-### AuthContext migrado
+## Arquivos a Modificar (total ~35)
 
-- Substituir localStorage por `supabase.auth.signInWithPassword()`
-- Sessao gerenciada via JWT do Supabase
-- Role carregado via query a `user_roles` (ou via claims customizados)
-- Remover completamente `initializeDefaultAdmin()`
-- Remover `password` de qualquer objeto JS
+**Admin (4):** Aprovacoes, Automacao, GerenciarUsuarios, Permissoes  
+**Comercial (5):** Propostas, AceitesDigitais, ModelosContrato, ValoresUnitarios, RelatoriosComerciais  
+**Financeiro (6):** ControleFinanceiro, ControleRetencoes, RelatoriosFinanceiros, ExportarDados, BoletinsMedicao, LancamentoDespesas  
+**Obras (10):** Medicoes, HorasExtras, EPIs, AlteracoesEscopo, Materiais, MateriaisEquipamentos, EquipeAtiva, ObrasEmAndamento, ObrasAgendadas, ObrasConcluidas, CentralAlertas, RelatorioDiarioObra, RelatoriosObra  
+**Cliente (4):** MinhasPropostas, MinhasObras, MeusPagamentos, MeusRelatorios  
+**Dashboard (3):** Dashboard.tsx, RecentProjects.tsx, ProgramacaoSection.tsx  
+**Shared (1):** Relatorios.tsx  
+**Programacao (1):** Programacao.tsx  
 
-### Modais com Zod
+---
 
-Padrao a seguir (ja implementado em 5 modais):
-- Schema Zod com `.min()`, `.max()`, `.email()`, `.positive()`
-- `react-hook-form` com `zodResolver`
-- Mensagens de erro em portugues
-- Sanitizacao de strings com `.trim()`
+## O Que NAO Muda
+
+- Nenhum componente UI (botoes, modais, formularios)
+- Nenhuma rota
+- Nenhuma logica de CRUD (adicionar, editar, excluir)
+- AuthContext (login/cadastro continua funcionando)
+- Listas estaticas de configuracao (meses, tipos de pagamento, condicoes climaticas, etc.)
+- Estrutura de componentes e imports
+
+---
+
+## Ordem de Implementacao
+
+1. Criar empty states reutilizavel (ou inline por pagina)
+2. Limpar paginas Admin (4 arquivos)
+3. Limpar paginas Comercial (5 arquivos)
+4. Limpar paginas Financeiro (6 arquivos)
+5. Limpar paginas Obras (12 arquivos)
+6. Limpar paginas Cliente (4 arquivos)
+7. Limpar Dashboard + componentes (3 arquivos)
+8. Limpar Shared/Relatorios + Programacao (2 arquivos)
 

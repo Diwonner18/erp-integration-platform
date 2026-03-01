@@ -57,44 +57,46 @@ const Cadastro = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
-            <h1 className="text-2xl font-bold text-blue-600">CT Guedes</h1>
-            <p className="text-sm text-slate-600">Sistema de Gestão de Obras</p>
+            <h1 className="text-2xl font-title font-bold text-primary">CT Guedes</h1>
+            <p className="text-sm font-body text-muted-foreground">Sistema de Gestão de Obras</p>
           </div>
-          <CardTitle>Criar Conta</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-title text-primary">Criar Conta</CardTitle>
+          <CardDescription className="font-body">
             Preencha os dados para criar sua conta no sistema.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo</Label>
+              <Label htmlFor="name" className="font-body text-primary">Nome Completo</Label>
               <Input
                 id="name"
                 type="text"
                 placeholder="Seu nome completo"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="font-body"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email" className="font-body text-primary">E-mail</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="font-body"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="font-body text-primary">Senha</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -102,6 +104,7 @@ const Cadastro = () => {
                   placeholder="Mínimo 6 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="font-body"
                   required
                 />
                 <Button
@@ -120,7 +123,7 @@ const Cadastro = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <Label htmlFor="confirmPassword" className="font-body text-primary">Confirmar Senha</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -128,6 +131,7 @@ const Cadastro = () => {
                   placeholder="Digite a senha novamente"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="font-body"
                   required
                 />
                 <Button
@@ -145,14 +149,14 @@ const Cadastro = () => {
                 </Button>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full font-body" disabled={isLoading}>
               {isLoading ? 'Criando conta...' : 'Criar Conta'}
             </Button>
           </form>
           <div className="mt-4 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm font-body text-muted-foreground">
               Já tem uma conta?{' '}
-              <Link to="/login" className="text-blue-600 hover:underline">
+              <Link to="/login" className="text-primary hover:underline font-medium">
                 Faça login aqui
               </Link>
             </p>

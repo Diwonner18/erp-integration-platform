@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '../components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -10,9 +9,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { User, Lock, Bell, Globe, Shield } from 'lucide-react';
+import { z } from 'zod';
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2, 'O nome deve ter pelo menos 2 caracteres.').max(100, 'O nome deve ter no máximo 100 caracteres.'),
+  email: z.string().trim().email('E-mail inválido.').max(255, 'O e-mail deve ter no máximo 255 caracteres.'),
+});
+
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Informe a senha atual.'),
+  newPassword: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres.'),
+  confirmPassword: z.string().min(1, 'Confirme a nova senha.'),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: 'As senhas não coincidem.',
+  path: ['confirmPassword'],
+});
 
 const Configuracoes = () => {
-  const { user } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -38,36 +52,39 @@ const Configuracoes = () => {
     theme: 'light'
   });
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => {
+    
+    const validation = profileSchema.safeParse(profileData);
+    if (!validation.success) {
+      validation.error.errors.forEach(err => toast.error(err.message));
+      return;
+    }
+
+    const result = await updateProfile(validation.data.name, validation.data.email);
+    if (result.success) {
       toast.success('Perfil atualizado com sucesso!');
-    }, 1000);
+    } else {
+      toast.error(result.error || 'Erro ao atualizar perfil.');
+    }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('As senhas não coincidem!');
+    const validation = passwordSchema.safeParse(passwordData);
+    if (!validation.success) {
+      validation.error.errors.forEach(err => toast.error(err.message));
       return;
     }
-    
-    if (passwordData.newPassword.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres!');
-      return;
-    }
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    const result = await changePassword(validation.data.currentPassword, validation.data.newPassword);
+    if (result.success) {
       toast.success('Senha alterada com sucesso!');
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-    }, 1000);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } else {
+      toast.error(result.error || 'Erro ao alterar senha.');
+    }
   };
 
   const handleNotificationUpdate = () => {

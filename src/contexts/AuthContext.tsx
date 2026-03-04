@@ -71,8 +71,8 @@ const determineUserType = (email: string): UserType => {
     } else if (prefix.includes('comercial') || prefix.includes('venda') || prefix.includes('proposta')) {
       return 'comercial';
     } else {
-      // Por padrão, funcionários da empresa são admin
-      return 'admin';
+      // Por padrão, funcionários sem prefixo conhecido recebem tipo 'obras' (menor privilégio)
+      return 'obras';
     }
   } else {
     // Usuários externos são clientes

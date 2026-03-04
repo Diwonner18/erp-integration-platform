@@ -38,6 +38,8 @@ interface AuthContextType {
   isLoading: boolean;
   hasPermission: (permission: keyof UserPermissions) => boolean;
   assignUserArea: (userId: string, area: UserType) => Promise<boolean>;
+  updateProfile: (name: string, email: string) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,8 +71,8 @@ const determineUserType = (email: string): UserType => {
     } else if (prefix.includes('comercial') || prefix.includes('venda') || prefix.includes('proposta')) {
       return 'comercial';
     } else {
-      // Por padrão, funcionários da empresa são admin
-      return 'admin';
+      // Por padrão, funcionários sem prefixo conhecido recebem tipo 'obras' (menor privilégio)
+      return 'obras';
     }
   } else {
     // Usuários externos são clientes
@@ -338,6 +340,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (name: string, email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (!user) return { success: false, error: 'Usuário não autenticado.' };
+      
+      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
+      
+      // Verificar unicidade de email se mudou
+      if (email !== user.email) {
+        const emailExists = users.some((u: any) => u.email === email && u.id !== user.id);
+        if (emailExists) return { success: false, error: 'Este e-mail já está em uso por outro usuário.' };
+      }
+      
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      if (userIndex === -1) return { success: false, error: 'Usuário não encontrado.' };
+      
+      users[userIndex].name = name;
+      users[userIndex].email = email;
+      localStorage.setItem('ct-guedes-users', JSON.stringify(users));
+      
+      const updatedUser = { ...user, name, email };
+      setUser(updatedUser);
+      localStorage.setItem('ct-guedes-user', JSON.stringify(updatedUser));
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Erro ao atualizar perfil.' };
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (!user) return { success: false, error: 'Usuário não autenticado.' };
+      
+      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
+      const foundUser = users.find((u: any) => u.id === user.id);
+      
+      if (!foundUser) return { success: false, error: 'Usuário não encontrado.' };
+      if (foundUser.password !== currentPassword) return { success: false, error: 'Senha atual incorreta.' };
+      
+      const userIndex = users.findIndex((u: any) => u.id === user.id);
+      users[userIndex].password = newPassword;
+      localStorage.setItem('ct-guedes-users', JSON.stringify(users));
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Erro ao alterar senha.' };
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setPermissions(null);
@@ -357,7 +408,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, permissions, login, register, logout, isLoading, hasPermission, assignUserArea }}>
+    <AuthContext.Provider value={{ user, permissions, login, register, logout, isLoading, hasPermission, assignUserArea, updateProfile, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

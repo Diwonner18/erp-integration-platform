@@ -38,6 +38,8 @@ interface AuthContextType {
   isLoading: boolean;
   hasPermission: (permission: keyof UserPermissions) => boolean;
   assignUserArea: (userId: string, area: UserType) => Promise<boolean>;
+  updateProfile: (name: string, email: string) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

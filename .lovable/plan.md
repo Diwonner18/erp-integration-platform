@@ -1,21 +1,30 @@
 
 
-## Plano: Remover alertas e notificações simuladas do Header
+## Plano: Corrigir V7 e V8 (independentes do backend)
 
-O problema: O `Header.tsx` possui alertas hardcoded que sempre aparecem para o admin (ex: "3 contratos com aniversário nos próximos 30 dias") e a bolinha vermelha no sino de notificação é acionada por esses mesmos alertas falsos. Como o sistema ainda não tem dados reais, esses avisos não deveriam aparecer.
+### V8 — Fallback de tipo de usuario muito permissivo
+**Arquivo**: `src/contexts/AuthContext.tsx`, linha 73
 
-### Alterações em `src/components/Layout/Header.tsx`
+Alterar o fallback de `return 'admin'` para `return 'obras'` na funcao `determineUserType`. Emails `@ctguedes.com.br` que nao correspondam a nenhum prefixo conhecido receberao o tipo `obras` em vez de `admin`.
 
-1. **Remover o bloco do `useEffect` que gera alertas fake** (linhas 18-49) — o array `alerts` inicia vazio e permanece vazio até que dados reais sejam conectados futuramente.
+### V7 — Formulario de perfil sem validacao nem persistencia
+**Arquivo**: `src/pages/Configuracoes.tsx`
 
-2. **Remover o bloco de renderização dos alertas** (linhas 130-142) — o `<div>` com os `<Alert>` dentro do `<header>`.
+1. **Validacao com Zod** no `handleProfileUpdate`: nome min 2 caracteres, email valido. Exibir erros via `toast.error`.
 
-3. **Remover a bolinha vermelha condicional** (linhas 94-96) — ela depende de `alerts.length > 0`, que agora será sempre 0.
+2. **Persistencia**: ao salvar, atualizar o usuario em `ct-guedes-users` e `ct-guedes-user` no localStorage, e atualizar o estado do AuthContext (necessario expor uma funcao `updateProfile` no AuthContext).
 
-4. **Limpar imports não utilizados** — remover `useEffect`, `AlertTriangle`, `Calendar`, `Alert`, `AlertDescription` que ficam sem uso.
+3. **Verificacao de unicidade de email**: antes de salvar, verificar se o novo email ja pertence a outro usuario.
 
-O sino de notificação continua funcionando normalmente (abre o `NotificationPanel`), mas sem indicador falso. Quando o sistema tiver dados reais, basta popular o array `alerts` com dados do backend.
+4. **Validacao da senha atual** no `handlePasswordChange`: buscar o usuario em `ct-guedes-users` e comparar `passwordData.currentPassword` com a senha armazenada. Rejeitar se nao corresponder.
+
+5. **Persistir nova senha**: atualizar a senha no array `ct-guedes-users` no localStorage.
+
+### Alteracoes no AuthContext
+- Adicionar funcao `updateProfile(name, email)` que atualiza localStorage e estado.
+- Adicionar funcao `changePassword(currentPassword, newPassword)` que valida a senha atual e persiste a nova.
 
 ### Arquivos afetados
-- `src/components/Layout/Header.tsx` — único arquivo
+- `src/contexts/AuthContext.tsx` — fallback V8 + novas funcoes `updateProfile` e `changePassword`
+- `src/pages/Configuracoes.tsx` — validacao Zod, chamadas as novas funcoes, feedback de erro
 

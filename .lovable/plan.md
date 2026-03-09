@@ -1,21 +1,52 @@
 
 
-## Plano: Remover alertas e notificações simuladas do Header
+## Plano: Popular o sistema conectando Supabase + n8n
 
-O problema: O `Header.tsx` possui alertas hardcoded que sempre aparecem para o admin (ex: "3 contratos com aniversário nos próximos 30 dias") e a bolinha vermelha no sino de notificação é acionada por esses mesmos alertas falsos. Como o sistema ainda não tem dados reais, esses avisos não deveriam aparecer.
+### Visao geral
 
-### Alterações em `src/components/Layout/Header.tsx`
+A ideia e criar um fluxo completo onde o Supabase serve como banco de dados real e o n8n popula/processa dados automaticamente. Hoje o sistema inteiro roda em localStorage sem backend. A conexao Supabase + n8n permite que os 14 workflows alimentem o banco e o frontend consuma dados reais.
 
-1. **Remover o bloco do `useEffect` que gera alertas fake** (linhas 18-49) — o array `alerts` inicia vazio e permanece vazio até que dados reais sejam conectados futuramente.
+### Arquitetura
 
-2. **Remover o bloco de renderização dos alertas** (linhas 130-142) — o `<div>` com os `<Alert>` dentro do `<header>`.
+```text
+[Frontend Lovable] <---> [Supabase (DB + Auth + Edge Functions)] <---> [n8n Workflows]
+                              |                                           |
+                              |-- Tabelas reais (obras, medicoes, etc)    |
+                              |-- Auth real (email/senha)                 |
+                              |-- Edge Functions (webhooks de saida) ---->|
+                              |<--- Webhooks de entrada (n8n responde) ---|
+```
 
-3. **Remover a bolinha vermelha condicional** (linhas 94-96) — ela depende de `alerts.length > 0`, que agora será sempre 0.
+### Etapas de implementacao
 
-4. **Limpar imports não utilizados** — remover `useEffect`, `AlertTriangle`, `Calendar`, `Alert`, `AlertDescription` que ficam sem uso.
+**Etapa 1 -- Conectar Supabase (Lovable Cloud)**
+- Ativar Lovable Cloud no projeto
+- Criar schema do banco: tabelas `obras`, `propostas`, `medicoes`, `programacoes`, `materiais`, `epis`, `boletins`, `logs_auditoria`, `notificacoes`, `user_roles`
+- Configurar autenticacao real (substituir localStorage)
+- Aplicar RLS em todas as tabelas
 
-O sino de notificação continua funcionando normalmente (abre o `NotificationPanel`), mas sem indicador falso. Quando o sistema tiver dados reais, basta popular o array `alerts` com dados do backend.
+**Etapa 2 -- Edge Functions como ponte para n8n**
+- Criar Edge Functions que disparam webhooks n8n quando acoes ocorrem no sistema:
+  - `on-proposta-aprovada` → WF-01 (cria obra)
+  - `on-programacao-criada` → WF-03 (agenda)
+  - `on-medicao-executada` → WF-05 (gera medicao)
+  - `on-acao-sensivel` → WF-13 (audit trail)
+- Criar Edge Functions que recebem dados do n8n:
+  - `webhook-criar-obra` (n8n envia obra criada)
+  - `webhook-gerar-medicao` (n8n envia medicao calculada)
+  - `webhook-notificacao` (n8n envia alertas)
 
-### Arquivos afetados
-- `src/components/Layout/Header.tsx` — único arquivo
+**Etapa 3 -- Migrar frontend para Supabase**
+- Substituir `AuthContext` de localStorage para `supabase.auth`
+- Substituir dados mock por queries `supabase.from('tabela').select()`
+- Dashboard consome dados reais via React Query + Supabase
+
+**Etapa 4 -- Conectar n8n aos endpoints**
+- Atualizar URLs dos webhooks nos 14 workflows para apontar para as Edge Functions do Supabase
+- Substituir placeholders (`<__PLACEHOLDER_VALUE__>`) por URLs reais
+- Testar fluxo completo: acao no frontend → Edge Function → n8n → processamento → resposta ao banco
+
+### Primeiro passo concreto
+
+Precisamos ativar o Lovable Cloud (Supabase) no projeto. Sem ele, nao ha banco de dados nem Edge Functions para o n8n consumir.
 

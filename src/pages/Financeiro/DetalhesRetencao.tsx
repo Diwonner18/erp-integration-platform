@@ -109,12 +109,7 @@ const DetalhesRetencao = () => {
     }
     
     // Implementar agendamento do follow-up
-    console.log('Agendando follow-up:', {
-      date: followUpDate,
-      time: followUpTime,
-      type: followUpType,
-      notes: followUpNotes
-    });
+    // TODO: persist follow-up to database
     
     toast.success('Follow-up agendado com sucesso!');
     setIsFollowUpModalOpen(false);

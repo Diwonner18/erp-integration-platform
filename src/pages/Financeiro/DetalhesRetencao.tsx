@@ -98,7 +98,7 @@ const DetalhesRetencao = () => {
 
   const handleSalvarObservacoes = () => {
     // Implementar salvamento das observações
-    console.log('Salvando observações:', observacoes);
+    // TODO: persist observações to database
     toast.success('Observações salvas com sucesso!');
   };
 
@@ -109,12 +109,7 @@ const DetalhesRetencao = () => {
     }
     
     // Implementar agendamento do follow-up
-    console.log('Agendando follow-up:', {
-      date: followUpDate,
-      time: followUpTime,
-      type: followUpType,
-      notes: followUpNotes
-    });
+    // TODO: persist follow-up to database
     
     toast.success('Follow-up agendado com sucesso!');
     setIsFollowUpModalOpen(false);
@@ -133,12 +128,7 @@ const DetalhesRetencao = () => {
     }
     
     // Implementar registro do pagamento
-    console.log('Registrando pagamento:', {
-      type: paymentType,
-      value: paymentValue,
-      date: paymentDate,
-      description: paymentDescription
-    });
+    // TODO: persist payment to database
     
     toast.success('Pagamento registrado com sucesso!');
     setIsPaymentModalOpen(false);
@@ -152,7 +142,7 @@ const DetalhesRetencao = () => {
 
   const handleGerarRelatorio = () => {
     // Implementar geração do relatório
-    console.log('Gerando relatório para retenção:', id);
+    // TODO: generate report via backend
     toast.success('Relatório gerado com sucesso!');
     
     // Simular download do relatório

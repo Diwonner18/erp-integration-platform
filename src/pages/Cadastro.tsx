@@ -34,8 +34,13 @@ const Cadastro = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+    if (password.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+
+    if (!/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+      toast.error('A senha deve conter pelo menos uma letra maiúscula e um número');
       return;
     }
 
@@ -121,7 +126,7 @@ const Cadastro = () => {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres (maiúscula + número)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="font-body"

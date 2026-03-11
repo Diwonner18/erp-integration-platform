@@ -18,7 +18,9 @@ const profileSchema = z.object({
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, 'Informe a senha atual.'),
-  newPassword: z.string().min(6, 'A nova senha deve ter pelo menos 6 caracteres.'),
+  newPassword: z.string().min(8, 'A nova senha deve ter pelo menos 8 caracteres.')
+    .regex(/[A-Z]/, 'A senha deve conter pelo menos uma letra maiúscula.')
+    .regex(/[0-9]/, 'A senha deve conter pelo menos um número.'),
   confirmPassword: z.string().min(1, 'Confirme a nova senha.'),
 }).refine(data => data.newPassword === data.confirmPassword, {
   message: 'As senhas não coincidem.',

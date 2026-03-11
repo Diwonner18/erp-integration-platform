@@ -295,9 +295,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const assignUserArea = async (userId: string, area: UserType): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: area });
+      const { error } = await supabase.rpc('self_assign_area', { _area: area });
 
       if (error) {
         console.error('Error assigning area:', error);

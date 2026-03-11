@@ -9,12 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const userSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   type: z.enum(['admin', 'obras', 'financeira', 'comercial', 'cliente']),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional(),
+  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
+    .regex(/[0-9]/, 'Deve conter pelo menos um número')
+    .optional(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -60,21 +64,55 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
     setIsLoading(true);
     
     try {
-      // Simular chamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: mode === 'create' ? 'Usuário criado' : 'Usuário atualizado',
-        description: mode === 'create' 
-          ? `Usuário ${data.name} foi criado com sucesso`
-          : `Usuário ${data.name} foi atualizado com sucesso`,
-      });
+      if (mode === 'create') {
+        if (!data.password) {
+          toast({ title: 'Erro', description: 'Senha é obrigatória para novos usuários', variant: 'destructive' });
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: result, error } = await supabase.functions.invoke('manage-user', {
+          body: {
+            action: 'create',
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            role: data.type,
+          },
+        });
+
+        if (error || result?.error) {
+          throw new Error(result?.error || error?.message || 'Erro ao criar usuário');
+        }
+
+        toast({
+          title: 'Usuário criado',
+          description: `Usuário ${data.name} foi criado com sucesso`,
+        });
+      } else if (mode === 'edit' && user?.id) {
+        const { data: result, error } = await supabase.functions.invoke('manage-user', {
+          body: {
+            action: 'update_role',
+            userId: user.id,
+            role: data.type,
+          },
+        });
+
+        if (error || result?.error) {
+          throw new Error(result?.error || error?.message || 'Erro ao atualizar usuário');
+        }
+
+        toast({
+          title: 'Usuário atualizado',
+          description: `Role de ${data.name} atualizado para ${data.type}`,
+        });
+      }
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro',
-        description: 'Ocorreu um erro ao salvar o usuário',
+        description: error.message || 'Ocorreu um erro ao salvar o usuário',
         variant: 'destructive',
       });
     } finally {
@@ -100,7 +138,7 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
               placeholder="Nome completo"
             />
             {errors.name && (
-              <p className="text-sm text-red-600">{errors.name.message}</p>
+              <p className="text-sm text-destructive">{errors.name.message}</p>
             )}
           </div>
 
@@ -111,15 +149,19 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
               type="email"
               {...register('email')}
               placeholder="email@exemplo.com"
+              disabled={mode === 'edit'}
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="type">Tipo de Usuário</Label>
-            <Select onValueChange={(value) => setValue('type', value as any)}>
+            <Select
+              defaultValue={user?.type}
+              onValueChange={(value) => setValue('type', value as any)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
@@ -132,7 +174,7 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
               </SelectContent>
             </Select>
             {errors.type && (
-              <p className="text-sm text-red-600">{errors.type.message}</p>
+              <p className="text-sm text-destructive">{errors.type.message}</p>
             )}
           </div>
 
@@ -143,10 +185,10 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
                 id="password"
                 type="password"
                 {...register('password')}
-                placeholder="Senha temporária"
+                placeholder="Mín. 8 caracteres (maiúscula + número)"
               />
               {errors.password && (
-                <p className="text-sm text-red-600">{errors.password.message}</p>
+                <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
           )}

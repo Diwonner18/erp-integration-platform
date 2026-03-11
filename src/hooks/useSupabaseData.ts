@@ -619,6 +619,7 @@ export const useCreateRelatorioDiario = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (relatorio: TablesInsert<'relatorios_diarios'>) => {
+      validateInput(relatorioDiarioInsertSchema, relatorio);
       const { data, error } = await supabase.from('relatorios_diarios').insert(relatorio).select().single();
       if (error) throw error;
       return data;

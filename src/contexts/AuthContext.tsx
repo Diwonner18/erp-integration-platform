@@ -401,13 +401,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {
-    // Restrict admin access to only carla@ctguedes.com.br
-    if (user?.type === 'admin' && user?.email !== 'carla@ctguedes.com.br') {
-      const basicPermissions: (keyof UserPermissions)[] = ['canViewOwnData'];
-      if (!basicPermissions.includes(permission)) {
-        return false;
-      }
-    }
     return permissions ? permissions[permission] : false;
   };
 

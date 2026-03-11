@@ -363,6 +363,7 @@ export const useCreateProgramacao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (prog: TablesInsert<'programacoes'>) => {
+      validateInput(programacaoInsertSchema, prog);
       const { data, error } = await supabase.from('programacoes').insert(prog).select().single();
       if (error) throw error;
       return data;

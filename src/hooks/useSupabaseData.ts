@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import {
+  obraInsertSchema, propostaInsertSchema, medicaoInsertSchema,
+  materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
+  epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
+  relatorioDiarioInsertSchema, validateInput,
+} from '@/lib/validationSchemas';
+
+const DEFAULT_LIMIT = 1000;
 
 // ==================== QUERY HOOKS ====================
 
@@ -10,7 +18,7 @@ export const useObras = (status?: Tables<'obras'>['status']) => {
     queryFn: async () => {
       let query = supabase.from('obras').select('*, clientes(razao_social)');
       if (status) query = query.eq('status', status);
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },
@@ -32,7 +40,7 @@ export const usePropostas = () => {
   return useQuery({
     queryKey: ['propostas'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('propostas').select('*, clientes(razao_social)').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('propostas').select('*, clientes(razao_social)').order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },
@@ -45,8 +53,7 @@ export const useMedicoes = (obraId?: string) => {
     queryFn: async () => {
       let query = supabase.from('medicoes').select('*, obras(nome, clientes(razao_social))');
       if (obraId) query = query.eq('obra_id', obraId);
-      const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) throw error;
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       return data;
     },
   });
@@ -56,7 +63,7 @@ export const useProgramacoes = () => {
   return useQuery({
     queryKey: ['programacoes'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('programacoes').select('*, obras(nome, endereco, clientes(razao_social))').order('data_programada', { ascending: false });
+      const { data, error } = await supabase.from('programacoes').select('*, obras(nome, endereco, clientes(razao_social))').order('data_programada', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },
@@ -194,7 +201,7 @@ export const useNotificacoes = () => {
   return useQuery({
     queryKey: ['notificacoes'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('notificacoes').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('notificacoes').select('*').order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },
@@ -205,7 +212,7 @@ export const useAprovacoes = () => {
   return useQuery({
     queryKey: ['aprovacoes'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('aprovacoes').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('aprovacoes').select('*').order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },
@@ -281,6 +288,7 @@ export const useCreateObra = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (obra: TablesInsert<'obras'>) => {
+      validateInput(obraInsertSchema, obra);
       const { data, error } = await supabase.from('obras').insert(obra).select().single();
       if (error) throw error;
       return data;
@@ -305,6 +313,7 @@ export const useCreateProposta = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (proposta: TablesInsert<'propostas'>) => {
+      validateInput(propostaInsertSchema, proposta);
       const { data, error } = await supabase.from('propostas').insert(proposta).select().single();
       if (error) throw error;
       return data;
@@ -329,6 +338,7 @@ export const useCreateMedicao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (medicao: TablesInsert<'medicoes'>) => {
+      validateInput(medicaoInsertSchema, medicao);
       const { data, error } = await supabase.from('medicoes').insert(medicao).select().single();
       if (error) throw error;
       return data;
@@ -353,6 +363,7 @@ export const useCreateProgramacao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (prog: TablesInsert<'programacoes'>) => {
+      validateInput(programacaoInsertSchema, prog);
       const { data, error } = await supabase.from('programacoes').insert(prog).select().single();
       if (error) throw error;
       return data;
@@ -377,6 +388,7 @@ export const useCreateMaterial = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (material: TablesInsert<'materiais'>) => {
+      validateInput(materialInsertSchema, material);
       const { data, error } = await supabase.from('materiais').insert(material).select().single();
       if (error) throw error;
       return data;
@@ -412,6 +424,7 @@ export const useCreateEquipamento = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (equip: TablesInsert<'equipamentos'>) => {
+      validateInput(equipamentoInsertSchema, equip);
       const { data, error } = await supabase.from('equipamentos').insert(equip).select().single();
       if (error) throw error;
       return data;
@@ -447,6 +460,7 @@ export const useCreateEPI = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (epi: TablesInsert<'epis'>) => {
+      validateInput(epiInsertSchema, epi);
       const { data, error } = await supabase.from('epis').insert(epi).select().single();
       if (error) throw error;
       return data;
@@ -483,6 +497,7 @@ export const useCreateDespesa = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (despesa: TablesInsert<'despesas'>) => {
+      validateInput(despesaInsertSchema, despesa);
       const { data, error } = await supabase.from('despesas').insert(despesa).select().single();
       if (error) throw error;
       return data;
@@ -495,6 +510,7 @@ export const useCreateBoletim = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (boletim: TablesInsert<'boletins_medicao'>) => {
+      validateInput(boletimInsertSchema, boletim);
       const { data, error } = await supabase.from('boletins_medicao').insert(boletim).select().single();
       if (error) throw error;
       return data;
@@ -603,6 +619,7 @@ export const useCreateRelatorioDiario = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (relatorio: TablesInsert<'relatorios_diarios'>) => {
+      validateInput(relatorioDiarioInsertSchema, relatorio);
       const { data, error } = await supabase.from('relatorios_diarios').insert(relatorio).select().single();
       if (error) throw error;
       return data;

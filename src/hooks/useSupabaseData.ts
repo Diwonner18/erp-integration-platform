@@ -460,6 +460,7 @@ export const useCreateEPI = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (epi: TablesInsert<'epis'>) => {
+      validateInput(epiInsertSchema, epi);
       const { data, error } = await supabase.from('epis').insert(epi).select().single();
       if (error) throw error;
       return data;

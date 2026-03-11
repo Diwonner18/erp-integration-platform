@@ -145,8 +145,8 @@ const Login = () => {
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full font-body" disabled={isLoading}>
-                {isLoading ? 'Entrando...' : 'Entrar'}
+              <Button type="submit" className="w-full font-body" disabled={isLoading || isLockedOut}>
+                {isLockedOut ? 'Aguarde...' : isLoading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
             <div className="mt-4 text-center">

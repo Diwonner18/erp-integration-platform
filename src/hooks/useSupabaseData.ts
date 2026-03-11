@@ -610,3 +610,37 @@ export const useCreateRelatorioDiario = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['relatorios_diarios'] }); },
   });
 };
+
+export const useUpdateRelatorioDiario = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: TablesUpdate<'relatorios_diarios'> & { id: string }) => {
+      const { data, error } = await supabase.from('relatorios_diarios').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['relatorios_diarios'] }); },
+  });
+};
+
+export const useDeleteProgramacao = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('programacoes').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['programacoes'] }); },
+  });
+};
+
+export const useDeleteEPI = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('epis').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['epis'] }); },
+  });
+};

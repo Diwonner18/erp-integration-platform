@@ -1,52 +1,32 @@
 
 
-## Plano: Popular o sistema conectando Supabase + n8n
+## Plano: Mover restricao admin do frontend para o banco de dados
 
-### Visao geral
+### Problema
 
-A ideia e criar um fluxo completo onde o Supabase serve como banco de dados real e o n8n popula/processa dados automaticamente. Hoje o sistema inteiro roda em localStorage sem backend. A conexao Supabase + n8n permite que os 14 workflows alimentem o banco e o frontend consuma dados reais.
+A restricao de admin para `carla@ctguedes.com.br` existe apenas no frontend (`AuthContext.tsx` linha 403-412). Qualquer usuario com role `admin` no banco pode bypassar isso via API direta.
 
-### Arquitetura
+### Solucao
 
-```text
-[Frontend Lovable] <---> [Supabase (DB + Auth + Edge Functions)] <---> [n8n Workflows]
-                              |                                           |
-                              |-- Tabelas reais (obras, medicoes, etc)    |
-                              |-- Auth real (email/senha)                 |
-                              |-- Edge Functions (webhooks de saida) ---->|
-                              |<--- Webhooks de entrada (n8n responde) ---|
+1. **SQL Migration**: Alterar a function `assign_internal_role` para impedir que o role `admin` seja atribuido a qualquer email diferente de `carla@ctguedes.com.br`
+2. **AuthContext.tsx**: Remover o check hardcoded de email no `hasPermission` -- a restricao agora e enforced no banco
+
+### Detalhes tecnicos
+
+**Migration SQL:**
+```sql
+-- Atualizar assign_internal_role para bloquear admin para outros emails
+CREATE OR REPLACE FUNCTION public.assign_internal_role(...)
+  -- Adicionar: IF _role = 'admin' AND _target_email != 'carla@ctguedes.com.br' THEN RAISE EXCEPTION
 ```
 
-### Etapas de implementacao
+**AuthContext.tsx:**
+- Remover linhas 403-412 (o bloco `if (user?.type === 'admin' && user?.email !== 'carla@ctguedes.com.br')`)
+- `hasPermission` passa a confiar no role do banco, que ja nao pode ser `admin` para outros usuarios
 
-**Etapa 1 -- Conectar Supabase (Lovable Cloud)**
-- Ativar Lovable Cloud no projeto
-- Criar schema do banco: tabelas `obras`, `propostas`, `medicoes`, `programacoes`, `materiais`, `epis`, `boletins`, `logs_auditoria`, `notificacoes`, `user_roles`
-- Configurar autenticacao real (substituir localStorage)
-- Aplicar RLS em todas as tabelas
+### Resultado
 
-**Etapa 2 -- Edge Functions como ponte para n8n**
-- Criar Edge Functions que disparam webhooks n8n quando acoes ocorrem no sistema:
-  - `on-proposta-aprovada` → WF-01 (cria obra)
-  - `on-programacao-criada` → WF-03 (agenda)
-  - `on-medicao-executada` → WF-05 (gera medicao)
-  - `on-acao-sensivel` → WF-13 (audit trail)
-- Criar Edge Functions que recebem dados do n8n:
-  - `webhook-criar-obra` (n8n envia obra criada)
-  - `webhook-gerar-medicao` (n8n envia medicao calculada)
-  - `webhook-notificacao` (n8n envia alertas)
-
-**Etapa 3 -- Migrar frontend para Supabase**
-- Substituir `AuthContext` de localStorage para `supabase.auth`
-- Substituir dados mock por queries `supabase.from('tabela').select()`
-- Dashboard consome dados reais via React Query + Supabase
-
-**Etapa 4 -- Conectar n8n aos endpoints**
-- Atualizar URLs dos webhooks nos 14 workflows para apontar para as Edge Functions do Supabase
-- Substituir placeholders (`<__PLACEHOLDER_VALUE__>`) por URLs reais
-- Testar fluxo completo: acao no frontend → Edge Function → n8n → processamento → resposta ao banco
-
-### Primeiro passo concreto
-
-Precisamos ativar o Lovable Cloud (Supabase) no projeto. Sem ele, nao ha banco de dados nem Edge Functions para o n8n consumir.
+- Finding `hardcoded_email_admin` resolvido
+- Restricao admin enforced no banco via SECURITY DEFINER
+- Impossivel atribuir role admin a outro email mesmo via API direta
 

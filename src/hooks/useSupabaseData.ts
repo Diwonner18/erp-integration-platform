@@ -497,6 +497,7 @@ export const useCreateDespesa = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (despesa: TablesInsert<'despesas'>) => {
+      validateInput(despesaInsertSchema, despesa);
       const { data, error } = await supabase.from('despesas').insert(despesa).select().single();
       if (error) throw error;
       return data;

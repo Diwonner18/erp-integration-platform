@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 export type UserType = 'admin' | 'obras' | 'financeira' | 'comercial' | 'cliente';
 
@@ -7,7 +9,7 @@ export interface User {
   name: string;
   email: string;
   type: UserType;
-  areaAssigned?: boolean; // Flag para indicar se a área já foi atribuída
+  areaAssigned?: boolean;
 }
 
 export interface UserPermissions {
@@ -54,30 +56,6 @@ export const useAuth = () => {
 
 const isCompanyEmail = (email: string): boolean => {
   return email.endsWith('@ctguedes.com.br');
-};
-
-const determineUserType = (email: string): UserType => {
-  // Verificar se é do domínio da empresa CT Guedes
-  if (email.endsWith('@ctguedes.com.br')) {
-    // Para funcionários da empresa, determinar o tipo baseado no prefixo do e-mail
-    const prefix = email.split('@')[0].toLowerCase();
-    
-    if (prefix.includes('admin') || prefix.includes('diretor') || prefix.includes('gerente')) {
-      return 'admin';
-    } else if (prefix.includes('obra') || prefix.includes('campo') || prefix.includes('execucao')) {
-      return 'obras';
-    } else if (prefix.includes('financ') || prefix.includes('contab') || prefix.includes('tesour')) {
-      return 'financeira';
-    } else if (prefix.includes('comercial') || prefix.includes('venda') || prefix.includes('proposta')) {
-      return 'comercial';
-    } else {
-      // Por padrão, funcionários sem prefixo conhecido recebem tipo 'obras' (menor privilégio)
-      return 'obras';
-    }
-  } else {
-    // Usuários externos são clientes
-    return 'cliente';
-  }
 };
 
 const getPermissionsByUserType = (userType: UserType): UserPermissions => {
@@ -199,71 +177,116 @@ const getPermissionsByUserType = (userType: UserType): UserPermissions => {
   }
 };
 
+// Helper to build User object from Supabase data
+const buildUser = (
+  supabaseUser: SupabaseUser,
+  fullName: string,
+  role: UserType | null
+): User => ({
+  id: supabaseUser.id,
+  name: fullName,
+  email: supabaseUser.email || '',
+  type: role || 'cliente',
+  areaAssigned: role !== null,
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Initialize default admin (Carla) if no users exist
-    const initializeDefaultAdmin = () => {
-      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
-      
-      // Check if Carla already exists
-      const carlaExists = users.some((u: any) => u.email === 'carla@ctguedes.com.br');
-      
-      if (!carlaExists) {
-        const carlaAdmin = {
-          id: 'carla-admin-001',
-          name: 'Carla',
-          email: 'carla@ctguedes.com.br',
-          password: 'admin123',
-          type: 'admin' as UserType,
-          areaAssigned: true
-        };
-        
-        users.push(carlaAdmin);
-        localStorage.setItem('ct-guedes-users', JSON.stringify(users));
+  // Fetch role and profile for a given user id
+  const loadUserData = async (supabaseUser: SupabaseUser) => {
+    try {
+      // Fetch profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', supabaseUser.id)
+        .single();
+
+      // Fetch role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', supabaseUser.id)
+        .single();
+
+      const fullName = profile?.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email || '';
+      const role = (roleData?.role as UserType) || null;
+
+      const appUser = buildUser(supabaseUser, fullName, role);
+      setUser(appUser);
+      if (role) {
+        setPermissions(getPermissionsByUserType(role));
+      } else {
+        setPermissions(null);
       }
-    };
-
-    // Initialize default admin
-    initializeDefaultAdmin();
-
-    // Check if user is logged in on app start
-    const savedUser = localStorage.getItem('ct-guedes-user');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-      setPermissions(getPermissionsByUserType(userData.type));
+    } catch (error) {
+      console.error('Error loading user data:', error);
     }
-    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          // Use setTimeout to avoid potential deadlock with Supabase client
+          setTimeout(() => loadUserData(session.user), 0);
+        } else {
+          setUser(null);
+          setPermissions(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserData(session.user).finally(() => setIsLoading(false));
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; needsAreaSelection?: boolean; user?: User }> => {
     try {
-      // Simulate API call - in real app, this would be a backend call
-      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
-      const foundUser = users.find((u: any) => u.email === email && u.password === password);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      if (foundUser) {
-        const { password: _, ...userWithoutPassword } = foundUser;
-        
-        // Verificar se é funcionário da empresa e se já tem área atribuída
-        if (isCompanyEmail(email) && !userWithoutPassword.areaAssigned) {
-          return { 
-            success: true, 
-            needsAreaSelection: true, 
-            user: userWithoutPassword 
-          };
-        }
-        
-        setUser(userWithoutPassword);
-        setPermissions(getPermissionsByUserType(userWithoutPassword.type));
-        localStorage.setItem('ct-guedes-user', JSON.stringify(userWithoutPassword));
-        return { success: true };
+      if (error || !data.user) {
+        return { success: false };
       }
-      return { success: false };
+
+      // Fetch profile and role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', data.user.id)
+        .single();
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single();
+
+      const fullName = profile?.full_name || data.user.user_metadata?.full_name || email;
+      const role = (roleData?.role as UserType) || null;
+      const appUser = buildUser(data.user, fullName, role);
+
+      // If company employee without role assigned, prompt area selection
+      if (isCompanyEmail(email) && !role) {
+        // Don't set user in state yet — wait for area selection
+        return { success: true, needsAreaSelection: true, user: appUser };
+      }
+
+      setUser(appUser);
+      setPermissions(getPermissionsByUserType(appUser.type));
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false };
@@ -272,22 +295,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const assignUserArea = async (userId: string, area: UserType): Promise<boolean> => {
     try {
-      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
-      const userIndex = users.findIndex((u: any) => u.id === userId);
-      
-      if (userIndex !== -1) {
-        users[userIndex].type = area;
-        users[userIndex].areaAssigned = true;
-        localStorage.setItem('ct-guedes-users', JSON.stringify(users));
-        
-        const { password: _, ...userWithoutPassword } = users[userIndex];
-        setUser(userWithoutPassword);
-        setPermissions(getPermissionsByUserType(area));
-        localStorage.setItem('ct-guedes-user', JSON.stringify(userWithoutPassword));
-        
-        return true;
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role: area });
+
+      if (error) {
+        console.error('Error assigning area:', error);
+        return false;
       }
-      return false;
+
+      // Reload user data
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        await loadUserData(currentUser);
+      }
+      return true;
     } catch (error) {
       console.error('Error assigning user area:', error);
       return false;
@@ -296,43 +318,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     try {
-      // Simulate API call - in real app, this would be a backend call
-      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
-      
-      // Check if user already exists
-      if (users.some((u: any) => u.email === email)) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error || !data.user) {
+        console.error('Register error:', error);
         return false;
       }
 
-      // Para funcionários da empresa, não determinar o tipo automaticamente
-      let userType: UserType = 'cliente';
-      let areaAssigned = true;
-      
-      if (isCompanyEmail(email)) {
-        userType = 'admin'; // Tipo temporário, será definido no login
-        areaAssigned = false; // Precisará selecionar área
+      // If client (external email), auto-assign role
+      if (!isCompanyEmail(email)) {
+        await supabase
+          .from('user_roles')
+          .insert({ user_id: data.user.id, role: 'cliente' as any });
       }
 
-      const newUser = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password,
-        type: userType,
-        areaAssigned
-      };
-
-      users.push(newUser);
-      localStorage.setItem('ct-guedes-users', JSON.stringify(users));
-
-      // Se for cliente, fazer login automático
-      if (userType === 'cliente') {
-        const { password: _, ...userWithoutPassword } = newUser;
-        setUser(userWithoutPassword);
-        setPermissions(getPermissionsByUserType(userWithoutPassword.type));
-        localStorage.setItem('ct-guedes-user', JSON.stringify(userWithoutPassword));
-      }
-      
       return true;
     } catch (error) {
       console.error('Register error:', error);
@@ -343,62 +349,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (name: string, email: string): Promise<{ success: boolean; error?: string }> => {
     try {
       if (!user) return { success: false, error: 'Usuário não autenticado.' };
-      
-      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
-      
-      // Verificar unicidade de email se mudou
+
+      // Update profile table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ full_name: name, email })
+        .eq('id', user.id);
+
+      if (profileError) return { success: false, error: profileError.message };
+
+      // Update email in Supabase Auth if changed
       if (email !== user.email) {
-        const emailExists = users.some((u: any) => u.email === email && u.id !== user.id);
-        if (emailExists) return { success: false, error: 'Este e-mail já está em uso por outro usuário.' };
+        const { error: authError } = await supabase.auth.updateUser({ email });
+        if (authError) return { success: false, error: authError.message };
       }
-      
-      const userIndex = users.findIndex((u: any) => u.id === user.id);
-      if (userIndex === -1) return { success: false, error: 'Usuário não encontrado.' };
-      
-      users[userIndex].name = name;
-      users[userIndex].email = email;
-      localStorage.setItem('ct-guedes-users', JSON.stringify(users));
-      
-      const updatedUser = { ...user, name, email };
-      setUser(updatedUser);
-      localStorage.setItem('ct-guedes-user', JSON.stringify(updatedUser));
-      
+
+      // Update user metadata
+      await supabase.auth.updateUser({ data: { full_name: name } });
+
+      setUser(prev => prev ? { ...prev, name, email } : null);
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Erro ao atualizar perfil.' };
     }
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+  const changePassword = async (_currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
     try {
       if (!user) return { success: false, error: 'Usuário não autenticado.' };
-      
-      const users = JSON.parse(localStorage.getItem('ct-guedes-users') || '[]');
-      const foundUser = users.find((u: any) => u.id === user.id);
-      
-      if (!foundUser) return { success: false, error: 'Usuário não encontrado.' };
-      if (foundUser.password !== currentPassword) return { success: false, error: 'Senha atual incorreta.' };
-      
-      const userIndex = users.findIndex((u: any) => u.id === user.id);
-      users[userIndex].password = newPassword;
-      localStorage.setItem('ct-guedes-users', JSON.stringify(users));
-      
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) return { success: false, error: error.message };
+
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Erro ao alterar senha.' };
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     setPermissions(null);
-    localStorage.removeItem('ct-guedes-user');
   };
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {
-    // Restringir acesso administrativo apenas para Carla
+    // Restrict admin access to only carla@ctguedes.com.br
     if (user?.type === 'admin' && user?.email !== 'carla@ctguedes.com.br') {
-      // Permitir apenas permissões básicas para outros admins
       const basicPermissions: (keyof UserPermissions)[] = ['canViewOwnData'];
       if (!basicPermissions.includes(permission)) {
         return false;

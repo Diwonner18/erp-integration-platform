@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,8 +42,8 @@ const Cadastro = () => {
     const success = await register(name, email, password);
     
     if (success) {
-      toast.success('Cadastro realizado com sucesso!');
-      // Funcionários da empresa irão para login para seleção de área
+      toast.success('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar.');
+      // Funcionários irão para login para seleção de área
       if (email.endsWith('@ctguedes.com.br')) {
         navigate('/login');
       } else {

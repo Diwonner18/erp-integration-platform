@@ -695,3 +695,91 @@ export const useAuditLog = () => {
     },
   });
 };
+
+// ==================== ACESSOS COMPARTILHADOS ====================
+
+export const useAcessosCompartilhados = (tabela?: string, registroId?: string) => {
+  return useQuery({
+    queryKey: ['acessos_compartilhados', tabela, registroId],
+    queryFn: async () => {
+      let query = supabase.from('acessos_compartilhados' as any).select('*');
+      if (tabela) query = query.eq('tabela', tabela);
+      if (registroId) query = query.eq('registro_id', registroId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+};
+
+export const useCheckRecordAccess = (tabela: string, registroId: string, nivel: string = 'view') => {
+  return useQuery({
+    queryKey: ['record_access', tabela, registroId, nivel],
+    enabled: !!registroId,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { data, error } = await supabase.rpc('has_record_access' as any, {
+        _user_id: user.id,
+        _tabela: tabela,
+        _registro_id: registroId,
+        _nivel: nivel,
+      });
+      if (error) throw error;
+      return data as boolean;
+    },
+  });
+};
+
+export const useSolicitarAcesso = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { tabela: string; registro_id: string; comentario?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+      const { data, error } = await supabase.from('aprovacoes').insert({
+        tipo: 'acesso_registro',
+        referencia_id: params.registro_id,
+        referencia_tabela: params.tabela,
+        solicitante_id: user.id,
+        comentario: params.comentario || null,
+        status: 'pendente' as any,
+      }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aprovacoes'] });
+    },
+  });
+};
+
+export const useInsertAcessoCompartilhado = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      user_id: string;
+      tabela: string;
+      registro_id: string;
+      nivel_acesso: 'view' | 'edit' | 'all';
+      aprovacao_id: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+      const { data, error } = await supabase.from('acessos_compartilhados' as any).insert({
+        user_id: params.user_id,
+        tabela: params.tabela,
+        registro_id: params.registro_id,
+        nivel_acesso: params.nivel_acesso,
+        concedido_por: user.id,
+        aprovacao_id: params.aprovacao_id,
+      }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['acessos_compartilhados'] });
+      queryClient.invalidateQueries({ queryKey: ['record_access'] });
+    },
+  });
+};

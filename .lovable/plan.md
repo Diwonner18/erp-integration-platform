@@ -1,52 +1,29 @@
 
 
-## Plano: Popular o sistema conectando Supabase + n8n
+## Plano: Corrigir RLS Policy Always True em `logs_auditoria`
 
-### Visao geral
+### Problema
 
-A ideia e criar um fluxo completo onde o Supabase serve como banco de dados real e o n8n popula/processa dados automaticamente. Hoje o sistema inteiro roda em localStorage sem backend. A conexao Supabase + n8n permite que os 14 workflows alimentem o banco e o frontend consuma dados reais.
+A policy `System can insert logs` na tabela `logs_auditoria` usa `WITH CHECK (true)`, permitindo que qualquer usuario autenticado insira registros com valores fabricados (email, nome, IP, dados arbitrarios). Isso compromete a integridade do log de auditoria.
 
-### Arquitetura
+### Solucao
 
-```text
-[Frontend Lovable] <---> [Supabase (DB + Auth + Edge Functions)] <---> [n8n Workflows]
-                              |                                           |
-                              |-- Tabelas reais (obras, medicoes, etc)    |
-                              |-- Auth real (email/senha)                 |
-                              |-- Edge Functions (webhooks de saida) ---->|
-                              |<--- Webhooks de entrada (n8n responde) ---|
-```
+**SQL Migration:**
 
-### Etapas de implementacao
+1. Dropar a policy `System can insert logs`
+2. Criar function SECURITY DEFINER `insert_audit_log()` que:
+   - Recebe apenas os campos de negocio (acao, descricao, tabela, registro_id, entidade, dados_anteriores, dados_novos, modulo)
+   - Preenche automaticamente `user_id`, `usuario_email`, `usuario_nome` a partir de `auth.uid()` + tabela `profiles`
+   - Preenche `created_at` com `now()`
+   - Impede que o chamador injete valores falsos nos campos de identidade
+3. Nao criar nenhuma nova policy de INSERT (apenas a function pode inserir, via SECURITY DEFINER)
 
-**Etapa 1 -- Conectar Supabase (Lovable Cloud)**
-- Ativar Lovable Cloud no projeto
-- Criar schema do banco: tabelas `obras`, `propostas`, `medicoes`, `programacoes`, `materiais`, `epis`, `boletins`, `logs_auditoria`, `notificacoes`, `user_roles`
-- Configurar autenticacao real (substituir localStorage)
-- Aplicar RLS em todas as tabelas
+**Codigo (opcional):**
+- Criar um hook `useAuditLog()` em `useSupabaseData.ts` que chama `supabase.rpc('insert_audit_log', {...})` para uso futuro nas paginas
 
-**Etapa 2 -- Edge Functions como ponte para n8n**
-- Criar Edge Functions que disparam webhooks n8n quando acoes ocorrem no sistema:
-  - `on-proposta-aprovada` → WF-01 (cria obra)
-  - `on-programacao-criada` → WF-03 (agenda)
-  - `on-medicao-executada` → WF-05 (gera medicao)
-  - `on-acao-sensivel` → WF-13 (audit trail)
-- Criar Edge Functions que recebem dados do n8n:
-  - `webhook-criar-obra` (n8n envia obra criada)
-  - `webhook-gerar-medicao` (n8n envia medicao calculada)
-  - `webhook-notificacao` (n8n envia alertas)
+### Resultado
 
-**Etapa 3 -- Migrar frontend para Supabase**
-- Substituir `AuthContext` de localStorage para `supabase.auth`
-- Substituir dados mock por queries `supabase.from('tabela').select()`
-- Dashboard consome dados reais via React Query + Supabase
-
-**Etapa 4 -- Conectar n8n aos endpoints**
-- Atualizar URLs dos webhooks nos 14 workflows para apontar para as Edge Functions do Supabase
-- Substituir placeholders (`<__PLACEHOLDER_VALUE__>`) por URLs reais
-- Testar fluxo completo: acao no frontend → Edge Function → n8n → processamento → resposta ao banco
-
-### Primeiro passo concreto
-
-Precisamos ativar o Lovable Cloud (Supabase) no projeto. Sem ele, nao ha banco de dados nem Edge Functions para o n8n consumir.
+- Finding `SUPA_rls_policy_always_true` resolvido
+- Finding `logs_auditoria_unrestricted_insert` resolvido
+- Logs de auditoria com integridade garantida pelo backend
 

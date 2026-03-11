@@ -288,6 +288,7 @@ export const useCreateObra = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (obra: TablesInsert<'obras'>) => {
+      validateInput(obraInsertSchema, obra);
       const { data, error } = await supabase.from('obras').insert(obra).select().single();
       if (error) throw error;
       return data;

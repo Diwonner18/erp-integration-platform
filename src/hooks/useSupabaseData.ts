@@ -201,7 +201,7 @@ export const useNotificacoes = () => {
   return useQuery({
     queryKey: ['notificacoes'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('notificacoes').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('notificacoes').select('*').order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },

@@ -17,6 +17,7 @@ const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -42,19 +43,38 @@ const Cadastro = () => {
     const success = await register(name, email, password);
     
     if (success) {
-      toast.success('Cadastro realizado com sucesso! Verifique seu e-mail para confirmar.');
-      // Funcionários irão para login para seleção de área
-      if (email.endsWith('@ctguedes.com.br')) {
-        navigate('/login');
-      } else {
-        navigate('/');
-      }
+      // V6 fix: always show confirmation message instead of redirecting
+      setRegistrationComplete(true);
     } else {
       toast.error('E-mail já cadastrado ou erro no cadastro');
     }
     
     setIsLoading(false);
   };
+
+  if (registrationComplete) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4">
+              <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto" />
+            </div>
+            <CardTitle className="font-title text-primary">Cadastro Realizado!</CardTitle>
+            <CardDescription className="font-body">
+              Enviamos um e-mail de confirmação para <strong>{email}</strong>. 
+              Por favor, verifique sua caixa de entrada (e spam) e clique no link de confirmação antes de fazer login.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full font-body" onClick={() => navigate('/login')}>
+              Ir para o Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

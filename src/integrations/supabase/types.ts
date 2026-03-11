@@ -62,6 +62,50 @@ export type Database = {
           },
         ]
       }
+      acessos_compartilhados: {
+        Row: {
+          aprovacao_id: string | null
+          concedido_por: string | null
+          created_at: string | null
+          expira_em: string | null
+          id: string
+          nivel_acesso: string
+          registro_id: string
+          tabela: string
+          user_id: string
+        }
+        Insert: {
+          aprovacao_id?: string | null
+          concedido_por?: string | null
+          created_at?: string | null
+          expira_em?: string | null
+          id?: string
+          nivel_acesso?: string
+          registro_id: string
+          tabela: string
+          user_id: string
+        }
+        Update: {
+          aprovacao_id?: string | null
+          concedido_por?: string | null
+          created_at?: string | null
+          expira_em?: string | null
+          id?: string
+          nivel_acesso?: string
+          registro_id?: string
+          tabela?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acessos_compartilhados_aprovacao_id_fkey"
+            columns: ["aprovacao_id"]
+            isOneToOne: false
+            referencedRelation: "aprovacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alteracoes_escopo: {
         Row: {
           aprovado_por: string | null
@@ -1180,6 +1224,15 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_record_access: {
+        Args: {
+          _nivel: string
+          _registro_id: string
+          _tabela: string
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {

@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Plus, FileText, Search, Filter } from 'lucide-react';
+import { Shield, Plus, FileText, Filter } from 'lucide-react';
+import { useEPIs, useObras, useCreateEPI } from '@/hooks/useSupabaseData';
 
 const EPIs = () => {
   const { toast } = useToast();
@@ -23,12 +25,14 @@ const EPIs = () => {
     colaborador: '',
     obra: '',
     dataEntrega: '',
-    responsavel: '',
-    status: 'entregue',
-    observacoes: ''
+    quantidade: '1',
+    certificadoAprovacao: '',
+    validade: '',
   });
 
-  const [registrosEPI, setRegistrosEPI] = useState<any[]>([]);
+  const { data: epis = [], isLoading: loadingEPIs } = useEPIs();
+  const { data: obrasData = [], isLoading: loadingObras } = useObras();
+  const createEPI = useCreateEPI();
 
   const tiposEPI = [
     'Capacete de Segurança',
@@ -41,28 +45,23 @@ const EPIs = () => {
     'Protetor Auricular'
   ];
 
-  const obras: string[] = [];
-  const colaboradores: string[] = [];
-  const responsaveis: string[] = [];
-
   const handleNovoRegistro = () => {
     setFormData({
       tipoEPI: '',
       colaborador: '',
       obra: '',
       dataEntrega: '',
-      responsavel: '',
-      status: 'entregue',
-      observacoes: ''
+      quantidade: '1',
+      certificadoAprovacao: '',
+      validade: '',
     });
     setShowRegistroModal(true);
   };
 
-  const handleSaveRegistro = (e: React.FormEvent) => {
+  const handleSaveRegistro = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tipoEPI || !formData.colaborador || !formData.obra || 
-        !formData.dataEntrega || !formData.responsavel) {
+    if (!formData.tipoEPI || !formData.colaborador || !formData.obra || !formData.dataEntrega) {
       toast({
         title: "Erro de validação",
         description: "Todos os campos obrigatórios devem ser preenchidos.",
@@ -71,59 +70,64 @@ const EPIs = () => {
       return;
     }
 
-    const novoRegistro = {
-      id: Date.now(),
-      ...formData
-    };
-
-    setRegistrosEPI(prev => [...prev, novoRegistro]);
-    toast({
-      title: "EPI registrado",
-      description: "Registro de EPI criado com sucesso.",
-    });
-    setShowRegistroModal(false);
+    try {
+      await createEPI.mutateAsync({
+        tipo: formData.tipoEPI,
+        funcionario: formData.colaborador,
+        obra_id: formData.obra,
+        data_entrega: formData.dataEntrega,
+        quantidade: parseInt(formData.quantidade) || 1,
+        certificado_aprovacao: formData.certificadoAprovacao || null,
+        validade: formData.validade || null,
+      });
+      toast({
+        title: "EPI registrado",
+        description: "Registro de EPI criado com sucesso.",
+      });
+      setShowRegistroModal(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao registrar EPI",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      entregue: { variant: 'default', label: 'Entregue' },
-      devolvido: { variant: 'secondary', label: 'Devolvido' },
-      perdido: { variant: 'destructive', label: 'Perdido' }
-    };
-    
-    const config = variants[status] || variants.entregue;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const filteredRegistros = registrosEPI.filter(registro => {
+  const filteredRegistros = epis.filter(registro => {
     const matchesSearch = !searchTerm || 
-      registro.tipoEPI.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registro.colaborador.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registro.obra.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesObra = !filtroObra || filtroObra === 'all' || registro.obra === filtroObra;
-    const matchesStatus = !filtroStatus || filtroStatus === 'all' || registro.status === filtroStatus;
-    
-    return matchesSearch && matchesObra && matchesStatus;
+      registro.tipo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      registro.funcionario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (registro as any).obras?.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesObra = !filtroObra || filtroObra === 'all' || registro.obra_id === filtroObra;
+    return matchesSearch && matchesObra;
   });
 
   const getRelatorioEstatisticas = () => {
-    const total = registrosEPI.length;
-    const entregues = registrosEPI.filter(r => r.status === 'entregue').length;
-    const devolvidos = registrosEPI.filter(r => r.status === 'devolvido').length;
-    const perdidos = registrosEPI.filter(r => r.status === 'perdido').length;
-    
-    return { total, entregues, devolvidos, perdidos };
+    const total = epis.length;
+    return { total };
   };
 
   const estatisticas = getRelatorioEstatisticas();
+
+  if (loadingEPIs || loadingObras) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Controle de EPIs</h1>
-            <p className="text-slate-600 mt-1">Registro e acompanhamento de Equipamentos de Proteção Individual</p>
+            <h1 className="text-3xl font-bold text-foreground">Controle de EPIs</h1>
+            <p className="text-muted-foreground mt-1">Registro e acompanhamento de Equipamentos de Proteção Individual</p>
           </div>
           <Button onClick={handleNovoRegistro}>
             <Plus className="w-4 h-4 mr-2" />
@@ -138,7 +142,6 @@ const EPIs = () => {
           </TabsList>
 
           <TabsContent value="registros" className="space-y-4">
-            {/* Filtros */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -147,7 +150,7 @@ const EPIs = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="busca">Busca Geral</Label>
                     <Input 
@@ -164,28 +167,14 @@ const EPIs = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as obras</SelectItem>
-                        {obras.map((obra) => (
-                          <SelectItem key={obra} value={obra}>{obra}</SelectItem>
+                        {obrasData.map((obra) => (
+                          <SelectItem key={obra.id} value={obra.id}>{obra.nome}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos os status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os status</SelectItem>
-                        <SelectItem value="entregue">Entregue</SelectItem>
-                        <SelectItem value="devolvido">Devolvido</SelectItem>
-                        <SelectItem value="perdido">Perdido</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="flex items-end">
-                    <div className="text-sm text-slate-600">
+                    <div className="text-sm text-muted-foreground">
                       {filteredRegistros.length} registros encontrados
                     </div>
                   </div>
@@ -193,7 +182,6 @@ const EPIs = () => {
               </CardContent>
             </Card>
 
-            {/* Lista de Registros */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -209,19 +197,19 @@ const EPIs = () => {
                       <TableHead>Colaborador</TableHead>
                       <TableHead>Obra</TableHead>
                       <TableHead>Data Entrega</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Quantidade</TableHead>
+                      <TableHead>Validade</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredRegistros.map((registro) => (
                       <TableRow key={registro.id}>
-                        <TableCell className="font-medium">{registro.tipoEPI}</TableCell>
-                        <TableCell>{registro.colaborador}</TableCell>
-                        <TableCell>{registro.obra}</TableCell>
-                        <TableCell>{new Date(registro.dataEntrega).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>{registro.responsavel}</TableCell>
-                        <TableCell>{getStatusBadge(registro.status)}</TableCell>
+                        <TableCell className="font-medium">{registro.tipo}</TableCell>
+                        <TableCell>{registro.funcionario || '—'}</TableCell>
+                        <TableCell>{(registro as any).obras?.nome || '—'}</TableCell>
+                        <TableCell>{registro.data_entrega ? new Date(registro.data_entrega).toLocaleDateString('pt-BR') : '—'}</TableCell>
+                        <TableCell>{registro.quantidade}</TableCell>
+                        <TableCell>{registro.validade ? new Date(registro.validade).toLocaleDateString('pt-BR') : '—'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -231,43 +219,25 @@ const EPIs = () => {
           </TabsContent>
 
           <TabsContent value="relatorios" className="space-y-4">
-            {/* Estatísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-slate-900">{estatisticas.total}</div>
-                    <div className="text-sm text-slate-600">Total de EPIs</div>
+                    <div className="text-2xl font-bold text-foreground">{estatisticas.total}</div>
+                    <div className="text-sm text-muted-foreground">Total de EPIs Registrados</div>
                   </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{estatisticas.entregues}</div>
-                    <div className="text-sm text-slate-600">EPIs Entregues</div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{estatisticas.devolvidos}</div>
-                    <div className="text-sm text-slate-600">EPIs Devolvidos</div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600">{estatisticas.perdidos}</div>
-                    <div className="text-sm text-slate-600">EPIs Perdidos</div>
+                    <div className="text-2xl font-bold text-foreground">{obrasData.length}</div>
+                    <div className="text-sm text-muted-foreground">Obras com EPIs</div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Relatório Detalhado por Obra */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -281,26 +251,15 @@ const EPIs = () => {
                     <TableRow>
                       <TableHead>Obra</TableHead>
                       <TableHead>Total EPIs</TableHead>
-                      <TableHead>Entregues</TableHead>
-                      <TableHead>Devolvidos</TableHead>
-                      <TableHead>Perdidos</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {obras.map((obra) => {
-                      const registrosObra = registrosEPI.filter(r => r.obra === obra);
-                      const total = registrosObra.length;
-                      const entregues = registrosObra.filter(r => r.status === 'entregue').length;
-                      const devolvidos = registrosObra.filter(r => r.status === 'devolvido').length;
-                      const perdidos = registrosObra.filter(r => r.status === 'perdido').length;
-                      
+                    {obrasData.map((obra) => {
+                      const registrosObra = epis.filter(r => r.obra_id === obra.id);
                       return (
-                        <TableRow key={obra}>
-                          <TableCell className="font-medium">{obra}</TableCell>
-                          <TableCell>{total}</TableCell>
-                          <TableCell className="text-green-600">{entregues}</TableCell>
-                          <TableCell className="text-blue-600">{devolvidos}</TableCell>
-                          <TableCell className="text-red-600">{perdidos}</TableCell>
+                        <TableRow key={obra.id}>
+                          <TableCell className="font-medium">{obra.nome}</TableCell>
+                          <TableCell>{registrosObra.length}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -320,9 +279,7 @@ const EPIs = () => {
             <form onSubmit={handleSaveRegistro} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-slate-700">
-                    Tipo de EPI *
-                  </Label>
+                  <Label>Tipo de EPI *</Label>
                   <Select 
                     value={formData.tipoEPI} 
                     onValueChange={(value) => setFormData({...formData, tipoEPI: value})}
@@ -339,28 +296,16 @@ const EPIs = () => {
                 </div>
 
                 <div>
-                  <Label className="text-slate-700">
-                    Colaborador *
-                  </Label>
-                  <Select 
-                    value={formData.colaborador} 
-                    onValueChange={(value) => setFormData({...formData, colaborador: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o colaborador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colaboradores.map((colaborador) => (
-                        <SelectItem key={colaborador} value={colaborador}>{colaborador}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Colaborador *</Label>
+                  <Input
+                    value={formData.colaborador}
+                    onChange={(e) => setFormData({...formData, colaborador: e.target.value})}
+                    placeholder="Nome do colaborador"
+                  />
                 </div>
 
                 <div>
-                  <Label className="text-slate-700">
-                    Obra *
-                  </Label>
+                  <Label>Obra *</Label>
                   <Select 
                     value={formData.obra} 
                     onValueChange={(value) => setFormData({...formData, obra: value})}
@@ -369,17 +314,15 @@ const EPIs = () => {
                       <SelectValue placeholder="Selecione a obra" />
                     </SelectTrigger>
                     <SelectContent>
-                      {obras.map((obra) => (
-                        <SelectItem key={obra} value={obra}>{obra}</SelectItem>
+                      {obrasData.map((obra) => (
+                        <SelectItem key={obra.id} value={obra.id}>{obra.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label className="text-slate-700">
-                    Data de Entrega *
-                  </Label>
+                  <Label>Data de Entrega *</Label>
                   <Input
                     type="date"
                     value={formData.dataEntrega}
@@ -389,55 +332,40 @@ const EPIs = () => {
                 </div>
 
                 <div>
-                  <Label className="text-slate-700">
-                    Responsável pela Entrega *
-                  </Label>
+                  <Label>Quantidade</Label>
                   <Input
-                    placeholder="Digite o responsável pela entrega"
-                    value={formData.responsavel}
-                    onChange={(e) => setFormData({...formData, responsavel: e.target.value})}
+                    type="number"
+                    value={formData.quantidade}
+                    onChange={(e) => setFormData({...formData, quantidade: e.target.value})}
+                    min="1"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-slate-700">
-                    Status *
-                  </Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(value) => setFormData({...formData, status: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="entregue">Entregue</SelectItem>
-                      <SelectItem value="devolvido">Devolvido</SelectItem>
-                      <SelectItem value="perdido">Perdido</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Validade</Label>
+                  <Input
+                    type="date"
+                    value={formData.validade}
+                    onChange={(e) => setFormData({...formData, validade: e.target.value})}
+                  />
                 </div>
-              </div>
 
-              <div>
-                <Label className="text-slate-700">
-                  Observações
-                </Label>
-                <textarea
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                  placeholder="Observações sobre o EPI..."
-                />
+                <div className="md:col-span-2">
+                  <Label>Certificado de Aprovação (CA)</Label>
+                  <Input
+                    value={formData.certificadoAprovacao}
+                    onChange={(e) => setFormData({...formData, certificadoAprovacao: e.target.value})}
+                    placeholder="Número do CA"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setShowRegistroModal(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  Registrar EPI
+                <Button type="submit" disabled={createEPI.isPending}>
+                  {createEPI.isPending ? 'Salvando...' : 'Registrar EPI'}
                 </Button>
               </div>
             </form>

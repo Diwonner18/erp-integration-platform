@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Package, Wrench, Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import EditMaterialModal from '@/components/Obras/EditMaterialModal';
 import EditEquipamentoModal from '@/components/Obras/EditEquipamentoModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useMateriais, useEquipamentos, useCreateMaterial, useCreateEquipamento, useDeleteMaterial, useDeleteEquipamento, useUpdateMaterial, useUpdateEquipamento, useObras } from '@/hooks/useSupabaseData';
 
 const MateriaisEquipamentos = () => {
   const { toast } = useToast();
@@ -21,13 +23,11 @@ const MateriaisEquipamentos = () => {
   const [modalType, setModalType] = useState<'material' | 'equipamento'>('material');
   const [formData, setFormData] = useState({
     nome: '',
-    categoria: '',
+    obraId: '',
     quantidade: '',
     unidade: '',
     valorUnitario: '',
-    marca: '',
-    modelo: '',
-    numeroSerie: ''
+    fornecedor: '',
   });
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -37,51 +37,71 @@ const MateriaisEquipamentos = () => {
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [deleteType, setDeleteType] = useState<string>('');
 
-  const [materiais, setMateriais] = useState<any[]>([]);
-
-  const [equipamentos, setEquipamentos] = useState<any[]>([]);
+  const { data: materiais = [], isLoading: loadingMateriais } = useMateriais();
+  const { data: equipamentos = [], isLoading: loadingEquipamentos } = useEquipamentos();
+  const { data: obrasData = [] } = useObras();
+  const createMaterial = useCreateMaterial();
+  const createEquipamento = useCreateEquipamento();
+  const deleteMaterialMut = useDeleteMaterial();
+  const deleteEquipamentoMut = useDeleteEquipamento();
+  const updateMaterialMut = useUpdateMaterial();
+  const updateEquipamentoMut = useUpdateEquipamento();
 
   const filteredMateriais = materiais.filter(material => 
     material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    material.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+    (material.fornecedor || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredEquipamentos = equipamentos.filter(equipamento => 
     equipamento.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    equipamento.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+    (equipamento.fornecedor || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddItem = (type: 'material' | 'equipamento') => {
     setModalType(type);
-    setFormData({
-      nome: '',
-      categoria: '',
-      quantidade: '',
-      unidade: '',
-      valorUnitario: '',
-      marca: '',
-      modelo: '',
-      numeroSerie: ''
-    });
+    setFormData({ nome: '', obraId: '', quantidade: '', unidade: '', valorUnitario: '', fornecedor: '' });
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    toast({
-      title: `${modalType === 'material' ? 'Material' : 'Equipamento'} adicionado`,
-      description: `${formData.nome} foi registrado com sucesso`,
-    });
-    setShowModal(false);
+  const handleSave = async () => {
+    if (!formData.nome || !formData.obraId) {
+      toast({ title: 'Erro', description: 'Nome e obra são obrigatórios', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      if (modalType === 'material') {
+        await createMaterial.mutateAsync({
+          nome: formData.nome,
+          obra_id: formData.obraId,
+          quantidade: parseFloat(formData.quantidade) || 0,
+          unidade: formData.unidade || 'un',
+          valor_unitario: parseFloat(formData.valorUnitario) || 0,
+          fornecedor: formData.fornecedor || null,
+        });
+      } else {
+        await createEquipamento.mutateAsync({
+          nome: formData.nome,
+          obra_id: formData.obraId,
+          quantidade: parseInt(formData.quantidade) || 1,
+          valor_unitario: parseFloat(formData.valorUnitario) || 0,
+          fornecedor: formData.fornecedor || null,
+        });
+      }
+      toast({
+        title: `${modalType === 'material' ? 'Material' : 'Equipamento'} adicionado`,
+        description: `${formData.nome} foi registrado com sucesso`,
+      });
+      setShowModal(false);
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
   };
 
   const handleEdit = (item: any, type: string) => {
-    if (type === 'Material') {
-      setSelectedItem(item);
-      setShowEditModal(true);
-    } else {
-      setSelectedItem(item);
-      setShowEditEquipamentoModal(true);
-    }
+    setSelectedItem(item);
+    if (type === 'Material') setShowEditModal(true);
+    else setShowEditEquipamentoModal(true);
   };
 
   const handleDelete = (item: any, type: string) => {
@@ -90,47 +110,51 @@ const MateriaisEquipamentos = () => {
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
-    if (itemToDelete && deleteType) {
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    try {
       if (deleteType === 'Material') {
-        setMateriais(prev => prev.filter(material => material.id !== itemToDelete.id));
+        await deleteMaterialMut.mutateAsync(itemToDelete.id);
       } else {
-        setEquipamentos(prev => prev.filter(equipamento => equipamento.id !== itemToDelete.id));
+        await deleteEquipamentoMut.mutateAsync(itemToDelete.id);
       }
-      
-      toast({
-        title: "Item excluído com sucesso",
-        description: `${itemToDelete.nome} foi removido da lista`,
-        variant: 'destructive',
-      });
-      
+      toast({ title: "Item excluído", description: `${itemToDelete.nome} foi removido`, variant: 'destructive' });
       setShowDeleteDialog(false);
       setItemToDelete(null);
       setDeleteType('');
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     }
   };
 
-  const handleSaveEdit = (updatedMaterial: any) => {
-    setMateriais(prev => prev.map(material => 
-      material.id === updatedMaterial.id ? updatedMaterial : material
-    ));
-    
-    toast({
-      title: "Material atualizado",
-      description: `${updatedMaterial.nome} foi atualizado com sucesso`,
-    });
+  const handleSaveEdit = async (updatedMaterial: any) => {
+    try {
+      await updateMaterialMut.mutateAsync({ id: updatedMaterial.id, nome: updatedMaterial.nome, quantidade: updatedMaterial.quantidade, unidade: updatedMaterial.unidade, valor_unitario: updatedMaterial.valor_unitario });
+      toast({ title: "Material atualizado", description: `${updatedMaterial.nome} foi atualizado` });
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
   };
 
-  const handleSaveEditEquipamento = (updatedEquipamento: any) => {
-    setEquipamentos(prev => prev.map(equipamento => 
-      equipamento.id === updatedEquipamento.id ? updatedEquipamento : equipamento
-    ));
-    
-    toast({
-      title: "Equipamento atualizado",
-      description: `${updatedEquipamento.nome} foi atualizado com sucesso`,
-    });
+  const handleSaveEditEquipamento = async (updatedEquipamento: any) => {
+    try {
+      await updateEquipamentoMut.mutateAsync({ id: updatedEquipamento.id, nome: updatedEquipamento.nome, quantidade: updatedEquipamento.quantidade, valor_unitario: updatedEquipamento.valor_unitario });
+      toast({ title: "Equipamento atualizado", description: `${updatedEquipamento.nome} foi atualizado` });
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
   };
+
+  if (loadingMateriais || loadingEquipamentos) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -145,12 +169,7 @@ const MateriaisEquipamentos = () => {
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input 
-              placeholder="Buscar..." 
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <Input placeholder="Buscar..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
 
@@ -158,11 +177,11 @@ const MateriaisEquipamentos = () => {
           <TabsList>
             <TabsTrigger value="materiais" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Materiais
+              Materiais ({materiais.length})
             </TabsTrigger>
             <TabsTrigger value="equipamentos" className="flex items-center gap-2">
               <Wrench className="w-4 h-4" />
-              Equipamentos
+              Equipamentos ({equipamentos.length})
             </TabsTrigger>
           </TabsList>
 
@@ -173,52 +192,32 @@ const MateriaisEquipamentos = () => {
                 Adicionar Material
               </Button>
             </div>
-            
             <div className="grid gap-4">
               {filteredMateriais.map((material) => (
                 <Card key={material.id}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          material.estoque === 'critico' ? 'bg-destructive/10' :
-                          material.estoque === 'baixo' ? 'bg-secondary' : 'bg-primary/10'
-                        }`}>
-                          <Package className={`w-5 h-5 ${
-                            material.estoque === 'critico' ? 'text-destructive' :
-                            material.estoque === 'baixo' ? 'text-muted-foreground' : 'text-primary'
-                          }`} />
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
+                          <Package className="w-5 h-5 text-primary" />
                         </div>
                         <div>
                           <h3 className="font-semibold text-foreground">{material.nome}</h3>
-                          <p className="text-sm text-muted-foreground">{material.categoria}</p>
+                          <p className="text-sm text-muted-foreground">{(material as any).obras?.nome || 'Sem obra'}</p>
                           <p className="text-xs text-muted-foreground">
-                            Qtd: {material.quantidade} {material.unidade} | {material.valorUnitario}
+                            Qtd: {material.quantidade} {material.unidade} | R$ {Number(material.valor_unitario || 0).toFixed(2)}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Badge variant={
-                          material.estoque === 'critico' ? 'destructive' :
-                          material.estoque === 'baixo' ? 'secondary' : 'default'
-                        }>
-                          {material.estoque === 'critico' ? 'Crítico' :
-                           material.estoque === 'baixo' ? 'Baixo' : 'Adequado'}
+                        <Badge variant={material.status === 'entregue' ? 'default' : 'secondary'}>
+                          {material.status || 'Pendente'}
                         </Badge>
-                        
                         <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEdit(material, 'Material')}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(material, 'Material')}>
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDelete(material, 'Material')}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(material, 'Material')}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -237,7 +236,6 @@ const MateriaisEquipamentos = () => {
                 Adicionar Equipamento
               </Button>
             </div>
-            
             <div className="grid gap-4">
               {filteredEquipamentos.map((equipamento) => (
                 <Card key={equipamento.id}>
@@ -245,19 +243,17 @@ const MateriaisEquipamentos = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          equipamento.status === 'manutencao' ? 'bg-destructive/10' :
-                          equipamento.status === 'em_uso' ? 'bg-secondary' : 'bg-primary/10'
+                          equipamento.status === 'manutencao' ? 'bg-destructive/10' : 'bg-primary/10'
                         }`}>
                           <Wrench className={`w-5 h-5 ${
-                            equipamento.status === 'manutencao' ? 'text-destructive' :
-                            equipamento.status === 'em_uso' ? 'text-muted-foreground' : 'text-primary'
+                            equipamento.status === 'manutencao' ? 'text-destructive' : 'text-primary'
                           }`} />
                         </div>
                         <div>
                           <h3 className="font-semibold text-foreground">{equipamento.nome}</h3>
-                          <p className="text-sm text-muted-foreground">{equipamento.categoria}</p>
+                          <p className="text-sm text-muted-foreground">{(equipamento as any).obras?.nome || 'Sem obra'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {equipamento.marca} {equipamento.modelo} | N/S: {equipamento.numeroSerie}
+                            Fornecedor: {equipamento.fornecedor || '—'} | Qtd: {equipamento.quantidade}
                           </p>
                         </div>
                       </div>
@@ -269,20 +265,11 @@ const MateriaisEquipamentos = () => {
                           {equipamento.status === 'manutencao' ? 'Manutenção' :
                            equipamento.status === 'em_uso' ? 'Em Uso' : 'Disponível'}
                         </Badge>
-                        
                         <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEdit(equipamento, 'Equipamento')}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(equipamento, 'Equipamento')}>
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDelete(equipamento, 'Equipamento')}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => handleDelete(equipamento, 'Equipamento')}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -295,130 +282,69 @@ const MateriaisEquipamentos = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Modal para adicionar material/equipamento */}
+        {/* Modal para adicionar */}
         <Dialog open={showModal} onOpenChange={setShowModal}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>
-                Adicionar {modalType === 'material' ? 'Material' : 'Equipamento'}
-              </DialogTitle>
+              <DialogTitle>Adicionar {modalType === 'material' ? 'Material' : 'Equipamento'}</DialogTitle>
             </DialogHeader>
-            
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input
-                  value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  placeholder={`Nome do ${modalType}`}
-                />
+                <Label>Nome *</Label>
+                <Input value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} placeholder={`Nome do ${modalType}`} />
               </div>
-
               <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Input
-                  value={formData.categoria}
-                  onChange={(e) => setFormData({...formData, categoria: e.target.value})}
-                  placeholder="Categoria"
-                />
+                <Label>Obra *</Label>
+                <Select value={formData.obraId} onValueChange={(value) => setFormData({...formData, obraId: value})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a obra" /></SelectTrigger>
+                  <SelectContent>
+                    {obrasData.map((obra) => (
+                      <SelectItem key={obra.id} value={obra.id}>{obra.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {modalType === 'material' ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Quantidade</Label>
-                      <Input
-                        type="number"
-                        value={formData.quantidade}
-                        onChange={(e) => setFormData({...formData, quantidade: e.target.value})}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Unidade</Label>
-                      <Select value={formData.unidade} onValueChange={(value) => setFormData({...formData, unidade: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Unidade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="UN">Unidade</SelectItem>
-                          <SelectItem value="M">Metro</SelectItem>
-                          <SelectItem value="KG">Quilograma</SelectItem>
-                          <SelectItem value="L">Litro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Quantidade</Label>
+                  <Input type="number" value={formData.quantidade} onChange={(e) => setFormData({...formData, quantidade: e.target.value})} placeholder="0" />
+                </div>
+                {modalType === 'material' && (
                   <div className="space-y-2">
-                    <Label>Valor Unitário (R$)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.valorUnitario}
-                      onChange={(e) => setFormData({...formData, valorUnitario: e.target.value})}
-                      placeholder="0.00"
-                    />
+                    <Label>Unidade</Label>
+                    <Select value={formData.unidade} onValueChange={(value) => setFormData({...formData, unidade: value})}>
+                      <SelectTrigger><SelectValue placeholder="Unidade" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="un">Unidade</SelectItem>
+                        <SelectItem value="m">Metro</SelectItem>
+                        <SelectItem value="kg">Quilograma</SelectItem>
+                        <SelectItem value="l">Litro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label>Marca</Label>
-                    <Input
-                      value={formData.marca}
-                      onChange={(e) => setFormData({...formData, marca: e.target.value})}
-                      placeholder="Marca do equipamento"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Modelo</Label>
-                    <Input
-                      value={formData.modelo}
-                      onChange={(e) => setFormData({...formData, modelo: e.target.value})}
-                      placeholder="Modelo"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Número de Série</Label>
-                    <Input
-                      value={formData.numeroSerie}
-                      onChange={(e) => setFormData({...formData, numeroSerie: e.target.value})}
-                      placeholder="Número de série"
-                    />
-                  </div>
-                </>
-              )}
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Unitário (R$)</Label>
+                <Input type="number" step="0.01" value={formData.valorUnitario} onChange={(e) => setFormData({...formData, valorUnitario: e.target.value})} placeholder="0.00" />
+              </div>
+              <div className="space-y-2">
+                <Label>Fornecedor</Label>
+                <Input value={formData.fornecedor} onChange={(e) => setFormData({...formData, fornecedor: e.target.value})} placeholder="Nome do fornecedor" />
+              </div>
             </div>
-
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave}>
-                Salvar
+              <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={createMaterial.isPending || createEquipamento.isPending}>
+                {(createMaterial.isPending || createEquipamento.isPending) ? 'Salvando...' : 'Salvar'}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Modal de Edição de Material */}
-        <EditMaterialModal
-          open={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          material={selectedItem}
-          onSave={handleSaveEdit}
-        />
+        <EditMaterialModal open={showEditModal} onClose={() => setShowEditModal(false)} material={selectedItem} onSave={handleSaveEdit} />
+        <EditEquipamentoModal open={showEditEquipamentoModal} onClose={() => setShowEditEquipamentoModal(false)} equipamento={selectedItem} onSave={handleSaveEditEquipamento} />
 
-        {/* Modal de Edição de Equipamento */}
-        <EditEquipamentoModal
-          open={showEditEquipamentoModal}
-          onClose={() => setShowEditEquipamentoModal(false)}
-          equipamento={selectedItem}
-          onSave={handleSaveEditEquipamento}
-        />
-
-        {/* Modal de Confirmação de Exclusão */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>

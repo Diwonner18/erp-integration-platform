@@ -1,47 +1,52 @@
 
 
-## Plano: Migrar paginas restantes para Supabase
+## Plano: Popular o sistema conectando Supabase + n8n
 
-### Paginas a migrar
+### Visao geral
 
-6 paginas ainda usam `useState<any[]>([])` ou arrays vazios hardcoded:
+A ideia e criar um fluxo completo onde o Supabase serve como banco de dados real e o n8n popula/processa dados automaticamente. Hoje o sistema inteiro roda em localStorage sem backend. A conexao Supabase + n8n permite que os 14 workflows alimentem o banco e o frontend consuma dados reais.
 
-1. **EPIs.tsx** -- `useState<any[]>([])` para registrosEPI, arrays vazios para obras/colaboradores/responsaveis
-2. **Materiais.tsx** -- `useState<any[]>([])` para materiais
-3. **MateriaisEquipamentos.tsx** -- `useState<any[]>([])` para materiais e equipamentos
-4. **EquipeAtiva.tsx** -- arrays vazios para funcionarios, obras, alocacoesDiarias
-5. **RelatorioDiarioObra.tsx** -- arrays vazios para obras, relatorios
-6. **Programacao.tsx** -- `useState<any[]>([])` para programacoes, aceites, obras
+### Arquitetura
 
-### Hooks ja existentes
+```text
+[Frontend Lovable] <---> [Supabase (DB + Auth + Edge Functions)] <---> [n8n Workflows]
+                              |                                           |
+                              |-- Tabelas reais (obras, medicoes, etc)    |
+                              |-- Auth real (email/senha)                 |
+                              |-- Edge Functions (webhooks de saida) ---->|
+                              |<--- Webhooks de entrada (n8n responde) ---|
+```
 
-Todos os hooks necessarios ja existem em `useSupabaseData.ts`: `useEPIs`, `useMateriais`, `useEquipamentos`, `useObras`, `useProgramacoes`, `useRelatoriosDiarios`, `useCreateEPI`, `useCreateMaterial`, `useDeleteMaterial`, `useUpdateMaterial`, `useCreateEquipamento`, `useDeleteEquipamento`, `useUpdateEquipamento`, `useCreateProgramacao`, `useUpdateProgramacao`, `useCreateRelatorioDiario`.
+### Etapas de implementacao
 
-### Mutations faltantes no hooks
+**Etapa 1 -- Conectar Supabase (Lovable Cloud)**
+- Ativar Lovable Cloud no projeto
+- Criar schema do banco: tabelas `obras`, `propostas`, `medicoes`, `programacoes`, `materiais`, `epis`, `boletins`, `logs_auditoria`, `notificacoes`, `user_roles`
+- Configurar autenticacao real (substituir localStorage)
+- Aplicar RLS em todas as tabelas
 
-Preciso adicionar ao `useSupabaseData.ts`:
-- `useDeleteProgramacao`
-- `useUpdateRelatorioDiario`
+**Etapa 2 -- Edge Functions como ponte para n8n**
+- Criar Edge Functions que disparam webhooks n8n quando acoes ocorrem no sistema:
+  - `on-proposta-aprovada` → WF-01 (cria obra)
+  - `on-programacao-criada` → WF-03 (agenda)
+  - `on-medicao-executada` → WF-05 (gera medicao)
+  - `on-acao-sensivel` → WF-13 (audit trail)
+- Criar Edge Functions que recebem dados do n8n:
+  - `webhook-criar-obra` (n8n envia obra criada)
+  - `webhook-gerar-medicao` (n8n envia medicao calculada)
+  - `webhook-notificacao` (n8n envia alertas)
 
-### Migracao por pagina
+**Etapa 3 -- Migrar frontend para Supabase**
+- Substituir `AuthContext` de localStorage para `supabase.auth`
+- Substituir dados mock por queries `supabase.from('tabela').select()`
+- Dashboard consome dados reais via React Query + Supabase
 
-**EPIs.tsx**: Substituir `registrosEPI` por `useEPIs()`. Usar `useObras()` para popular select de obras. Modal de registro usa `useCreateEPI()`. Mapear campos: `tipoEPI` -> `tipo`, `colaborador` -> `funcionario`, `dataEntrega` -> `data_entrega`.
+**Etapa 4 -- Conectar n8n aos endpoints**
+- Atualizar URLs dos webhooks nos 14 workflows para apontar para as Edge Functions do Supabase
+- Substituir placeholders (`<__PLACEHOLDER_VALUE__>`) por URLs reais
+- Testar fluxo completo: acao no frontend → Edge Function → n8n → processamento → resposta ao banco
 
-**Materiais.tsx**: Substituir `materiais` por `useMateriais()`. Delete usa `useDeleteMaterial()`. Edit usa `useUpdateMaterial()`. Adaptar filtro (`categoria` nao existe na tabela -- usar `fornecedor` ou `status`).
+### Primeiro passo concreto
 
-**MateriaisEquipamentos.tsx**: Mesma abordagem -- `useMateriais()` + `useEquipamentos()`. Create/edit/delete usam mutations existentes.
-
-**EquipeAtiva.tsx**: Nao existe tabela `funcionarios` no Supabase. Esta pagina mostra equipe vinculada a obras. Usarei `useProfiles()` + `useUserRoles()` para listar usuarios internos, e `useObras()` para popular selects. Alocacoes diarias permanecem como estado local (nao ha tabela dedicada).
-
-**RelatorioDiarioObra.tsx**: Substituir `obras: string[]` por `useObras()`. Substituir `relatorios` por `useRelatoriosDiarios()`. Salvar usa `useCreateRelatorioDiario()`.
-
-**Programacao.tsx**: Substituir `programacoes` por `useProgramacoes()`. Substituir `obras` por `useObras()`. Nova programacao usa `useCreateProgramacao()`. Editar usa `useUpdateProgramacao()`. Aceites permanecem como estado local (tabela `aceites_digitais` e para propostas, nao programacoes).
-
-### Abordagem
-
-- Importar hooks existentes em cada pagina
-- Remover `useState<any[]>([])` e arrays vazios
-- Adicionar loading states com Skeleton
-- Mapear campos do frontend para colunas reais do banco
-- Manter logica de UI (filtros, modais) intacta
+Precisamos ativar o Lovable Cloud (Supabase) no projeto. Sem ele, nao ha banco de dados nem Edge Functions para o n8n consumir.
 

@@ -424,6 +424,7 @@ export const useCreateEquipamento = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (equip: TablesInsert<'equipamentos'>) => {
+      validateInput(equipamentoInsertSchema, equip);
       const { data, error } = await supabase.from('equipamentos').insert(equip).select().single();
       if (error) throw error;
       return data;

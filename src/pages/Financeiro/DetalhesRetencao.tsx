@@ -128,12 +128,7 @@ const DetalhesRetencao = () => {
     }
     
     // Implementar registro do pagamento
-    console.log('Registrando pagamento:', {
-      type: paymentType,
-      value: paymentValue,
-      date: paymentDate,
-      description: paymentDescription
-    });
+    // TODO: persist payment to database
     
     toast.success('Pagamento registrado com sucesso!');
     setIsPaymentModalOpen(false);

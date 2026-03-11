@@ -10,6 +10,9 @@ import { Eye, EyeOff } from 'lucide-react';
 import AreaSelectionModal from '@/components/Auth/AreaSelectionModal';
 import logotipo from '@/assets/logotipo.png';
 
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_SECONDS = 30;
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,9 +21,13 @@ const Login = () => {
   const [showAreaSelection, setShowAreaSelection] = useState(false);
   const [pendingUser, setPendingUser] = useState<User | null>(null);
   const [isAssigningArea, setIsAssigningArea] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   
   const { login, assignUserArea } = useAuth();
   const navigate = useNavigate();
+
+  const isLockedOut = lockoutUntil !== null && Date.now() < lockoutUntil;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +37,18 @@ const Login = () => {
       return;
     }
 
+    if (isLockedOut) {
+      const secondsLeft = Math.ceil((lockoutUntil! - Date.now()) / 1000);
+      toast.error(`Muitas tentativas. Aguarde ${secondsLeft}s antes de tentar novamente.`);
+      return;
+    }
+
     setIsLoading(true);
     const result = await login(email, password);
     
     if (result.success) {
+      setLoginAttempts(0);
+      setLockoutUntil(null);
       if (result.needsAreaSelection && result.user) {
         setPendingUser(result.user);
         setShowAreaSelection(true);
@@ -43,7 +58,15 @@ const Login = () => {
         navigate('/');
       }
     } else {
-      toast.error('Credenciais inválidas. Verifique seu e-mail e senha.');
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setLockoutUntil(Date.now() + LOCKOUT_SECONDS * 1000);
+        setLoginAttempts(0);
+        toast.error(`Muitas tentativas falhas. Aguarde ${LOCKOUT_SECONDS}s.`);
+      } else {
+        toast.error(`Credenciais inválidas. ${MAX_ATTEMPTS - newAttempts} tentativa(s) restante(s).`);
+      }
     }
     
     setIsLoading(false);

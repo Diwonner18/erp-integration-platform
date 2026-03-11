@@ -53,8 +53,7 @@ export const useMedicoes = (obraId?: string) => {
     queryFn: async () => {
       let query = supabase.from('medicoes').select('*, obras(nome, clientes(razao_social))');
       if (obraId) query = query.eq('obra_id', obraId);
-      const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) throw error;
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       return data;
     },
   });

@@ -98,7 +98,7 @@ const DetalhesRetencao = () => {
 
   const handleSalvarObservacoes = () => {
     // Implementar salvamento das observações
-    console.log('Salvando observações:', observacoes);
+    // TODO: persist observações to database
     toast.success('Observações salvas com sucesso!');
   };
 

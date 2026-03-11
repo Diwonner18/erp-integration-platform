@@ -1203,6 +1203,10 @@ export type Database = {
         }
         Returns: string
       }
+      self_assign_area: {
+        Args: { _area: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
+      }
     }
     Enums: {
       alteracao_escopo_status:

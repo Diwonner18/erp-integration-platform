@@ -18,7 +18,7 @@ export const useObras = (status?: Tables<'obras'>['status']) => {
     queryFn: async () => {
       let query = supabase.from('obras').select('*, clientes(razao_social)');
       if (status) query = query.eq('status', status);
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },

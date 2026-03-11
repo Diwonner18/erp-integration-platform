@@ -40,7 +40,7 @@ export const usePropostas = () => {
   return useQuery({
     queryKey: ['propostas'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('propostas').select('*, clientes(razao_social)').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('propostas').select('*, clientes(razao_social)').order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },

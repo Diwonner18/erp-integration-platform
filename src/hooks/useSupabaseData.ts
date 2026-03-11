@@ -313,6 +313,7 @@ export const useCreateProposta = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (proposta: TablesInsert<'propostas'>) => {
+      validateInput(propostaInsertSchema, proposta);
       const { data, error } = await supabase.from('propostas').insert(proposta).select().single();
       if (error) throw error;
       return data;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -11,276 +10,127 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
+import { useHorasExtras, useCreateHorasExtras, useUpdateHorasExtras, useObras } from '@/hooks/useSupabaseData';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const HorasExtras = () => {
+const HorasExtrasPage = () => {
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedRegistro, setSelectedRegistro] = useState(null);
-  const [formData, setFormData] = useState({
-    funcionario: '',
-    horas: '',
-    obra: '',
-    observacoes: '',
-    vinculo: '',
-    dataEspecifica: '',
-    tipoHora: ''
-  });
+  const [selectedRegistro, setSelectedRegistro] = useState<any>(null);
+  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '' });
 
-  const [registros, setRegistros] = useState<any[]>([]);
+  const { data: registros = [], isLoading } = useHorasExtras();
+  const { data: obrasData = [] } = useObras();
+  const createHE = useCreateHorasExtras();
+  const updateHE = useUpdateHorasExtras();
 
-  const tiposHora = {
-    diaria: { valor: 25, descricao: 'Jornada normal de trabalho (8 horas)' },
-    dobra: { valor: 50, descricao: 'Jornada dupla ou hora extra (acima de 8 horas)' },
-    continuacao: { valor: 37.5, descricao: 'Continuação de plantão ou extensão da jornada' }
-  };
-
-  const handleAddHorasExtras = () => {
-    setFormData({ funcionario: '', horas: '', obra: '', observacoes: '', vinculo: '', dataEspecifica: '', tipoHora: '' });
-    setShowAddModal(true);
-  };
-
-  const handleAprovarHoras = (registro: any) => {
-    setSelectedRegistro(registro);
-    setShowConfirmModal(true);
-  };
-
-  const confirmAprovarHoras = () => {
-    if (selectedRegistro) {
-      setRegistros(prev => prev.map(reg => 
-        reg.id === selectedRegistro.id 
-          ? { ...reg, status: 'aprovada' }
-          : reg
-      ));
-      toast({
-        title: "Horas aprovadas",
-        description: `Horas extras de ${selectedRegistro.funcionario} foram aprovadas.`,
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createHE.mutateAsync({
+        funcionario: formData.funcionario,
+        horas: parseFloat(formData.horas),
+        obra_id: formData.obra_id,
+        motivo: formData.motivo,
+        data: new Date().toISOString().split('T')[0],
+        valor_hora: 30,
       });
+      toast({ title: 'Horas registradas', description: 'Registro criado com sucesso.' });
+      setShowAddModal(false);
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao registrar.', variant: 'destructive' });
+    }
+  };
+
+  const confirmAprovar = async () => {
+    if (!selectedRegistro) return;
+    try {
+      await updateHE.mutateAsync({ id: selectedRegistro.id, status: 'aprovada' });
+      toast({ title: 'Horas aprovadas', description: `Horas de ${selectedRegistro.funcionario} aprovadas.` });
+    } catch {
+      toast({ title: 'Erro', variant: 'destructive' });
     }
     setShowConfirmModal(false);
     setSelectedRegistro(null);
   };
 
-  const handleSaveHorasExtras = (e: React.FormEvent) => {
-    e.preventDefault();
-    const valorPorHora = tiposHora[formData.tipoHora]?.valor || 30;
-    const novoRegistro = {
-      id: Date.now(),
-      funcionario: formData.funcionario,
-      horas: formData.horas,
-      valor: `R$ ${parseFloat(formData.horas) * valorPorHora}`,
-      obra: formData.obra,
-      status: 'pendente',
-      date: new Date().toISOString().split('T')[0],
-      tipoHora: formData.tipoHora
-    };
-    
-    setRegistros(prev => [...prev, novoRegistro]);
-    toast({
-      title: "Horas registradas",
-      description: "Registro de horas extras criado com sucesso.",
-    });
-    setShowAddModal(false);
-  };
+  const formatCurrency = (v: number | null) => v ? `R$ ${v.toFixed(2)}` : 'R$ 0,00';
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Controle de Horas Extras</h1>
-            <p className="text-slate-600 mt-1">Registrar e acompanhar horas extras</p>
+            <h1 className="text-3xl font-bold text-foreground">Controle de Horas Extras</h1>
+            <p className="text-muted-foreground mt-1">Registrar e acompanhar horas extras</p>
           </div>
-          <Button onClick={handleAddHorasExtras}>
-            <Plus className="w-4 h-4 mr-2" />
-            Registrar Horas
-          </Button>
+          <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
         </div>
 
-        <div className="grid gap-4">
-          {registros.map((registro) => (
-            <Card key={registro.id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-purple-600" />
+        {isLoading ? (
+          <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>
+        ) : registros.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p className="font-medium">Nenhum registro de horas extras</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {registros.map((registro) => (
+              <Card key={registro.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{registro.funcionario}</h3>
+                        <p className="text-sm text-muted-foreground">{registro.obras?.nome || '-'} - {registro.horas}h</p>
+                        <p className="text-xs text-muted-foreground">Data: {new Date(registro.data).toLocaleDateString('pt-BR')} | Valor/h: {formatCurrency(registro.valor_hora)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900">{registro.funcionario}</h3>
-                      <p className="text-sm text-slate-600">{registro.obra} - {registro.horas}</p>
-                      <p className="text-xs text-slate-500">Data: {registro.date} | Valor: {registro.valor}</p>
-                      {registro.tipoHora && (
-                        <p className="text-xs text-blue-600 font-medium">
-                          Tipo: {registro.tipoHora === 'diaria' ? 'Diária' : 
-                                 registro.tipoHora === 'dobra' ? 'Dobra' : 'Continuação'}
-                        </p>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={registro.status === 'aprovada' ? 'default' : 'secondary'}>
+                        {registro.status === 'aprovada' ? 'Aprovada' : 'Pendente'}
+                      </Badge>
+                      {registro.status === 'pendente' && (
+                        <Button size="sm" onClick={() => { setSelectedRegistro(registro); setShowConfirmModal(true); }}>Aprovar</Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={registro.status === 'aprovada' ? 'default' : 'secondary'}>
-                      {registro.status === 'aprovada' ? 'Aprovada' : 'Pendente'}
-                    </Badge>
-                    {registro.status === 'pendente' && (
-                      <Button 
-                        size="sm"
-                        onClick={() => handleAprovarHoras(registro)}
-                      >
-                        Aprovar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {/* Add Modal */}
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Registrar Horas Extras</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSaveHorasExtras} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Funcionário
-                </label>
-                <Input
-                  value={formData.funcionario}
-                  onChange={(e) => setFormData({...formData, funcionario: e.target.value})}
-                  placeholder="Nome do funcionário"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Quantidade de Horas
-                </label>
-                <Input
-                  type="number"
-                  value={formData.horas}
-                  onChange={(e) => setFormData({...formData, horas: e.target.value})}
-                  placeholder="Ex: 4"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-slate-700">
-                  Obra
-                </Label>
-                <Input
-                  value={formData.obra}
-                  onChange={(e) => setFormData({...formData, obra: e.target.value})}
-                  placeholder="Ex: Residencial - ABC"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label className="text-slate-700">
-                  Tipo de Hora *
-                </Label>
-                <Select 
-                  value={formData.tipoHora} 
-                  onValueChange={(value) => setFormData({...formData, tipoHora: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo de hora" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="diaria">
-                      <div className="flex flex-col">
-                        <span>Diária</span>
-                        <span className="text-xs text-slate-500">Jornada normal de trabalho (8 horas) - R$ 25/h</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="dobra">
-                      <div className="flex flex-col">
-                        <span>Dobra</span>
-                        <span className="text-xs text-slate-500">Jornada dupla ou hora extra (acima de 8 horas) - R$ 50/h</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="continuacao">
-                      <div className="flex flex-col">
-                        <span>Continuação</span>
-                        <span className="text-xs text-slate-500">Continuação de plantão ou extensão da jornada - R$ 37,50/h</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
+            <DialogHeader><DialogTitle>Registrar Horas Extras</DialogTitle></DialogHeader>
+            <form onSubmit={handleSave} className="space-y-4">
+              <div><Label>Funcionário</Label><Input value={formData.funcionario} onChange={(e) => setFormData({...formData, funcionario: e.target.value})} required /></div>
+              <div><Label>Horas</Label><Input type="number" value={formData.horas} onChange={(e) => setFormData({...formData, horas: e.target.value})} required /></div>
+              <div><Label>Obra</Label>
+                <Select value={formData.obra_id} onValueChange={(v) => setFormData({...formData, obra_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{obrasData.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <Label className="text-slate-700">
-                  Vínculo *
-                </Label>
-                <Select 
-                  value={formData.vinculo} 
-                  onValueChange={(value) => setFormData({...formData, vinculo: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o vínculo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="obra">Por Obra</SelectItem>
-                    <SelectItem value="data">Por Data Específica</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.vinculo === 'data' && (
-                <div>
-                  <Label className="text-slate-700">
-                    Data Específica
-                  </Label>
-                  <Input
-                    type="date"
-                    value={formData.dataEspecifica}
-                    onChange={(e) => setFormData({...formData, dataEspecifica: e.target.value})}
-                    required
-                  />
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Observações
-                </label>
-                <textarea
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                  placeholder="Descreva o motivo das horas extras..."
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  Registrar
-                </Button>
+              <div><Label>Motivo</Label><Input value={formData.motivo} onChange={(e) => setFormData({...formData, motivo: e.target.value})} /></div>
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancelar</Button>
+                <Button type="submit" disabled={createHE.isPending}>{createHE.isPending ? 'Salvando...' : 'Registrar'}</Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
 
-        {/* Confirmation Modal */}
-        <ConfirmationModal
-          open={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          onConfirm={confirmAprovarHoras}
-          title="Aprovar Horas Extras"
-          description={`Tem certeza que deseja aprovar as horas extras de ${selectedRegistro?.funcionario}?`}
-          confirmText="Aprovar"
-          type="success"
-        />
+        <ConfirmationModal open={showConfirmModal} onClose={() => setShowConfirmModal(false)} onConfirm={confirmAprovar} title="Aprovar Horas Extras" description={`Aprovar horas de ${selectedRegistro?.funcionario}?`} confirmText="Aprovar" type="success" loading={updateHE.isPending} />
       </div>
     </MainLayout>
   );
 };
 
-export default HorasExtras;
+export default HorasExtrasPage;

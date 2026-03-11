@@ -510,6 +510,7 @@ export const useCreateBoletim = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (boletim: TablesInsert<'boletins_medicao'>) => {
+      validateInput(boletimInsertSchema, boletim);
       const { data, error } = await supabase.from('boletins_medicao').insert(boletim).select().single();
       if (error) throw error;
       return data;

@@ -673,8 +673,8 @@ export const useAuditLog = () => {
       registro_id?: string;
       entidade?: string;
       entidade_id?: string;
-      dados_anteriores?: Record<string, unknown>;
-      dados_novos?: Record<string, unknown>;
+      dados_anteriores?: Record<string, unknown> | null;
+      dados_novos?: Record<string, unknown> | null;
       modulo?: string;
       nivel_sensibilidade?: string;
     }) => {
@@ -685,8 +685,8 @@ export const useAuditLog = () => {
         _registro_id: params.registro_id ?? null,
         _entidade: params.entidade ?? null,
         _entidade_id: params.entidade_id ?? null,
-        _dados_anteriores: params.dados_anteriores ?? null,
-        _dados_novos: params.dados_novos ?? null,
+        _dados_anteriores: (params.dados_anteriores as unknown as Json) ?? null,
+        _dados_novos: (params.dados_novos as unknown as Json) ?? null,
         _modulo: params.modulo ?? null,
         _nivel_sensibilidade: params.nivel_sensibilidade ?? 'baixo',
       });

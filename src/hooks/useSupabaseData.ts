@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert, TablesUpdate, Json } from '@/integrations/supabase/types';
 import {
   obraInsertSchema, propostaInsertSchema, medicaoInsertSchema,
   materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,

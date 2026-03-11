@@ -142,7 +142,7 @@ const DetalhesRetencao = () => {
 
   const handleGerarRelatorio = () => {
     // Implementar geração do relatório
-    console.log('Gerando relatório para retenção:', id);
+    // TODO: generate report via backend
     toast.success('Relatório gerado com sucesso!');
     
     // Simular download do relatório

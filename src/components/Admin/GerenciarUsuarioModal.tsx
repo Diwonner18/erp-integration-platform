@@ -14,7 +14,10 @@ const userSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   type: z.enum(['admin', 'obras', 'financeira', 'comercial', 'cliente']),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional(),
+  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
+    .regex(/[0-9]/, 'Deve conter pelo menos um número')
+    .optional(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;

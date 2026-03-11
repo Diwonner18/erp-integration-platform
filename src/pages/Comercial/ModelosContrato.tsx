@@ -1,250 +1,90 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Plus, Download, Edit, Upload } from 'lucide-react';
+import { FileText, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useModelosContrato, useCreateModeloContrato, useUpdateModeloContrato } from '@/hooks/useSupabaseData';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ModelosContrato = () => {
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedModelo, setSelectedModelo] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    type: '',
-    description: ''
-  });
+  const [selectedModelo, setSelectedModelo] = useState<any>(null);
+  const [formData, setFormData] = useState({ titulo: '', tipo: '', conteudo: '' });
 
-  const [modelos, setModelos] = useState<any[]>([]);
+  const { data: modelos = [], isLoading } = useModelosContrato();
+  const createModelo = useCreateModeloContrato();
+  const updateModelo = useUpdateModeloContrato();
 
-  const handleAddModelo = () => {
-    setFormData({ name: '', type: '', description: '' });
-    setShowAddModal(true);
-  };
-
-  const handleEditModelo = (modelo: any) => {
-    setSelectedModelo(modelo);
-    setFormData({
-      name: modelo.name,
-      type: modelo.type,
-      description: modelo.description
-    });
-    setShowEditModal(true);
-  };
-
-  const handleDownloadModelo = (modelo: any) => {
-    toast({
-      title: "Download iniciado",
-      description: `Download do modelo "${modelo.name}" foi iniciado.`,
-    });
-  };
-
-  const handleSaveModelo = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedModelo) {
-      setModelos(prev => prev.map(m => 
-        m.id === selectedModelo.id 
-          ? { ...m, ...formData, updated: new Date().toISOString().split('T')[0] }
-          : m
-      ));
-      toast({
-        title: "Modelo atualizado",
-        description: "O modelo foi atualizado com sucesso.",
-      });
-      setShowEditModal(false);
-    } else {
-      const novoModelo = {
-        id: Date.now(),
-        ...formData,
-        updated: new Date().toISOString().split('T')[0]
-      };
-      setModelos(prev => [...prev, novoModelo]);
-      toast({
-        title: "Modelo adicionado",
-        description: "Novo modelo foi adicionado com sucesso.",
-      });
-      setShowAddModal(false);
+    try {
+      if (selectedModelo) {
+        await updateModelo.mutateAsync({ id: selectedModelo.id, titulo: formData.titulo, tipo: formData.tipo, conteudo: formData.conteudo });
+        toast({ title: 'Modelo atualizado' });
+        setShowEditModal(false);
+      } else {
+        await createModelo.mutateAsync({ titulo: formData.titulo, tipo: formData.tipo, conteudo: formData.conteudo });
+        toast({ title: 'Modelo adicionado' });
+        setShowAddModal(false);
+      }
+      setSelectedModelo(null);
+    } catch {
+      toast({ title: 'Erro', variant: 'destructive' });
     }
-    setSelectedModelo(null);
   };
+
+  const FormContent = () => (
+    <form onSubmit={handleSave} className="space-y-4">
+      <div><label className="block text-sm font-medium mb-2">Nome</label><Input value={formData.titulo} onChange={(e) => setFormData({...formData, titulo: e.target.value})} required /></div>
+      <div><label className="block text-sm font-medium mb-2">Tipo</label>
+        <select className="w-full p-3 border rounded-md" value={formData.tipo} onChange={(e) => setFormData({...formData, tipo: e.target.value})} required>
+          <option value="">Selecione</option><option value="Contrato">Contrato</option><option value="Aditivo">Aditivo</option><option value="Termo">Termo</option>
+        </select>
+      </div>
+      <div><label className="block text-sm font-medium mb-2">Conteúdo</label><textarea className="w-full p-3 border rounded-md" rows={3} value={formData.conteudo} onChange={(e) => setFormData({...formData, conteudo: e.target.value})} /></div>
+      <div className="flex justify-end gap-3"><Button type="button" variant="outline" onClick={() => { setShowAddModal(false); setShowEditModal(false); }}>Cancelar</Button><Button type="submit">Salvar</Button></div>
+    </form>
+  );
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Modelos de Contrato</h1>
-            <p className="text-slate-600 mt-1">Gerenciar templates de contratos e aditivos</p>
-          </div>
-          <Button onClick={handleAddModelo}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Modelo
-          </Button>
+          <div><h1 className="text-3xl font-bold text-foreground">Modelos de Contrato</h1><p className="text-muted-foreground mt-1">Gerenciar templates</p></div>
+          <Button onClick={() => { setFormData({ titulo: '', tipo: '', conteudo: '' }); setSelectedModelo(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Modelo</Button>
         </div>
 
-        <div className="grid gap-4">
-          {modelos.map((modelo) => (
-            <Card key={modelo.id}>
-              <CardContent className="p-6">
+        {isLoading ? (
+          <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-20 w-full" />)}</div>
+        ) : modelos.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground"><FileText className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum modelo cadastrado</p></div>
+        ) : (
+          <div className="grid gap-4">
+            {modelos.map((modelo) => (
+              <Card key={modelo.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-purple-600" />
-                    </div>
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center"><FileText className="w-5 h-5 text-primary" /></div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">{modelo.name}</h3>
-                      <p className="text-sm text-slate-600">Tipo: {modelo.type}</p>
-                      <p className="text-xs text-slate-500">Atualizado: {modelo.updated}</p>
+                      <h3 className="font-semibold text-foreground">{modelo.titulo}</h3>
+                      <p className="text-sm text-muted-foreground">Tipo: {modelo.tipo || '-'}</p>
+                      <p className="text-xs text-muted-foreground">Atualizado: {new Date(modelo.updated_at).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDownloadModelo(modelo)}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleEditModelo(modelo)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="sm" onClick={() => { setSelectedModelo(modelo); setFormData({ titulo: modelo.titulo, tipo: modelo.tipo || '', conteudo: modelo.conteudo || '' }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </CardContent></Card>
+            ))}
+          </div>
+        )}
 
-        {/* Add Modal */}
-        <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Novo Modelo</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSaveModelo} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nome do Modelo
-                </label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="Ex: Contrato Padrão - Industrial"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tipo
-                </label>
-                <select
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  required
-                >
-                  <option value="">Selecione o tipo</option>
-                  <option value="Contrato">Contrato</option>
-                  <option value="Aditivo">Aditivo</option>
-                  <option value="Termo">Termo</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Descrição
-                </label>
-                <textarea
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Descreva o propósito do modelo..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Arquivo do Modelo
-                </label>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
-                  <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Clique para fazer upload do arquivo</p>
-                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  Adicionar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Modal */}
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Modelo</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSaveModelo} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Nome do Modelo
-                </label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Tipo
-                </label>
-                <select
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  required
-                >
-                  <option value="Contrato">Contrato</option>
-                  <option value="Aditivo">Aditivo</option>
-                  <option value="Termo">Termo</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Descrição
-                </label>
-                <textarea
-                  className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  Salvar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Dialog open={showAddModal} onOpenChange={setShowAddModal}><DialogContent><DialogHeader><DialogTitle>Novo Modelo</DialogTitle></DialogHeader><FormContent /></DialogContent></Dialog>
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}><DialogContent><DialogHeader><DialogTitle>Editar Modelo</DialogTitle></DialogHeader><FormContent /></DialogContent></Dialog>
       </div>
     </MainLayout>
   );

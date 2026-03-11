@@ -10,238 +10,97 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign, Plus, Calendar, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useDespesas, useCreateDespesa, useObras } from '@/hooks/useSupabaseData';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const LancamentoDespesas = () => {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    descricao: '',
-    valor: '',
-    categoria: '',
-    vinculo: '',
-    obra: '',
-    dataEspecifica: '',
-    observacoes: ''
-  });
+  const [formData, setFormData] = useState({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' });
 
-  const [despesas, setDespesas] = useState<any[]>([]);
+  const { data: despesas = [], isLoading } = useDespesas();
+  const { data: obrasData = [] } = useObras();
+  const createDespesa = useCreateDespesa();
 
-  const handleAddDespesa = () => {
-    setFormData({
-      descricao: '',
-      valor: '',
-      categoria: '',
-      vinculo: '',
-      obra: '',
-      dataEspecifica: '',
-      observacoes: ''
-    });
-    setShowModal(true);
+  const handleSave = async () => {
+    if (!formData.descricao || !formData.valor || !formData.categoria) {
+      toast({ title: 'Campos obrigatórios', variant: 'destructive' }); return;
+    }
+    try {
+      await createDespesa.mutateAsync({
+        descricao: formData.descricao,
+        valor: parseFloat(formData.valor),
+        categoria: formData.categoria as any,
+        obra_id: formData.obra_id || null,
+        data: formData.data || new Date().toISOString().split('T')[0],
+      });
+      toast({ title: 'Despesa lançada' });
+      setShowModal(false);
+    } catch {
+      toast({ title: 'Erro', variant: 'destructive' });
+    }
   };
 
-  const handleSave = () => {
-    if (!formData.descricao || !formData.valor || !formData.categoria || !formData.vinculo) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha todos os campos obrigatórios',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (formData.vinculo === 'obra' && !formData.obra) {
-      toast({
-        title: 'Obra obrigatória',
-        description: 'Selecione uma obra para este tipo de vínculo',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (formData.vinculo === 'data' && !formData.dataEspecifica) {
-      toast({
-        title: 'Data obrigatória',
-        description: 'Informe a data específica para este tipo de vínculo',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    toast({
-      title: 'Despesa lançada',
-      description: `${formData.descricao} foi registrada com sucesso`,
-    });
-    setShowModal(false);
-  };
+  const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
   return (
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">Lançamento de Despesas</h1>
-            <p className="text-muted-foreground mt-1">Registrar e controlar despesas operacionais</p>
-          </div>
-          <Button onClick={handleAddDespesa}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Despesa
-          </Button>
+          <div><h1 className="text-3xl font-bold text-primary">Lançamento de Despesas</h1><p className="text-muted-foreground mt-1">Registrar despesas operacionais</p></div>
+          <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }}><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
         </div>
 
-        <div className="grid gap-4">
-          {despesas.map((despesa) => (
-            <Card key={despesa.id}>
-              <CardContent className="p-6">
+        {isLoading ? (
+          <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-20 w-full" />)}</div>
+        ) : despesas.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground"><DollarSign className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhuma despesa registrada</p></div>
+        ) : (
+          <div className="grid gap-4">
+            {despesas.map((despesa) => (
+              <Card key={despesa.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-5 h-5 text-primary" />
-                    </div>
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center"><DollarSign className="w-5 h-5 text-primary" /></div>
                     <div>
                       <h3 className="font-semibold text-foreground">{despesa.descricao}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {despesa.categoria} - {despesa.valor}
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-2">
-                        {despesa.vinculo === 'obra' ? (
-                          <>
-                            <Building className="w-3 h-3" />
-                            {despesa.obra}
-                          </>
-                        ) : (
-                          <>
-                            <Calendar className="w-3 h-3" />
-                            {despesa.dataEspecifica}
-                          </>
-                        )}
-                        | Data: {despesa.data}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{despesa.categoria} - {formatCurrency(despesa.valor)}</p>
+                      <p className="text-xs text-muted-foreground">{despesa.obras?.nome || '-'} | {new Date(despesa.data).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <Badge variant={despesa.status === 'aprovada' ? 'default' : 'secondary'}>
-                      {despesa.status === 'aprovada' ? 'Aprovada' : 'Pendente'}
-                    </Badge>
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </CardContent></Card>
+            ))}
+          </div>
+        )}
 
         <Dialog open={showModal} onOpenChange={setShowModal}>
           <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Nova Despesa</DialogTitle>
-            </DialogHeader>
-            
+            <DialogHeader><DialogTitle>Nova Despesa</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Descrição *</Label>
-                <Input
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                  placeholder="Descrição da despesa"
-                />
-              </div>
-
+              <div><Label>Descrição *</Label><Input value={formData.descricao} onChange={(e) => setFormData({...formData, descricao: e.target.value})} /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Valor (R$) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.valor}
-                    onChange={(e) => setFormData({...formData, valor: e.target.value})}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Categoria *</Label>
-                  <Select 
-                    value={formData.categoria} 
-                    onValueChange={(value) => setFormData({...formData, categoria: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
+                <div><Label>Valor *</Label><Input type="number" step="0.01" value={formData.valor} onChange={(e) => setFormData({...formData, valor: e.target.value})} /></div>
+                <div><Label>Categoria *</Label>
+                  <Select value={formData.categoria} onValueChange={(v) => setFormData({...formData, categoria: v})}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="transporte">Transporte</SelectItem>
-                      <SelectItem value="administrativo">Administrativo</SelectItem>
-                      <SelectItem value="equipamentos">Equipamentos</SelectItem>
-                      <SelectItem value="materiais">Materiais</SelectItem>
-                      <SelectItem value="alimentacao">Alimentação</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
+                      <SelectItem value="material">Material</SelectItem><SelectItem value="mao_de_obra">Mão de Obra</SelectItem>
+                      <SelectItem value="equipamento">Equipamento</SelectItem><SelectItem value="transporte">Transporte</SelectItem>
+                      <SelectItem value="alimentacao">Alimentação</SelectItem><SelectItem value="outro">Outro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label>Vínculo *</Label>
-                <Select 
-                  value={formData.vinculo} 
-                  onValueChange={(value) => setFormData({...formData, vinculo: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo de vínculo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="obra">Por Obra</SelectItem>
-                    <SelectItem value="data">Por Data Específica</SelectItem>
-                  </SelectContent>
+              <div><Label>Obra</Label>
+                <Select value={formData.obra_id} onValueChange={(v) => setFormData({...formData, obra_id: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
+                  <SelectContent>{obrasData.map(o => <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-
-              {formData.vinculo === 'obra' && (
-                <div className="space-y-2">
-                  <Label>Obra *</Label>
-                  <Select 
-                    value={formData.obra} 
-                    onValueChange={(value) => setFormData({...formData, obra: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a obra" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="residencial-silva">Residencial Silva</SelectItem>
-                      <SelectItem value="comercial-abc">Comercial ABC</SelectItem>
-                      <SelectItem value="industrial-mendes">Industrial Mendes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {formData.vinculo === 'data' && (
-                <div className="space-y-2">
-                  <Label>Data Específica *</Label>
-                  <Input
-                    type="date"
-                    value={formData.dataEspecifica}
-                    onChange={(e) => setFormData({...formData, dataEspecifica: e.target.value})}
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                  placeholder="Observações adicionais..."
-                  rows={3}
-                />
-              </div>
+              <div><Label>Data</Label><Input type="date" value={formData.data} onChange={(e) => setFormData({...formData, data: e.target.value})} /></div>
             </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave}>
-                Salvar Despesa
-              </Button>
-            </DialogFooter>
+            <DialogFooter><Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button><Button onClick={handleSave} disabled={createDespesa.isPending}>{createDespesa.isPending ? 'Salvando...' : 'Salvar'}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import {
+  obraInsertSchema, propostaInsertSchema, medicaoInsertSchema,
+  materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
+  epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
+  relatorioDiarioInsertSchema, validateInput,
+} from '@/lib/validationSchemas';
+
+const DEFAULT_LIMIT = 1000;
 
 // ==================== QUERY HOOKS ====================
 

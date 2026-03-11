@@ -388,6 +388,7 @@ export const useCreateMaterial = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (material: TablesInsert<'materiais'>) => {
+      validateInput(materialInsertSchema, material);
       const { data, error } = await supabase.from('materiais').insert(material).select().single();
       if (error) throw error;
       return data;

@@ -63,7 +63,7 @@ export const useProgramacoes = () => {
   return useQuery({
     queryKey: ['programacoes'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('programacoes').select('*, obras(nome, endereco, clientes(razao_social))').order('data_programada', { ascending: false });
+      const { data, error } = await supabase.from('programacoes').select('*, obras(nome, endereco, clientes(razao_social))').order('data_programada', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },

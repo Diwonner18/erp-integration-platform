@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert, TablesUpdate, Json } from '@/integrations/supabase/types';
 import {
   obraInsertSchema, propostaInsertSchema, medicaoInsertSchema,
   materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
@@ -659,5 +659,39 @@ export const useDeleteEPI = () => {
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['epis'] }); },
+  });
+};
+
+// ==================== AUDIT LOG ====================
+
+export const useAuditLog = () => {
+  return useMutation({
+    mutationFn: async (params: {
+      acao: string;
+      descricao?: string;
+      tabela?: string;
+      registro_id?: string;
+      entidade?: string;
+      entidade_id?: string;
+      dados_anteriores?: Record<string, unknown> | null;
+      dados_novos?: Record<string, unknown> | null;
+      modulo?: string;
+      nivel_sensibilidade?: string;
+    }) => {
+      const { data, error } = await supabase.rpc('insert_audit_log', {
+        _acao: params.acao,
+        _descricao: params.descricao ?? null,
+        _tabela: params.tabela ?? null,
+        _registro_id: params.registro_id ?? null,
+        _entidade: params.entidade ?? null,
+        _entidade_id: params.entidade_id ?? null,
+        _dados_anteriores: (params.dados_anteriores as unknown as Json) ?? null,
+        _dados_novos: (params.dados_novos as unknown as Json) ?? null,
+        _modulo: params.modulo ?? null,
+        _nivel_sensibilidade: params.nivel_sensibilidade ?? 'baixo',
+      });
+      if (error) throw error;
+      return data;
+    },
   });
 };

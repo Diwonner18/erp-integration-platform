@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,17 +35,15 @@ const Login = () => {
     
     if (result.success) {
       if (result.needsAreaSelection && result.user) {
-        // Funcionário precisa selecionar área
         setPendingUser(result.user);
         setShowAreaSelection(true);
         toast.info('Selecione sua área de trabalho para continuar');
       } else {
-        // Login completo
         toast.success('Login realizado com sucesso!');
         navigate('/');
       }
     } else {
-      toast.error('Credenciais inválidas');
+      toast.error('Credenciais inválidas. Verifique seu e-mail e senha.');
     }
     
     setIsLoading(false);

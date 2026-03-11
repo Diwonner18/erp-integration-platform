@@ -338,6 +338,7 @@ export const useCreateMedicao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (medicao: TablesInsert<'medicoes'>) => {
+      validateInput(medicaoInsertSchema, medicao);
       const { data, error } = await supabase.from('medicoes').insert(medicao).select().single();
       if (error) throw error;
       return data;

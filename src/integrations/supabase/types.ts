@@ -1188,6 +1188,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_audit_log: {
+        Args: {
+          _acao: string
+          _dados_anteriores?: Json
+          _dados_novos?: Json
+          _descricao?: string
+          _entidade?: string
+          _entidade_id?: string
+          _modulo?: string
+          _nivel_sensibilidade?: string
+          _registro_id?: string
+          _tabela?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       alteracao_escopo_status:

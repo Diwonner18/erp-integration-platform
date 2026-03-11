@@ -4,7 +4,7 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 
 // ==================== QUERY HOOKS ====================
 
-export const useObras = (status?: string) => {
+export const useObras = (status?: Tables<'obras'>['status']) => {
   return useQuery({
     queryKey: ['obras', status],
     queryFn: async () => {

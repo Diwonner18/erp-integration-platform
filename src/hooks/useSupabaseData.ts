@@ -212,7 +212,7 @@ export const useAprovacoes = () => {
   return useQuery({
     queryKey: ['aprovacoes'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('aprovacoes').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('aprovacoes').select('*').order('created_at', { ascending: false }).limit(DEFAULT_LIMIT);
       if (error) throw error;
       return data;
     },

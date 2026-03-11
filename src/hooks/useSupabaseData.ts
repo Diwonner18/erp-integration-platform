@@ -661,3 +661,37 @@ export const useDeleteEPI = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['epis'] }); },
   });
 };
+
+// ==================== AUDIT LOG ====================
+
+export const useAuditLog = () => {
+  return useMutation({
+    mutationFn: async (params: {
+      acao: string;
+      descricao?: string;
+      tabela?: string;
+      registro_id?: string;
+      entidade?: string;
+      entidade_id?: string;
+      dados_anteriores?: Record<string, unknown>;
+      dados_novos?: Record<string, unknown>;
+      modulo?: string;
+      nivel_sensibilidade?: string;
+    }) => {
+      const { data, error } = await supabase.rpc('insert_audit_log', {
+        _acao: params.acao,
+        _descricao: params.descricao ?? null,
+        _tabela: params.tabela ?? null,
+        _registro_id: params.registro_id ?? null,
+        _entidade: params.entidade ?? null,
+        _entidade_id: params.entidade_id ?? null,
+        _dados_anteriores: params.dados_anteriores ?? null,
+        _dados_novos: params.dados_novos ?? null,
+        _modulo: params.modulo ?? null,
+        _nivel_sensibilidade: params.nivel_sensibilidade ?? 'baixo',
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+};

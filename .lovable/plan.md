@@ -1,8 +1,8 @@
-# Overview Final de Seguranca - Sistema CT Guedes
+# Overview Final - Sistema CT Guedes
 
 ## Estado Atual
 
-Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Bug RLS em `acessos_compartilhados` corrigido (RESTRICTIVE → PERMISSIVE).
+Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Roadmap completo.
 
 ## ✅ Implementado
 
@@ -17,27 +17,21 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 - **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
 - **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
 
-## ✅ Roadmap - Etapas Concluidas
+## ✅ Roadmap - Todas as Etapas Concluidas
 
 - **Etapa 1 - Nomenclatura**: Padronizada (Programacao)
 - **Etapa 2 - Filtros Avancados**: AdvancedFilters em Medicoes, Programacao, Propostas, Boletins, AlteracoesEscopo, HorasExtras
-- **Etapa 4 - Aceites Digitais**: Clientes podem aceitar propostas via MinhasPropostas com registro em aceites_digitais
-- **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
-- **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
-- **Etapa 13 - Botoes Funcionais**: Aprovar/rejeitar em Medicoes, AlteracoesEscopo e Propostas com ConfirmationModal + mutations Supabase
-
-## ⏳ Roadmap - Proximos Lotes
-
-### Lote 5
-- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (receita vs despesa, fluxo de caixa)
-- **Etapa 8 - Contratos com Alertas**: Vencimentos e renovacoes automaticas
-- **Etapa 9 - Materiais/Equipamentos Unificados**: Controle de inventario
-- **Etapa 11 - Fechamento Mensal**: Automacao de fechamento
-
-## ✅ Lote 4 - Concluido
 - **Etapa 3 - Medicoes**: Auto-calculo com IGP-M, vinculo com programacoes executadas, NovaMedicaoModal refeito com Supabase
+- **Etapa 4 - Aceites Digitais**: Clientes podem aceitar propostas via MinhasPropostas com registro em aceites_digitais
 - **Etapa 5 - Relatorios com Export**: exportUtils.ts (jspdf + xlsx), exportacao PDF/Excel em Medicoes, HorasExtras e RelatoriosFinanceiros
 - **Etapa 6 - Horas/Custos**: Valor/hora configuravel por registro no formulario de HorasExtras
+- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (BarChart receita vs despesa, AreaChart fluxo de caixa) em ControleFinanceiro, RelatoriosComerciais e Dashboard
+- **Etapa 8 - Contratos com Alertas**: Badge "Vencendo" em Propostas + secao de alertas no Dashboard para propostas < 30 dias
+- **Etapa 9 - Materiais/Equipamentos Unificados**: Cards de resumo (total materiais, equipamentos, valor estoque, pendentes) em MateriaisEquipamentos
+- **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
+- **Etapa 11 - Fechamento Mensal**: Export real via exportUtils com dados filtrados por periodo (medicoes, despesas, boletins, horas extras)
+- **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
+- **Etapa 13 - Botoes Funcionais**: Aprovar/rejeitar em Medicoes, AlteracoesEscopo e Propostas com ConfirmationModal + mutations Supabase
 
 ## ⚠️ Pendente (apenas media/baixa severidade)
 
@@ -49,7 +43,7 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 ## Arquitetura
 
 ```
-Frontend (React + AccessGuard + Zod + AdvancedFilters)
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts)
   → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
     → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
     → pg_cron (purge-expired-logs-daily @ 00:00 UTC)

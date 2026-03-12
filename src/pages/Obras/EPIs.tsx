@@ -14,6 +14,7 @@ import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Plus, FileText, Filter, Pencil, Trash2, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { useEPIs, useObras, useCreateEPI, useUpdateEPI, useDeleteEPI } from '@/hooks/useSupabaseData';
+import FileImportButton from '@/components/shared/FileImportButton';
 
 const tiposEPI = [
   'Capacete de Segurança',
@@ -168,10 +169,13 @@ const EPIs = () => {
             <h1 className="text-3xl font-bold text-foreground">Controle de EPIs</h1>
             <p className="text-muted-foreground mt-1">Registro e acompanhamento de Equipamentos de Proteção Individual</p>
           </div>
-          <Button onClick={handleNovoRegistro}>
-            <Plus className="w-4 h-4 mr-2" />
-            Registrar EPI
-          </Button>
+          <div className="flex gap-2">
+            <FileImportButton targetType="epis" />
+            <Button onClick={handleNovoRegistro}>
+              <Plus className="w-4 h-4 mr-2" />
+              Registrar EPI
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}

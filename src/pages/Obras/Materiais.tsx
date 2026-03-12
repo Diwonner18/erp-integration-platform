@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import FileImportButton from '@/components/shared/FileImportButton';
 import AdicionarMaterialModal from '@/components/Obras/AdicionarMaterialModal';
 import EditMaterialModal from '@/components/Obras/EditMaterialModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
@@ -115,10 +116,13 @@ const Materiais = () => {
             <h1 className="text-3xl font-bold text-foreground">Controle de Materiais</h1>
             <p className="text-muted-foreground mt-1">Gestão de estoque e materiais</p>
           </div>
-          <Button onClick={() => setShowModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Material
-          </Button>
+          <div className="flex gap-2">
+            <FileImportButton targetType="materiais" />
+            <Button onClick={() => setShowModal(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Material
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center space-x-4">

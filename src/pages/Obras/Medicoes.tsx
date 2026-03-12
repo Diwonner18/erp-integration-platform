@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Ruler, Plus, Search, Eye, Check, X, Loader2, Download, FileSpreadsheet } from 'lucide-react';
+import FileImportButton from '@/components/shared/FileImportButton';
 import NovaMedicaoModal from '@/components/Obras/NovaMedicaoModal';
 import MedicaoDetailModal from '@/components/Obras/MedicaoDetailModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
@@ -127,7 +128,8 @@ const Medicoes = () => {
             <h1 className="text-3xl font-bold font-title text-foreground">Medições</h1>
             <p className="text-muted-foreground mt-1">Controle de medições das obras</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <FileImportButton targetType="medicoes" />
             <Button variant="outline" size="sm" onClick={() => {
               exportToPDF({
                 title: 'Relatório de Medições',

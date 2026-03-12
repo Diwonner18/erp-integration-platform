@@ -1,193 +1,142 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Download, Archive, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useMedicoes, useDespesas, useHorasExtras, useBoletins } from '@/hooks/useSupabaseData';
+import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
 
 const FechamentoMensal = () => {
   const { toast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState('');
-  const [selectedYear, setSelectedYear] = useState('2024');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const months = [
-    { value: '01', label: 'Janeiro' },
-    { value: '02', label: 'Fevereiro' },
-    { value: '03', label: 'Março' },
-    { value: '04', label: 'Abril' },
-    { value: '05', label: 'Maio' },
-    { value: '06', label: 'Junho' },
-    { value: '07', label: 'Julho' },
-    { value: '08', label: 'Agosto' },
-    { value: '09', label: 'Setembro' },
-    { value: '10', label: 'Outubro' },
-    { value: '11', label: 'Novembro' },
-    { value: '12', label: 'Dezembro' }
-  ];
+  const { data: medicoes = [] } = useMedicoes();
+  const { data: despesas = [] } = useDespesas();
+  const { data: horasExtras = [] } = useHorasExtras();
+  const { data: boletins = [] } = useBoletins();
 
-  const years = ['2022', '2023', '2024', '2025'];
+  const months = [
+    { value: '01', label: 'Janeiro' }, { value: '02', label: 'Fevereiro' }, { value: '03', label: 'Março' },
+    { value: '04', label: 'Abril' }, { value: '05', label: 'Maio' }, { value: '06', label: 'Junho' },
+    { value: '07', label: 'Julho' }, { value: '08', label: 'Agosto' }, { value: '09', label: 'Setembro' },
+    { value: '10', label: 'Outubro' }, { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' }
+  ];
+  const years = ['2023', '2024', '2025', '2026'];
+  const prefix = `${selectedYear}-${selectedMonth}`;
+
+  const filtered = useMemo(() => ({
+    medicoes: medicoes.filter(m => (m.data_medicao || m.created_at).startsWith(prefix)),
+    despesas: despesas.filter(d => d.data.startsWith(prefix)),
+    horasExtras: horasExtras.filter(h => h.data.startsWith(prefix)),
+    boletins: boletins.filter(b => (b.data_emissao || b.created_at).startsWith(prefix)),
+  }), [medicoes, despesas, horasExtras, boletins, prefix]);
 
   const documentos = [
-    { nome: 'Relatório de Medições', tipo: 'PDF', size: '2.5 MB' },
-    { nome: 'Planilha de Materiais', tipo: 'XLSX', size: '1.8 MB' },
-    { nome: 'Controle Financeiro', tipo: 'PDF', size: '3.2 MB' },
-    { nome: 'Relatório de Horas Extras', tipo: 'XLSX', size: '920 KB' },
-    { nome: 'Resumo Executivo', tipo: 'PDF', size: '1.1 MB' }
+    { nome: 'Relatório de Medições', tipo: 'PDF', count: filtered.medicoes.length, export: (fmt: 'pdf'|'excel') => {
+      const opts = { title: `Medições - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `medicoes_${prefix}`, columns: [
+        { header: 'Nº', key: 'numero' }, { header: 'Obra', key: 'obra' }, { header: 'Data', key: 'data_medicao', format: formatDateExport },
+        { header: 'Valor', key: 'valor', format: formatCurrencyExport }, { header: 'Status', key: 'status' },
+      ], data: filtered.medicoes.map(m => ({ ...m, obra: (m as any).obras?.nome || '-' })) };
+      fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
+    }},
+    { nome: 'Planilha de Despesas', tipo: 'XLSX', count: filtered.despesas.length, export: (fmt: 'pdf'|'excel') => {
+      const opts = { title: `Despesas - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `despesas_${prefix}`, columns: [
+        { header: 'Descrição', key: 'descricao' }, { header: 'Data', key: 'data', format: formatDateExport },
+        { header: 'Categoria', key: 'categoria' }, { header: 'Valor', key: 'valor', format: formatCurrencyExport },
+      ], data: filtered.despesas };
+      fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
+    }},
+    { nome: 'Boletins de Medição', tipo: 'PDF', count: filtered.boletins.length, export: (fmt: 'pdf'|'excel') => {
+      const opts = { title: `Boletins - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `boletins_${prefix}`, columns: [
+        { header: 'Nº', key: 'numero' }, { header: 'Obra', key: 'obra' },
+        { header: 'Valor', key: 'valor', format: formatCurrencyExport }, { header: 'Status', key: 'status' },
+      ], data: filtered.boletins.map(b => ({ ...b, obra: (b as any).obras?.nome || '-' })) };
+      fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
+    }},
+    { nome: 'Relatório de Horas Extras', tipo: 'XLSX', count: filtered.horasExtras.length, export: (fmt: 'pdf'|'excel') => {
+      const opts = { title: `Horas Extras - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `horas_extras_${prefix}`, columns: [
+        { header: 'Funcionário', key: 'funcionario' }, { header: 'Data', key: 'data', format: formatDateExport },
+        { header: 'Horas', key: 'horas' }, { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
+        { header: 'Total', key: 'total', format: formatCurrencyExport },
+      ], data: filtered.horasExtras.map(h => ({ ...h, total: (h.horas || 0) * (h.valor_hora || 0) })) };
+      fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
+    }},
   ];
 
-  const handleGenerateDocuments = async () => {
+  const handleGenerateDocuments = () => {
     if (!selectedMonth || !selectedYear) {
-      toast({
-        title: 'Dados incompletos',
-        description: 'Selecione o mês e ano para gerar os documentos',
-        variant: 'destructive',
-      });
+      toast({ title: 'Dados incompletos', description: 'Selecione o mês e ano', variant: 'destructive' });
       return;
     }
-
     setIsGenerating(true);
-    
-    try {
-      // Simular geração de documentos
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: 'Documentos gerados',
-        description: `Fechamento de ${months.find(m => m.value === selectedMonth)?.label}/${selectedYear} concluído`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro na geração',
-        description: 'Ocorreu um erro ao gerar os documentos',
-        variant: 'destructive',
-      });
-    } finally {
+    setTimeout(() => {
       setIsGenerating(false);
-    }
-  };
-
-  const handleDownloadDocument = (documento: any) => {
-    toast({
-      title: 'Download iniciado',
-      description: `Fazendo download de ${documento.nome}`,
-    });
+      toast({ title: 'Período selecionado', description: `Documentos prontos para ${months.find(m => m.value === selectedMonth)?.label}/${selectedYear}` });
+    }, 500);
   };
 
   const handleBackup = () => {
-    toast({
-      title: 'Backup criado',
-      description: 'Backup dos documentos criado com sucesso',
-    });
+    if (!selectedMonth) { toast({ title: 'Selecione um período', variant: 'destructive' }); return; }
+    documentos.forEach(d => { if (d.count > 0) { d.export(d.tipo === 'XLSX' ? 'excel' : 'pdf'); }});
+    toast({ title: 'Backup completo', description: 'Todos os documentos foram exportados' });
   };
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">Fechamento Mensal</h1>
-            <p className="text-muted-foreground mt-1">Gerar e organizar documentos mensais</p>
-          </div>
-        </div>
+        <div><h1 className="text-3xl font-bold text-primary">Fechamento Mensal</h1><p className="text-muted-foreground mt-1">Gerar e exportar documentos mensais</p></div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Seleção de Período */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Período
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5" />Período</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="month">Mês</Label>
+                <Label>Mês</Label>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o mês" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecione o mês" /></SelectTrigger>
+                  <SelectContent>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="year">Ano</Label>
+                <Label>Ano</Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o ano" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecione o ano" /></SelectTrigger>
+                  <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-
-              <Button 
-                onClick={handleGenerateDocuments} 
-                disabled={isGenerating}
-                className="w-full"
-              >
-                {isGenerating ? 'Gerando...' : 'Gerar Documentos'}
+              <Button onClick={handleGenerateDocuments} disabled={isGenerating} className="w-full">
+                {isGenerating ? 'Carregando...' : 'Filtrar Período'}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Lista de Documentos */}
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Documentos Gerados
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Documentos</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {documentos.map((documento, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                {documentos.map((doc, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center"><FileText className="w-4 h-4 text-primary" /></div>
                       <div>
-                        <p className="font-medium text-foreground">{documento.nome}</p>
-                        <p className="text-sm text-muted-foreground">{documento.tipo} • {documento.size}</p>
+                        <p className="font-medium text-foreground">{doc.nome}</p>
+                        <p className="text-sm text-muted-foreground">{doc.tipo} • {doc.count} registros</p>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDownloadDocument(documento)}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => doc.export('pdf')} disabled={doc.count === 0}><Download className="w-4 h-4 mr-1" />PDF</Button>
+                      <Button variant="outline" size="sm" onClick={() => doc.export('excel')} disabled={doc.count === 0}><Download className="w-4 h-4 mr-1" />Excel</Button>
+                    </div>
                   </div>
                 ))}
               </div>
-
               <div className="mt-6 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={handleBackup}
-                  className="w-full"
-                >
-                  <Archive className="w-4 h-4 mr-2" />
-                  Criar Backup Completo
-                </Button>
+                <Button variant="outline" onClick={handleBackup} className="w-full"><Archive className="w-4 h-4 mr-2" />Exportar Todos</Button>
               </div>
             </CardContent>
           </Card>

@@ -166,6 +166,13 @@ const MateriaisEquipamentos = () => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total Materiais</p><p className="text-2xl font-bold text-foreground">{materiais.length}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total Equipamentos</p><p className="text-2xl font-bold text-foreground">{equipamentos.length}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Valor em Estoque</p><p className="text-2xl font-bold text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(materiais.reduce((s, m) => s + (Number(m.valor_unitario) || 0) * (Number(m.quantidade) || 0), 0) + equipamentos.reduce((s, e) => s + (Number(e.valor_unitario) || 0) * (Number(e.quantidade) || 0), 0))}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Itens Pendentes</p><p className="text-2xl font-bold text-foreground">{materiais.filter(m => m.status === 'pendente').length + equipamentos.filter(e => e.status === 'disponivel').length}</p></CardContent></Card>
+        </div>
+
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />

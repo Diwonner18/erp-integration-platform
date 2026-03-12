@@ -213,7 +213,7 @@ const DetalhesRetencao = () => {
                   <div className="space-y-4">
                     {historico.map((item, index) => (
                       <div key={index} className="flex items-start space-x-4 p-4 border rounded-lg">
-                        <div className={cn("w-2 h-2 rounded-full mt-2", item.tipo === 'pagamento' ? 'bg-green-500' : 'bg-primary')} />
+                        <div className={cn("w-2 h-2 rounded-full mt-2", item.tipo === 'pagamento' ? 'bg-chart-2' : 'bg-primary')} />
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <h4 className="font-semibold text-foreground">{item.acao}</h4>

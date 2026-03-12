@@ -125,6 +125,23 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const menuItems = getMenuItems().filter(item => item.show);
 
+  const getTourId = (path: string): string | null => {
+    const map: Record<string, string> = {
+      '/usuarios': 'sidebar-usuarios',
+      '/permissoes': 'sidebar-permissoes',
+      '/aprovacoes': 'sidebar-aprovacoes',
+      '/programacao': 'sidebar-programacao',
+      '/medicoes': 'sidebar-medicoes',
+      '/boletins-medicao': 'sidebar-boletins',
+      '/financeiro': 'sidebar-financeiro',
+      '/propostas': 'sidebar-propostas',
+      '/valores-unitarios': 'sidebar-valores',
+      '/minhas-obras': 'sidebar-minhas-obras',
+      '/solicitar-agendamento': 'sidebar-agendamento',
+    };
+    return map[path] || null;
+  };
+
   const getUserTypeColor = (type: string) => {
     const colors = {
       admin: 'text-red-400',
@@ -235,7 +252,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   // Desktop: fixed sidebar
   return (
-    <div className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
+    <div data-tour="sidebar" className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
         <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />
         <p className="text-sm font-body text-sidebar-foreground/70 mt-1">Sistema de Obras</p>
@@ -257,20 +274,24 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       
       <ScrollArea className="flex-1">
         <nav className="mt-6">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center px-6 py-3 text-sm font-body font-medium transition-colors hover:bg-sidebar-accent ${
-                  isActive ? 'bg-sidebar-primary border-r-4 border-sidebar-ring text-sidebar-primary-foreground' : 'text-sidebar-foreground'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.label}
-            </NavLink>
-          ))}
+          {menuItems.map((item) => {
+            const tourId = getTourId(item.path);
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                {...(tourId ? { 'data-tour': tourId } : {})}
+                className={({ isActive }) =>
+                  `flex items-center px-6 py-3 text-sm font-body font-medium transition-colors hover:bg-sidebar-accent ${
+                    isActive ? 'bg-sidebar-primary border-r-4 border-sidebar-ring text-sidebar-primary-foreground' : 'text-sidebar-foreground'
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
       </ScrollArea>
 

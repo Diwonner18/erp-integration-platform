@@ -5,6 +5,10 @@ import RecentProjects from '../components/Dashboard/RecentProjects';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '@/hooks/useSupabaseData';
+import { useTour } from '@/hooks/useTour';
+import { getTourSteps } from '@/components/Tour/tourSteps';
+import WelcomeModal from '@/components/Tour/WelcomeModal';
+import ProductTour from '@/components/Tour/ProductTour';
 import { 
   Calendar, ClipboardList, FileText, Clock, Wallet, Package,
   CheckSquare, BarChart3, Users, Settings, Shield
@@ -14,6 +18,9 @@ const Dashboard = () => {
   const { user, hasPermission } = useAuth();
   const navigate = useNavigate();
   const { data: stats } = useDashboardStats();
+
+  const tour = useTour(user?.id);
+  const tourSteps = getTourSteps(user?.type || '');
 
   const getUserTypeLabel = (type: string) => {
     const types: Record<string, string> = { admin: 'Administrador Pai', obras: 'Equipe de Obras', financeira: 'Equipe Financeira', comercial: 'Equipe Comercial/Propostas', cliente: 'Cliente CT Guedes' };
@@ -98,7 +105,7 @@ const Dashboard = () => {
   };
 
   return (
-    <MainLayout>
+    <MainLayout onStartTour={tour.resetTour}>
       <div className="space-y-6">
         <div className="bg-sidebar rounded-lg p-6 text-sidebar-foreground">
           <h1 className="text-2xl font-bold font-title">{getUserTypeLabel(user?.type || '')}</h1>
@@ -106,12 +113,12 @@ const Dashboard = () => {
           <div className="mt-4 text-sm text-sidebar-foreground/70">Bem-vindo, {user?.name}!</div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div data-tour="dashboard-stats" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {getStatsForUser().map((stat, i) => <StatsCard key={i} title={stat.title} value={stat.value} icon={stat.icon} change={stat.change} changeType={stat.changeType} />)}
         </div>
 
         {quickActions.length > 0 && (
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div data-tour="quick-actions" className="bg-card rounded-lg shadow-sm border border-border p-6">
             <h3 className="text-lg font-semibold font-title text-foreground mb-4">Ações Rápidas</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {quickActions.map((action, i) => (
@@ -132,6 +139,23 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <WelcomeModal
+        open={tour.showWelcome}
+        userName={user?.name || ''}
+        userType={user?.type || ''}
+        onStartTour={() => tour.startTour(tourSteps.length)}
+        onSkip={tour.skipTour}
+      />
+
+      <ProductTour
+        steps={tourSteps}
+        currentStep={tour.currentStep}
+        isActive={tour.isActive}
+        onNext={tour.nextStep}
+        onPrev={tour.prevStep}
+        onSkip={tour.skipTour}
+      />
     </MainLayout>
   );
 };

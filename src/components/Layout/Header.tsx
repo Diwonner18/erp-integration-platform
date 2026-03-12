@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, User, Settings, LogOut, Menu } from 'lucide-react';
+import { Bell, User, Settings, LogOut, Menu, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -10,9 +10,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
+  onStartTour?: () => void;
 }
 
-const Header = ({ onToggleSidebar }: HeaderProps) => {
+const Header = ({ onToggleSidebar, onStartTour }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -67,7 +68,16 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           </div>
           
           <div className="flex items-center space-x-2 md:space-x-4">
+            <button
+              onClick={onStartTour}
+              className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-full transition-colors"
+              title="Tutorial do sistema"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+
             <button 
+              data-tour="notifications"
               onClick={handleNotificationClick}
               className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-full relative transition-colors"
             >

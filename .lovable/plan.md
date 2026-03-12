@@ -1,73 +1,41 @@
+# Overview Final de Seguranca - Sistema CT Guedes
 
+## Estado Atual
 
-# Product Tour com Pop-up de Boas-Vindas
+Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Bug RLS em `acessos_compartilhados` corrigido (RESTRICTIVE → PERMISSIVE).
 
-## Resumo
+## ✅ Implementado
 
-Ao fazer login pela primeira vez, o usuario vera um dialog de boas-vindas personalizado por tipo (ex: "Bem-vindo, Joao! Voce e Administrador do sistema CT Guedes") com duas opcoes: **"Fazer o Tour"** ou **"Pular"**. Se aceitar, inicia um tour step-by-step guiado com spotlight nos elementos da interface. A flag de primeiro acesso fica salva no `localStorage` por user ID.
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, rate limiting login (frontend)
+- **RLS**: 24 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
+- **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
+- **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
 
-## Arquivos a criar
+## ⚠️ Pendente (apenas media/baixa severidade)
 
-### 1. `src/components/Tour/WelcomeModal.tsx`
-- Dialog usando o componente `Dialog` existente
-- Exibe nome do usuario, tipo/funcao com descricao amigavel
-- Icone de graduacao/mapa
-- Dois botoes: "Iniciar Tour" (primary) e "Agora nao" (outline)
-- Ao clicar "Iniciar Tour", fecha o modal e dispara o tour
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
 
-### 2. `src/components/Tour/ProductTour.tsx`
-- Componente overlay com spotlight (box-shadow inset no elemento alvo)
-- Tooltip posicionado dinamicamente via `getBoundingClientRect()`
-- Navegacao: Anterior / Proximo / Pular (X)
-- Indicador de progresso (step 2 de 7)
-- Transicao suave entre steps
+## Arquitetura
 
-### 3. `src/components/Tour/TourTooltip.tsx`
-- Tooltip estilizado com titulo, descricao, botoes e barra de progresso
-- Posicionamento automatico (top/bottom/left/right) baseado no espaco disponivel
-
-### 4. `src/components/Tour/tourSteps.ts`
-- Steps definidos por user type com: `selector` (CSS), `title`, `description`, `position`
-- **Admin (8 steps):** sidebar, dashboard stats, gerenciar usuarios, permissoes, aprovacoes, programacao, relatorios, configuracoes
-- **Obras (6 steps):** sidebar, programacao, medicoes, materiais, alteracoes escopo, relatorio diario
-- **Financeira (5 steps):** sidebar, boletins, controle financeiro, retencoes, fechamento
-- **Comercial (5 steps):** sidebar, propostas, valores unitarios, aceites, modelos contrato
-- **Cliente (4 steps):** sidebar, minhas obras, solicitar agendamento, minhas propostas
-
-### 5. `src/hooks/useTour.ts`
-- Estado: `currentStep`, `isActive`, `showWelcome`
-- `localStorage` key: `tour_completed_${userId}`
-- Funcoes: `startTour()`, `nextStep()`, `prevStep()`, `skipTour()`, `resetTour()`
-- Verifica no mount se e primeiro acesso → seta `showWelcome = true`
-
-## Arquivos a modificar
-
-### 6. `src/pages/Dashboard.tsx`
-- Importar `WelcomeModal` e `ProductTour`
-- Usar `useTour` hook
-- Renderizar `WelcomeModal` (controlado pelo hook) e `ProductTour` quando ativo
-
-### 7. `src/components/Layout/Header.tsx`
-- Adicionar botao com icone `HelpCircle` ao lado do sino de notificacoes
-- Ao clicar, reinicia o tour (`resetTour()` do hook via contexto ou callback)
-
-## Fluxo
-
-```text
-Login → Dashboard monta → useTour verifica localStorage
-  ↓
-Primeiro acesso? → WelcomeModal aparece
-  ↓
-"Iniciar Tour" → Tour step-by-step com spotlight
-  ↓
-Ultimo step ou "Pular" → Salva flag no localStorage
+```
+Frontend (React + AccessGuard + Zod)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
+    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
 ```
 
-## Detalhes tecnicos
+## Proximo passo sugerido
 
-- Sem bibliotecas externas - React puro + CSS
-- Overlay via React Portal (`createPortal`) com `position: fixed` e `z-index: 9999`
-- Spotlight via `box-shadow: 0 0 0 9999px rgba(0,0,0,0.6)` no elemento alvo
-- `ResizeObserver` + `scroll` listener para reposicionar tooltip
-- Cores CT Guedes (primary do Tailwind) nos botoes e destaques
-
+- Habilitar rate limiting server-side no Supabase Dashboard
+- Traduzir templates de e-mail para PT-BR
+- Conectar n8n workflows ao Supabase
+- Continuar roadmap de produto (13 etapas)

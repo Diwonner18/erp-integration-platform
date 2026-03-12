@@ -143,6 +143,78 @@ export const useRetencoes = () => {
   });
 };
 
+export const useRetencao = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ['retencoes', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('retencoes').select('*, obras(nome, clientes(razao_social))').eq('id', id!).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useRetencaoFollowups = (retencaoId: string | undefined) => {
+  return useQuery({
+    queryKey: ['retencao_followups', retencaoId],
+    enabled: !!retencaoId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('retencao_followups' as any).select('*').eq('retencao_id', retencaoId!).order('data', { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+};
+
+export const useRetencaoPagamentos = (retencaoId: string | undefined) => {
+  return useQuery({
+    queryKey: ['retencao_pagamentos', retencaoId],
+    enabled: !!retencaoId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('retencao_pagamentos' as any).select('*').eq('retencao_id', retencaoId!).order('data_pagamento', { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+};
+
+export const useUpdateRetencao = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, observacoes }: { id: string; observacoes: string }) => {
+      const { data, error } = await supabase.from('retencoes').update({ observacoes } as any).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['retencoes'] }); },
+  });
+};
+
+export const useCreateRetencaoFollowup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (followup: { retencao_id: string; data: string; horario: string; tipo_contato: string; observacoes?: string }) => {
+      const { data, error } = await supabase.from('retencao_followups' as any).insert(followup).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['retencao_followups'] }); },
+  });
+};
+
+export const useCreateRetencaoPagamento = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (pagamento: { retencao_id: string; tipo: string; valor: number; data_pagamento: string; descricao?: string }) => {
+      const { data, error } = await supabase.from('retencao_pagamentos' as any).insert(pagamento).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['retencao_pagamentos'] }); queryClient.invalidateQueries({ queryKey: ['retencoes'] }); },
+  });
+};
+
 export const useHorasExtras = () => {
   return useQuery({
     queryKey: ['horas_extras'],

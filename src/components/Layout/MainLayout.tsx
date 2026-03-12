@@ -1,18 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <Header />
-      <main className="ml-64 pt-16 p-6">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <main className={`pt-16 p-4 md:p-6 ${isMobile ? 'ml-0' : 'ml-64'}`}>
         {children}
       </main>
     </div>

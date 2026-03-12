@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth, User, UserType } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import AreaSelectionModal from '@/components/Auth/AreaSelectionModal';
 import logotipo from '@/assets/logotipo.png';
 

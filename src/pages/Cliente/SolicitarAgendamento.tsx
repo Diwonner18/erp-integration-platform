@@ -75,17 +75,11 @@ const SolicitarAgendamento = () => {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-slate-700">Tipo de Serviço</label>
-                  <select 
-                    className="w-full mt-1 p-2 border rounded-md"
+                  <Input 
+                    placeholder="Descreva o tipo de serviço desejado"
+                    className="mt-1"
                     {...register('tipoServico')}
-                  >
-                    <option value="">Selecione o tipo de serviço</option>
-                    <option value="residencial">Instalação Elétrica Residencial</option>
-                    <option value="comercial">Instalação Elétrica Comercial</option>
-                    <option value="automacao">Sistema de Automação</option>
-                    <option value="manutencao">Manutenção Preventiva</option>
-                    <option value="emergencia">Reparo de Emergência</option>
-                  </select>
+                  />
                   {errors.tipoServico && (
                     <p className="text-sm text-red-600 mt-1">{errors.tipoServico.message}</p>
                   )}

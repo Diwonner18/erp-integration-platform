@@ -100,7 +100,8 @@ const HorasExtrasPage = () => {
             <h1 className="text-3xl font-bold text-foreground">Controle de Horas Extras</h1>
             <p className="text-muted-foreground mt-1">Registrar e acompanhar horas extras</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <FileImportButton targetType="horas_extras" />
             <Button variant="outline" size="sm" onClick={() => {
               const columns = [
                 { header: 'Funcionário', key: 'funcionario' },

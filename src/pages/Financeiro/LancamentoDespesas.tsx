@@ -49,7 +49,10 @@ const LancamentoDespesas = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div><h1 className="text-3xl font-bold text-primary">Lançamento de Despesas</h1><p className="text-muted-foreground mt-1">Registrar despesas operacionais</p></div>
-          <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }}><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
+          <div className="flex gap-2">
+            <FileImportButton targetType="despesas" />
+            <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }}><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
+          </div>
         </div>
 
         {isLoading ? (

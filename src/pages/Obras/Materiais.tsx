@@ -116,10 +116,13 @@ const Materiais = () => {
             <h1 className="text-3xl font-bold text-foreground">Controle de Materiais</h1>
             <p className="text-muted-foreground mt-1">Gestão de estoque e materiais</p>
           </div>
-          <Button onClick={() => setShowModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Material
-          </Button>
+          <div className="flex gap-2">
+            <FileImportButton targetType="materiais" />
+            <Button onClick={() => setShowModal(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Material
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center space-x-4">

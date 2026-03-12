@@ -128,7 +128,8 @@ const Medicoes = () => {
             <h1 className="text-3xl font-bold font-title text-foreground">Medições</h1>
             <p className="text-muted-foreground mt-1">Controle de medições das obras</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <FileImportButton targetType="medicoes" />
             <Button variant="outline" size="sm" onClick={() => {
               exportToPDF({
                 title: 'Relatório de Medições',

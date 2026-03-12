@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
+  onStartTour?: () => void;
 }
 
 const Header = ({ onToggleSidebar }: HeaderProps) => {

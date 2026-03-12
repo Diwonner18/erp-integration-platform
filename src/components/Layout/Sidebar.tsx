@@ -145,6 +145,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const getUserTypeColor = (type: string) => {
     const colors = {
       admin: 'text-red-400',
+      gerenciador_tecnico: 'text-cyan-400',
       obras: 'text-orange-400',
       financeira: 'text-green-400',
       comercial: 'text-blue-400',

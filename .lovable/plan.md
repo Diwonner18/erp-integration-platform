@@ -21,13 +21,14 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 
 - **Etapa 1 - Nomenclatura**: Padronizada (Programacao)
 - **Etapa 2 - Filtros Avancados**: AdvancedFilters em Medicoes, Programacao, Propostas, Boletins, AlteracoesEscopo, HorasExtras
+- **Etapa 4 - Aceites Digitais**: Clientes podem aceitar propostas via MinhasPropostas com registro em aceites_digitais
 - **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
 - **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
+- **Etapa 13 - Botoes Funcionais**: Aprovar/rejeitar em Medicoes, AlteracoesEscopo e Propostas com ConfirmationModal + mutations Supabase
 
 ## ⏳ Roadmap - Proximos Lotes
 
-### Lote 3
-- **Etapa 13 - Botoes Funcionais**: Tornar funcionais botoes de aprovar/rejeitar/editar em Medicoes, Alteracoes de Escopo e Propostas
+### Lote 4
 - **Etapa 4 - Edicao Obras + Aceites Digitais**: Formularios de edicao e assinatura digital
 
 ### Lote 4

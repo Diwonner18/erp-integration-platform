@@ -68,7 +68,7 @@ const HorasExtrasPage = () => {
         obra_id: formData.obra_id,
         motivo: formData.motivo,
         data: new Date().toISOString().split('T')[0],
-        valor_hora: 30,
+        valor_hora: parseFloat(formData.valor_hora) || 30,
       });
       toast({ title: 'Horas registradas', description: 'Registro criado com sucesso.' });
       setShowAddModal(false);

@@ -13,13 +13,13 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 - **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
 - **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
 - **V4 FKs**: Foreign keys ja existiam em `aceites_digitais` (proposta_id, cliente_id)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
 - **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
 - **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
 
 ## ⚠️ Pendente
 
 - **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
-- **V8 (Baixa)**: Expurgo automatico de logs expirados para LGPD (pg_cron ou Edge Function scheduled)
 - **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault
 - **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
 
@@ -28,11 +28,11 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 ```
 Frontend (React + AccessGuard + Zod)
   → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
-    → Edge Functions (manage-user, insert_audit_log)
+    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
 ```
 
 ## Proximo passo sugerido
 
 - Habilitar rate limiting server-side no Supabase Dashboard
-- Implementar expurgo LGPD
 - Conectar n8n workflows ao Supabase

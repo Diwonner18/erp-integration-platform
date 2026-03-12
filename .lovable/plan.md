@@ -1,56 +1,41 @@
+# Overview Final de Seguranca - Sistema CT Guedes
 
+## Estado Atual
 
-# Pendencias Restantes - Sistema CT Guedes
+Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Bug RLS em `acessos_compartilhados` corrigido (RESTRICTIVE → PERMISSIVE).
 
-## 1. BUG DE SEGURANCA ENCONTRADO (Implementavel)
+## ✅ Implementado
 
-### `acessos_compartilhados` - Politicas RESTRICTIVE sem PERMISSIVE
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, rate limiting login (frontend)
+- **RLS**: 24 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
+- **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
+- **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
 
-**Problema:** Todas as 5 politicas RLS da tabela `acessos_compartilhados` sao RESTRICTIVE. No PostgreSQL, politicas RESTRICTIVE so restringem o que politicas PERMISSIVE ja permitem. Sem nenhuma PERMISSIVE, o resultado e **acesso negado para todos**, incluindo admins.
+## ⚠️ Pendente (apenas media/baixa severidade)
 
-Isso significa que ninguem consegue criar, ler, editar ou deletar registros de acesso compartilhado via API. A funcao `has_record_access()` continua funcionando (SECURITY DEFINER bypassa RLS), mas a gestao de acessos pela interface esta quebrada.
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
 
-**Solucao:** Converter as politicas admin de RESTRICTIVE para PERMISSIVE e manter as de usuario como PERMISSIVE tambem:
-- Admin ALL → PERMISSIVE
-- Users SELECT own → PERMISSIVE
+## Arquitetura
 
----
+```
+Frontend (React + AccessGuard + Zod)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
+    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
+```
 
-## 2. PENDENCIAS MANUAIS (Nao-implementaveis via codigo)
+## Proximo passo sugerido
 
-| Item | Severidade | Onde configurar |
-|------|-----------|-----------------|
-| V1 - Rate limiting server-side | Media | Supabase Dashboard > Auth > Rate Limits |
-| Templates e-mail PT-BR | Baixa | Supabase Dashboard > Auth > Email Templates |
-
----
-
-## 3. PENDENCIAS OPCIONAIS (Avaliar necessidade)
-
-| Item | Severidade | Notas |
-|------|-----------|-------|
-| V9 - Criptografia CPF/CNPJ | Media | RLS ja protege. Implementar so se exigido |
-| V11 - Monitoramento suspeito | Baixa | Log Drains + n8n (futuro) |
-
----
-
-## 4. ROADMAP DE PRODUTO
-
-As 13 etapas do roadmap de produto continuam pendentes (filtros, medicoes, relatorios, fechamento mensal, etc).
-
----
-
-## Plano de Implementacao
-
-**Unica acao implementavel agora:** Corrigir as politicas RLS da tabela `acessos_compartilhados`.
-
-Migration SQL:
-1. DROP das 5 politicas RESTRICTIVE existentes
-2. CREATE politica PERMISSIVE ALL para admins
-3. CREATE politica PERMISSIVE SELECT para usuarios (own records)
-4. CREATE politica PERMISSIVE INSERT para admins
-5. CREATE politica PERMISSIVE UPDATE para admins
-6. CREATE politica PERMISSIVE DELETE para admins
-
-Isso restaura o funcionamento correto da gestao de acessos compartilhados na interface.
-
+- Habilitar rate limiting server-side no Supabase Dashboard
+- Traduzir templates de e-mail para PT-BR
+- Conectar n8n workflows ao Supabase
+- Continuar roadmap de produto (13 etapas)

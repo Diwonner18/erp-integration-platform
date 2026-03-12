@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import AreaSelectionModal from '@/components/Auth/AreaSelectionModal';
-import logotipo from '@/assets/logotipo.png';
+import AuthLayout from '@/components/Auth/AuthLayout';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_SECONDS = 30;
@@ -93,14 +93,10 @@ const Login = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
+      <AuthLayout>
+        <Card className="shadow-lg border-border/50">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4">
-              <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto" />
-              <p className="text-sm font-body text-muted-foreground mt-2">Sistema de Gestão de Obras</p>
-            </div>
-            <CardTitle className="font-title text-primary">Fazer Login</CardTitle>
+            <CardTitle className="font-title text-primary text-2xl">Fazer Login</CardTitle>
             <CardDescription className="font-body">
               Entre com suas credenciais para acessar o sistema
             </CardDescription>
@@ -138,11 +134,7 @@ const Login = () => {
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
@@ -180,7 +172,7 @@ const Login = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
 
       <AreaSelectionModal
         isOpen={showAreaSelection}

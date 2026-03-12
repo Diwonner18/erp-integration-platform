@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
-import logotipo from '@/assets/logotipo.png';
+import AuthLayout from '@/components/Auth/AuthLayout';
 
 const Cadastro = () => {
   const [name, setName] = useState('');
@@ -48,7 +48,6 @@ const Cadastro = () => {
     const success = await register(name, email, password);
     
     if (success) {
-      // V6 fix: always show confirmation message instead of redirecting
       setRegistrationComplete(true);
     } else {
       toast.error('E-mail já cadastrado ou erro no cadastro');
@@ -59,13 +58,10 @@ const Cadastro = () => {
 
   if (registrationComplete) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
+      <AuthLayout>
+        <Card className="shadow-lg border-border/50">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4">
-              <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto" />
-            </div>
-            <CardTitle className="font-title text-primary">Cadastro Realizado!</CardTitle>
+            <CardTitle className="font-title text-primary text-2xl">Cadastro Realizado!</CardTitle>
             <CardDescription className="font-body">
               Enviamos um e-mail de confirmação para <strong>{email}</strong>. 
               Por favor, verifique sua caixa de entrada (e spam) e clique no link de confirmação antes de fazer login.
@@ -77,19 +73,15 @@ const Cadastro = () => {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <AuthLayout>
+      <Card className="shadow-lg border-border/50">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto" />
-            <p className="text-sm font-body text-muted-foreground mt-2">Sistema de Gestão de Obras</p>
-          </div>
-          <CardTitle className="font-title text-primary">Criar Conta</CardTitle>
+          <CardTitle className="font-title text-primary text-2xl">Criar Conta</CardTitle>
           <CardDescription className="font-body">
             Preencha os dados para criar sua conta no sistema.
           </CardDescription>
@@ -139,11 +131,7 @@ const Cadastro = () => {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -166,11 +154,7 @@ const Cadastro = () => {
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -188,7 +172,7 @@ const Cadastro = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 };
 

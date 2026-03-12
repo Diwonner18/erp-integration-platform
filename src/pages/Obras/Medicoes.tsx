@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Ruler, Plus, Search, Eye, Check, X, Loader2 } from 'lucide-react';
+import { Ruler, Plus, Search, Eye, Check, X, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 import NovaMedicaoModal from '@/components/Obras/NovaMedicaoModal';
 import MedicaoDetailModal from '@/components/Obras/MedicaoDetailModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
@@ -12,6 +12,7 @@ import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters'
 import { useToast } from '@/hooks/use-toast';
 import { useMedicoes, useUpdateMedicao, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport, formatPercentExport } from '@/lib/exportUtils';
 
 const Medicoes = () => {
   const { toast } = useToast();

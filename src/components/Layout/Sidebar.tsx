@@ -257,20 +257,24 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       
       <ScrollArea className="flex-1">
         <nav className="mt-6">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center px-6 py-3 text-sm font-body font-medium transition-colors hover:bg-sidebar-accent ${
-                  isActive ? 'bg-sidebar-primary border-r-4 border-sidebar-ring text-sidebar-primary-foreground' : 'text-sidebar-foreground'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.label}
-            </NavLink>
-          ))}
+          {menuItems.map((item) => {
+            const tourId = getTourId(item.path);
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                {...(tourId ? { 'data-tour': tourId } : {})}
+                className={({ isActive }) =>
+                  `flex items-center px-6 py-3 text-sm font-body font-medium transition-colors hover:bg-sidebar-accent ${
+                    isActive ? 'bg-sidebar-primary border-r-4 border-sidebar-ring text-sidebar-primary-foreground' : 'text-sidebar-foreground'
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
       </ScrollArea>
 

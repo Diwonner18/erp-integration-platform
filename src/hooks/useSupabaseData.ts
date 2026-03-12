@@ -5,7 +5,8 @@ import {
   obraInsertSchema, propostaInsertSchema, medicaoInsertSchema,
   materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
   epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
-  relatorioDiarioInsertSchema, validateInput,
+  relatorioDiarioInsertSchema, horasExtrasInsertSchema, alteracaoEscopoInsertSchema,
+  validateInput,
 } from '@/lib/validationSchemas';
 
 const DEFAULT_LIMIT = 1000;
@@ -473,6 +474,7 @@ export const useCreateHorasExtras = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (he: TablesInsert<'horas_extras'>) => {
+      validateInput(horasExtrasInsertSchema, he);
       const { data, error } = await supabase.from('horas_extras').insert(he).select().single();
       if (error) throw error;
       return data;
@@ -523,6 +525,7 @@ export const useCreateAlteracaoEscopo = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (alt: TablesInsert<'alteracoes_escopo'>) => {
+      validateInput(alteracaoEscopoInsertSchema, alt);
       const { data, error } = await supabase.from('alteracoes_escopo').insert(alt).select().single();
       if (error) throw error;
       return data;

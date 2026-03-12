@@ -890,6 +890,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          preferencias: Json | null
           telefone: string | null
           updated_at: string
         }
@@ -899,6 +900,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          preferencias?: Json | null
           telefone?: string | null
           updated_at?: string
         }
@@ -908,6 +910,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          preferencias?: Json | null
           telefone?: string | null
           updated_at?: string
         }

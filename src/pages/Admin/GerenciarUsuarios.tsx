@@ -32,7 +32,7 @@ const GerenciarUsuarios = () => {
     });
   }, [usuarios, searchTerm, selectedFilter]);
 
-  const roleLabels: Record<string, string> = { admin: 'Administrador', obras: 'Obras', financeira: 'Financeiro', comercial: 'Comercial', cliente: 'Cliente', sem_role: 'Sem Role' };
+  const roleLabels: Record<string, string> = { admin: 'Administrador', gerenciador_tecnico: 'Gerenciador Técnico', obras: 'Obras', financeira: 'Financeiro', comercial: 'Comercial', cliente: 'Cliente', sem_role: 'Sem Role' };
   const isLoading = loadingP || loadingR;
 
   return (

@@ -1094,6 +1094,88 @@ export type Database = {
           },
         ]
       }
+      retencao_followups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: string
+          horario: string
+          id: string
+          observacoes: string | null
+          retencao_id: string
+          tipo_contato: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data: string
+          horario: string
+          id?: string
+          observacoes?: string | null
+          retencao_id: string
+          tipo_contato: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          horario?: string
+          id?: string
+          observacoes?: string | null
+          retencao_id?: string
+          tipo_contato?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retencao_followups_retencao_id_fkey"
+            columns: ["retencao_id"]
+            isOneToOne: false
+            referencedRelation: "retencoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retencao_pagamentos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_pagamento: string
+          descricao: string | null
+          id: string
+          retencao_id: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_pagamento: string
+          descricao?: string | null
+          id?: string
+          retencao_id: string
+          tipo: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string
+          descricao?: string | null
+          id?: string
+          retencao_id?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retencao_pagamentos_retencao_id_fkey"
+            columns: ["retencao_id"]
+            isOneToOne: false
+            referencedRelation: "retencoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       retencoes: {
         Row: {
           base_calculo: number | null
@@ -1102,6 +1184,7 @@ export type Database = {
           id: string
           mes_referencia: string | null
           obra_id: string
+          observacoes: string | null
           percentual: number
           status: string | null
           tipo: Database["public"]["Enums"]["retencao_tipo"]
@@ -1114,6 +1197,7 @@ export type Database = {
           id?: string
           mes_referencia?: string | null
           obra_id: string
+          observacoes?: string | null
           percentual: number
           status?: string | null
           tipo: Database["public"]["Enums"]["retencao_tipo"]
@@ -1126,6 +1210,7 @@ export type Database = {
           id?: string
           mes_referencia?: string | null
           obra_id?: string
+          observacoes?: string | null
           percentual?: number
           status?: string | null
           tipo?: Database["public"]["Enums"]["retencao_tipo"]

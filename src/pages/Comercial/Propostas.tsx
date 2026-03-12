@@ -3,11 +3,12 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Search, Eye, Edit, Download, Filter } from 'lucide-react';
+import { FileText, Plus, Search, Eye, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import NovaPropostaModal from '@/components/Comercial/NovaPropostaModal';
 import EditPropostaModal from '@/components/Comercial/EditPropostaModal';
+import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useToast } from '@/hooks/use-toast';
 import { usePropostas, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,14 +20,36 @@ const Propostas = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProposta, setSelectedProposta] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [filters, setFilters] = useState<FilterValues>({
+    obra: '',
+    dataInicial: null,
+    dataFinal: null,
+    status: ''
+  });
 
   const { data: propostas = [], isLoading } = usePropostas();
   const { data: obrasData = [] } = useObras();
 
+  const obras = obrasData.map(o => ({ id: o.id, nome: o.nome }));
+  const statusOptions = [
+    { value: 'rascunho', label: 'Rascunho' },
+    { value: 'pendente', label: 'Pendente' },
+    { value: 'em_analise', label: 'Em Análise' },
+    { value: 'aprovada', label: 'Aprovada' },
+    { value: 'rejeitada', label: 'Rejeitada' },
+    { value: 'cancelada', label: 'Cancelada' },
+  ];
+
   const filteredPropostas = useMemo(() => {
     let result = propostas;
-    if (statusFilter !== 'all') result = result.filter(p => p.status === statusFilter);
+    if (filters.obra) result = result.filter(p => p.obra_id === filters.obra);
+    if (filters.status) result = result.filter(p => p.status === filters.status);
+    if (filters.dataInicial && filters.dataFinal) {
+      result = result.filter(p => {
+        const d = new Date(p.created_at);
+        return d >= filters.dataInicial! && d <= filters.dataFinal!;
+      });
+    }
     if (searchTerm) {
       result = result.filter(p =>
         (p.titulo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -34,7 +57,7 @@ const Propostas = () => {
       );
     }
     return result;
-  }, [propostas, searchTerm, statusFilter]);
+  }, [propostas, searchTerm, filters]);
 
   const formatCurrency = (v: number | null) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'R$ 0,00';
 
@@ -54,24 +77,15 @@ const Propostas = () => {
           <Button onClick={() => setShowNovaPropostaModal(true)}><Plus className="w-4 h-4 mr-2" />Nova Proposta</Button>
         </div>
 
+        <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />
+
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input placeholder="Buscar propostas..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 border border-border rounded-md text-sm">
-              <option value="all">Todos</option>
-              <option value="pendente">Pendente</option>
-              <option value="aprovada">Aprovada</option>
-              <option value="em_analise">Em Análise</option>
-              <option value="rejeitada">Rejeitada</option>
-            </select>
-          </div>
+          <div className="text-sm text-muted-foreground">{filteredPropostas.length} de {propostas.length} propostas</div>
         </div>
-
-        <div className="text-sm text-muted-foreground">{filteredPropostas.length} de {propostas.length} propostas</div>
 
         {isLoading ? (
           <div className="grid gap-4">{[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>

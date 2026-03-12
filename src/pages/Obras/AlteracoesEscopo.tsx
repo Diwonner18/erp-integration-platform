@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { FileEdit, Plus, Search, Eye, Check, X } from 'lucide-react';
+import { FileEdit, Plus, Search, Check, X } from 'lucide-react';
 import SugestaoEscopoModal from '@/components/Obras/SugestaoEscopoModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
+import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useToast } from '@/hooks/use-toast';
-import { useAlteracoesEscopo, useUpdateAlteracaoEscopo } from '@/hooks/useSupabaseData';
+import { useAlteracoesEscopo, useUpdateAlteracaoEscopo, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const AlteracoesEscopo = () => {
@@ -18,14 +19,43 @@ const AlteracoesEscopo = () => {
   const [selectedAlteracao, setSelectedAlteracao] = useState<any>(null);
   const [confirmationType, setConfirmationType] = useState<'aprovar' | 'rejeitar'>('aprovar');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<FilterValues>({
+    obra: '',
+    dataInicial: null,
+    dataFinal: null,
+    status: ''
+  });
 
   const { data: alteracoes = [], isLoading } = useAlteracoesEscopo();
+  const { data: obrasData = [] } = useObras();
   const updateAlteracao = useUpdateAlteracaoEscopo();
 
-  const filteredAlteracoes = alteracoes.filter(a =>
-    (a.descricao || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (a.obras?.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const obras = obrasData.map(o => ({ id: o.id, nome: o.nome }));
+  const statusOptions = [
+    { value: 'pendente', label: 'Pendente' },
+    { value: 'em_analise', label: 'Em Análise' },
+    { value: 'aprovada', label: 'Aprovada' },
+    { value: 'rejeitada', label: 'Rejeitada' },
+  ];
+
+  const filteredAlteracoes = useMemo(() => {
+    let result = alteracoes;
+    if (filters.obra) result = result.filter(a => a.obra_id === filters.obra);
+    if (filters.status) result = result.filter(a => a.status === filters.status);
+    if (filters.dataInicial && filters.dataFinal) {
+      result = result.filter(a => {
+        const d = new Date(a.created_at);
+        return d >= filters.dataInicial! && d <= filters.dataFinal!;
+      });
+    }
+    if (searchTerm) {
+      result = result.filter(a =>
+        (a.descricao || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (a.obras?.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return result;
+  }, [alteracoes, filters, searchTerm]);
 
   const handleConfirmAction = async () => {
     if (!selectedAlteracao) return;
@@ -58,11 +88,14 @@ const AlteracoesEscopo = () => {
           <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-2" />Nova Sugestão</Button>
         </div>
 
+        <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />
+
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input placeholder="Buscar alterações..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
+          <div className="text-sm text-muted-foreground">{filteredAlteracoes.length} de {alteracoes.length} alterações</div>
         </div>
 
         {isLoading ? (
@@ -70,7 +103,7 @@ const AlteracoesEscopo = () => {
         ) : filteredAlteracoes.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <FileEdit className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="font-medium">Nenhuma alteração de escopo</p>
+            <p className="font-medium">Nenhuma alteração de escopo encontrada</p>
           </div>
         ) : (
           <div className="grid gap-4">

@@ -235,7 +235,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   // Desktop: fixed sidebar
   return (
-    <div className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
+    <div data-tour="sidebar" className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
         <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />
         <p className="text-sm font-body text-sidebar-foreground/70 mt-1">Sistema de Obras</p>

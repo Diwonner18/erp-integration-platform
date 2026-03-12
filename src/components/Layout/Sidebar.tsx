@@ -157,6 +157,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const getUserTypeLabel = (type: string) => {
     const types = {
       admin: 'Admin Master',
+      gerenciador_tecnico: 'Gerenciador Técnico',
       obras: 'Obras',
       financeira: 'Financeiro',
       comercial: 'Comercial',

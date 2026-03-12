@@ -46,7 +46,7 @@ const GerenciarUsuarios = () => {
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" /><Input placeholder="Buscar..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
           <select value={selectedFilter} onChange={(e) => setSelectedFilter(e.target.value)} className="px-3 py-2 border border-border rounded-md text-sm">
-            <option value="all">Todos</option><option value="admin">Admin</option><option value="obras">Obras</option><option value="financeira">Financeiro</option><option value="comercial">Comercial</option><option value="cliente">Cliente</option>
+            <option value="all">Todos</option><option value="admin">Admin</option><option value="gerenciador_tecnico">Gerenciador Técnico</option><option value="obras">Obras</option><option value="financeira">Financeiro</option><option value="comercial">Comercial</option><option value="cliente">Cliente</option>
           </select>
         </div>
 

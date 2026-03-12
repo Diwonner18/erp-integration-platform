@@ -167,6 +167,7 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="gerenciador_tecnico">Gerenciador Técnico</SelectItem>
                 <SelectItem value="obras">Obras</SelectItem>
                 <SelectItem value="financeira">Financeiro</SelectItem>
                 <SelectItem value="comercial">Comercial</SelectItem>

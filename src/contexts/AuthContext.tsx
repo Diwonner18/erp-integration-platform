@@ -61,6 +61,7 @@ const isCompanyEmail = (email: string): boolean => {
 const getPermissionsByUserType = (userType: UserType): UserPermissions => {
   switch (userType) {
     case 'admin':
+    case 'gerenciador_tecnico':
       return {
         canManageUsers: true,
         canApproveChanges: true,

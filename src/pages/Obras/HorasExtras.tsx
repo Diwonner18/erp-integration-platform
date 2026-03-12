@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Clock, Plus } from 'lucide-react';
+import { Clock, Plus, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
+import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useHorasExtras, useCreateHorasExtras, useUpdateHorasExtras, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,11 +20,43 @@ const HorasExtrasPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRegistro, setSelectedRegistro] = useState<any>(null);
   const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<FilterValues>({
+    obra: '',
+    dataInicial: null,
+    dataFinal: null,
+    status: ''
+  });
 
   const { data: registros = [], isLoading } = useHorasExtras();
   const { data: obrasData = [] } = useObras();
   const createHE = useCreateHorasExtras();
   const updateHE = useUpdateHorasExtras();
+
+  const obras = obrasData.map(o => ({ id: o.id, nome: o.nome }));
+  const statusOptions = [
+    { value: 'pendente', label: 'Pendente' },
+    { value: 'aprovada', label: 'Aprovada' },
+  ];
+
+  const filteredRegistros = useMemo(() => {
+    let result = registros;
+    if (filters.obra) result = result.filter(r => r.obra_id === filters.obra);
+    if (filters.status) result = result.filter(r => r.status === filters.status);
+    if (filters.dataInicial && filters.dataFinal) {
+      result = result.filter(r => {
+        const d = new Date(r.data);
+        return d >= filters.dataInicial! && d <= filters.dataFinal!;
+      });
+    }
+    if (searchTerm) {
+      result = result.filter(r =>
+        r.funcionario.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.obras?.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return result;
+  }, [registros, filters, searchTerm]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,16 +101,26 @@ const HorasExtrasPage = () => {
           <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
         </div>
 
+        <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />
+
+        <div className="flex items-center space-x-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input placeholder="Buscar por funcionário ou obra..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          <div className="text-sm text-muted-foreground">{filteredRegistros.length} de {registros.length} registros</div>
+        </div>
+
         {isLoading ? (
           <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>
-        ) : registros.length === 0 ? (
+        ) : filteredRegistros.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="font-medium">Nenhum registro de horas extras</p>
+            <p className="font-medium">Nenhum registro encontrado</p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {registros.map((registro) => (
+            {filteredRegistros.map((registro) => (
               <Card key={registro.id}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">

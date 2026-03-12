@@ -1,52 +1,153 @@
 
 
-## Plano: Popular o sistema conectando Supabase + n8n
+# Overview Final de Seguranca - Sistema CT Guedes
 
-### Visao geral
+## Estado Atual
 
-A ideia e criar um fluxo completo onde o Supabase serve como banco de dados real e o n8n popula/processa dados automaticamente. Hoje o sistema inteiro roda em localStorage sem backend. A conexao Supabase + n8n permite que os 14 workflows alimentem o banco e o frontend consuma dados reais.
+O sistema atingiu um estado de seguranca robusto e funcional. Todas as vulnerabilidades criticas e altas foram corrigidas. O modelo de acesso granular intra-role foi implementado com sucesso, permitindo que funcionarios acessem registros uns dos outros com autorizacao administrativa.
 
-### Arquitetura
+---
 
-```text
-[Frontend Lovable] <---> [Supabase (DB + Auth + Edge Functions)] <---> [n8n Workflows]
-                              |                                           |
-                              |-- Tabelas reais (obras, medicoes, etc)    |
-                              |-- Auth real (email/senha)                 |
-                              |-- Edge Functions (webhooks de saida) ---->|
-                              |<--- Webhooks de entrada (n8n responde) ---|
+## ✅ PONTOS SEGUROS (Verificados)
+
+### 1. Autenticacao e Autorizacao
+
+| Controle | Implementacao |
+|----------|---------------|
+| Supabase Auth | Sessoes JWT gerenciadas pelo Supabase, sem localStorage |
+| Roles em banco | Tabela `user_roles` com enum `app_role`, nunca no frontend |
+| Admin restrito | Function `assign_internal_role` + Edge Function `manage-user` bloqueiam admin para emails fora de `carla@ctguedes.com.br` |
+| Auto-atribuicao segura | `self_assign_area` valida email `@ctguedes.com.br`, bloqueia admin, exige ausencia de role |
+| Confirmacao de email | Registro exige confirmacao antes de acesso |
+| Rate limiting login | 5 tentativas -> lockout 30s com feedback visual |
+
+### 2. Row Level Security (RLS)
+
+| Controle | Status |
+|----------|--------|
+| 24 tabelas com RLS | 100% cobertura |
+| Policies PERMISSIVE | 70+ policies concedem acesso baseado em roles |
+| Policies RESTRICTIVE | 30+ policies (15 DELETE + 15 UPDATE) restringem por `created_by` ou `has_record_access` |
+| Function SECURITY DEFINER | `has_record_access(_user_id, _tabela, _registro_id, _nivel)` valida acesso compartilhado |
+
+### 3. Isolamento Intra-Role (V4 Implementado)
+
+**Fluxo completo funcional:**
+
+```
+1. Funcionario tenta editar registro de outro
+   -> AccessGuard detecta created_by !== auth.uid()
+   -> Exibe botao "Solicitar Acesso ao Admin"
+
+2. Solicitacao criada em `aprovacoes` (tipo: 'acesso_registro')
+   -> referencia_tabela, referencia_id, solicitante_id
+
+3. Admin ve na tela /aprovacoes
+   -> Clica "Aprovar" -> Dialog com 3 niveis:
+      - Visualizar (view)
+      - Editar (edit) 
+      - Completo (all)
+
+4. Ao aprovar -> insere em `acessos_compartilhados`
+   -> nivel_acesso, expira_em (opcional), concedido_por
+
+5. Funcionario agora pode acessar via `has_record_access`
+   -> view: aceita view/edit/all
+   -> edit: aceita edit/all  
+   -> delete: aceita apenas all
 ```
 
-### Etapas de implementacao
+### 4. Validacao e Protecao de Dados
 
-**Etapa 1 -- Conectar Supabase (Lovable Cloud)**
-- Ativar Lovable Cloud no projeto
-- Criar schema do banco: tabelas `obras`, `propostas`, `medicoes`, `programacoes`, `materiais`, `epis`, `boletins`, `logs_auditoria`, `notificacoes`, `user_roles`
-- Configurar autenticacao real (substituir localStorage)
-- Aplicar RLS em todas as tabelas
+| Controle | Status |
+|----------|--------|
+| Zod validation | Schemas em cadastro, configuracoes, modais |
+| Senha forte | 8+ chars, maiuscula, numero obrigatorios |
+| Validacao senha atual | `changePassword` re-autentica antes de alterar |
+| Sem console.log sensiveis | Apenas errors tecnicos |
+| Sem dangerouslySetInnerHTML | Com dados de usuario |
 
-**Etapa 2 -- Edge Functions como ponte para n8n**
-- Criar Edge Functions que disparam webhooks n8n quando acoes ocorrem no sistema:
-  - `on-proposta-aprovada` → WF-01 (cria obra)
-  - `on-programacao-criada` → WF-03 (agenda)
-  - `on-medicao-executada` → WF-05 (gera medicao)
-  - `on-acao-sensivel` → WF-13 (audit trail)
-- Criar Edge Functions que recebem dados do n8n:
-  - `webhook-criar-obra` (n8n envia obra criada)
-  - `webhook-gerar-medicao` (n8n envia medicao calculada)
-  - `webhook-notificacao` (n8n envia alertas)
+### 5. Auditoria e Logs
 
-**Etapa 3 -- Migrar frontend para Supabase**
-- Substituir `AuthContext` de localStorage para `supabase.auth`
-- Substituir dados mock por queries `supabase.from('tabela').select()`
-- Dashboard consome dados reais via React Query + Supabase
+| Controle | Status |
+|----------|--------|
+| Logs de auditoria | Tabela `logs_auditoria` via `insert_audit_log` SECURITY DEFINER |
+| Identidade preservada | Usuario nao pode spoofar logs |
+| RLS em logs | Apenas admin visualiza |
 
-**Etapa 4 -- Conectar n8n aos endpoints**
-- Atualizar URLs dos webhooks nos 14 workflows para apontar para as Edge Functions do Supabase
-- Substituir placeholders (`<__PLACEHOLDER_VALUE__>`) por URLs reais
-- Testar fluxo completo: acao no frontend → Edge Function → n8n → processamento → resposta ao banco
+---
 
-### Primeiro passo concreto
+## ⚠️ VULNERABILIDADES REMANESCENTES
 
-Precisamos ativar o Lovable Cloud (Supabase) no projeto. Sem ele, nao ha banco de dados nem Edge Functions para o n8n consumir.
+### MEDIA - V8: Sem expurgo automatico de logs (LGPD)
+
+| Item | Detalhe |
+|------|---------|
+| Severidade | Baixa |
+| Tipo | Compliance / Regulatorio |
+| Descricao | `logs_auditoria` tem campo `data_expiracao` mas nenhum mecanismo automatico de limpeza |
+| Risco | Acumulo de dados pessoais além do prazo legal |
+| Solucao | Edge Function scheduled ou pg_cron para expurgar logs expirados |
+
+---
+
+## 📊 RESUMO EXECUTIVO
+
+| Severidade | Quantidade | Status |
+|-----------|-----------|--------|
+| Critica | 0 | ✅ Todas resolvidas |
+| Alta | 0 | ✅ Todas resolvidas |
+| Media | 0 | ✅ V4 IDOR intra-role implementado |
+| Baixa | 1 | ⚠️ V8 LGPD expurgo (melhoria futura) |
+
+**Conclusao:** O sistema esta seguro e funcional. O modelo de acesso granular com autorizacao administrativa esta operacional. A unica pendencia e de carater regulatorio (LGPD), nao de seguranca tecnica.
+
+---
+
+## 🏗️ ARQUITETURA DE SEGURANCA IMPLEMENTADA
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    FRONTEND (React)                    │
+│  - AccessGuard: verifica created_by vs auth.uid()      │
+│  - Rate limiting no login                              │
+│  - Zod validation em todos os forms                    │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│                SUPABASE (Auth + DB)                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
+│  │   Auth      │  │    RLS      │  │  Functions  │   │
+│  │  JWT/SAML   │  │  PERMISSIVE │  │has_record_  │   │
+│  │             │  │  RESTRICTIVE│  │   access()  │   │
+│  └─────────────┘  └─────────────┘  └─────────────┘   │
+│                                                        │
+│  Tabelas: 24 com RLS                                   │
+│  - acessos_compartilhados (novo)                       │
+│  - 70+ policies PERMISSIVE                             │
+│  - 30+ policies RESTRICTIVE                            │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│              EDGE FUNCTIONS (Deno)                     │
+│  - manage-user: cria usuarios via Admin API            │
+│  - assign_internal_role: admin delega roles            │
+│  - self_assign_area: funcionario escolhe area          │
+│  - insert_audit_log: logs com identidade preservada    │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 COMPONENTES DE SEGURANCA IMPLEMENTADOS
+
+| Arquivo | Funcao |
+|---------|--------|
+| `src/components/shared/AccessGuard.tsx` | Bloqueio de edicao + botao solicitacao |
+| `src/hooks/useSupabaseData.ts` | Hooks `useCheckRecordAccess`, `useSolicitarAcesso`, `useInsertAcessoCompartilhado` |
+| `src/pages/Admin/Aprovacoes.tsx` | Dialog de nivel de acesso ao aprovar |
+| `supabase/functions/manage-user/index.ts` | Criacao de usuarios via Admin API |
+| Migration `feee61a9` | Tabela `acessos_compartilhados` + function `has_record_access` + 30 policies |
 

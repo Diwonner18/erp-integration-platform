@@ -1,43 +1,50 @@
+# Overview Final - Sistema CT Guedes
 
+## Estado Atual
 
-# Lote 7b - Relatórios Compartilhados com Dados Reais do Supabase
+Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Roadmap completo.
 
-## Situacao Atual
+## ✅ Implementado
 
-`src/pages/Shared/Relatorios.tsx` usa `allData = { obras: [], clientes: [], setores: [] }` -- arrays vazios hardcoded. A pagina e admin-only (`/relatorios`). Filtros e UI existem mas nao mostram nada.
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, rate limiting login (frontend)
+- **RLS**: 24 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
+- **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
+- **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
 
-## Plano
+## ✅ Roadmap - Todas as Etapas Concluidas
 
-### Integrar dados reais via hooks existentes
+- **Etapa 1 - Nomenclatura**: Padronizada (Programacao)
+- **Etapa 2 - Filtros Avancados**: AdvancedFilters em Medicoes, Programacao, Propostas, Boletins, AlteracoesEscopo, HorasExtras
+- **Etapa 3 - Medicoes**: Auto-calculo com IGP-M, vinculo com programacoes executadas, NovaMedicaoModal refeito com Supabase
+- **Etapa 4 - Aceites Digitais**: Clientes podem aceitar propostas via MinhasPropostas com registro em aceites_digitais
+- **Etapa 5 - Relatorios com Export**: exportUtils.ts (jspdf + xlsx), exportacao PDF/Excel em Medicoes, HorasExtras e RelatoriosFinanceiros
+- **Etapa 6 - Horas/Custos**: Valor/hora configuravel por registro no formulario de HorasExtras
+- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (BarChart receita vs despesa, AreaChart fluxo de caixa) em ControleFinanceiro, RelatoriosComerciais e Dashboard
+- **Etapa 8 - Contratos com Alertas**: Badge "Vencendo" em Propostas + secao de alertas no Dashboard para propostas < 30 dias
+- **Etapa 9 - Materiais/Equipamentos Unificados**: Cards de resumo (total materiais, equipamentos, valor estoque, pendentes) em MateriaisEquipamentos
+- **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
+- **Etapa 11 - Fechamento Mensal**: Export real via exportUtils com dados filtrados por periodo (medicoes, despesas, boletins, horas extras)
+- **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
+- **Etapa 13 - Botoes Funcionais**: Aprovar/rejeitar em Medicoes, AlteracoesEscopo e Propostas com ConfirmationModal + mutations Supabase
 
-Substituir o `allData` mock pelos hooks ja existentes: `useObras`, `useClientes`, `useMedicoes`, `useDespesas`.
+## ⚠️ Pendente (apenas media/baixa severidade)
 
-**Dados derivados:**
-- **Obras**: `useObras()` com join em `clientes(razao_social)` -- nome, cliente, status, data_inicio, valor_contrato
-- **Receita**: somar `valor_contrato` das obras filtradas
-- **Clientes unicos**: extrair de obras
-- **Performance por setor**: agrupar despesas por categoria (material, mao_de_obra, equipamento, etc.)
-- **Crescimento**: comparar obras criadas no periodo vs periodo anterior (se filtro de data ativo)
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
 
-### Filtros funcionais
+## Arquitetura
 
-- **Obra**: popular select com nomes reais das obras
-- **Status**: mapear para status reais do enum (`programacao_pendente`, `em_andamento`, `concluida`, `cancelada`)
-- **Periodo**: filtrar por `data_inicio` da obra
-
-### Exportar Dashboard
-
-- Botao "Exportar Dashboard" gera PDF com `exportToPDF` contendo resumo + lista de obras filtradas
-
-### Usar tema consistente
-
-- Trocar `text-slate-900`/`text-slate-600` por `text-foreground`/`text-muted-foreground` (consistencia com resto do sistema)
-
-## Arquivos Modificados
-
-| Arquivo | Mudanca |
-|---|---|
-| `Relatorios.tsx` | Hooks reais, filtros funcionais, export PDF, tema consistente |
-
-Sem migration necessaria. Sem novos hooks -- reutiliza `useObras`, `useClientes`, `useDespesas` existentes.
-
+```
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
+    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
+```

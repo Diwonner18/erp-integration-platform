@@ -474,6 +474,7 @@ export const useCreateHorasExtras = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (he: TablesInsert<'horas_extras'>) => {
+      validateInput(horasExtrasInsertSchema, he);
       const { data, error } = await supabase.from('horas_extras').insert(he).select().single();
       if (error) throw error;
       return data;

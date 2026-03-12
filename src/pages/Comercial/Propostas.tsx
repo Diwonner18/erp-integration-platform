@@ -3,14 +3,15 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Search, Eye, Edit } from 'lucide-react';
+import { FileText, Plus, Search, Eye, Edit, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import NovaPropostaModal from '@/components/Comercial/NovaPropostaModal';
 import EditPropostaModal from '@/components/Comercial/EditPropostaModal';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useToast } from '@/hooks/use-toast';
-import { usePropostas, useObras } from '@/hooks/useSupabaseData';
+import { usePropostas, useUpdateProposta, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Propostas = () => {
@@ -18,7 +19,9 @@ const Propostas = () => {
   const [showNovaPropostaModal, setShowNovaPropostaModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedProposta, setSelectedProposta] = useState<any>(null);
+  const [actionType, setActionType] = useState<'aprovar' | 'rejeitar' | ''>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({
     obra: '',
@@ -29,6 +32,7 @@ const Propostas = () => {
 
   const { data: propostas = [], isLoading } = usePropostas();
   const { data: obrasData = [] } = useObras();
+  const updateProposta = useUpdateProposta();
 
   const obras = obrasData.map(o => ({ id: o.id, nome: o.nome }));
   const statusOptions = [
@@ -64,6 +68,27 @@ const Propostas = () => {
   const getStatusLabel = (s: string) => {
     const map: Record<string, string> = { aprovada: 'Aprovada', pendente: 'Pendente', em_analise: 'Em Análise', rejeitada: 'Rejeitada', rascunho: 'Rascunho', cancelada: 'Cancelada' };
     return map[s] || s;
+  };
+
+  const canChangeStatus = (status: string) => ['pendente', 'em_analise'].includes(status);
+
+  const handleConfirmAction = async () => {
+    if (!selectedProposta) return;
+    const newStatus = actionType === 'aprovar' ? 'aprovada' : 'rejeitada';
+    try {
+      await updateProposta.mutateAsync({ id: selectedProposta.id, status: newStatus as any });
+      toast({
+        title: actionType === 'aprovar' ? 'Proposta aprovada' : 'Proposta rejeitada',
+        description: `"${selectedProposta.titulo}" foi ${newStatus}.`,
+        variant: actionType === 'rejeitar' ? 'destructive' : undefined,
+      });
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao processar a proposta.', variant: 'destructive' });
+    } finally {
+      setShowConfirmModal(false);
+      setSelectedProposta(null);
+      setActionType('');
+    }
   };
 
   return (
@@ -114,8 +139,20 @@ const Propostas = () => {
                       <Badge variant={proposta.status === 'aprovada' ? 'default' : proposta.status === 'pendente' ? 'secondary' : proposta.status === 'rejeitada' ? 'destructive' : 'outline'}>
                         {getStatusLabel(proposta.status)}
                       </Badge>
-                      <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowDetailModal(true); }}><Eye className="w-4 h-4" /></Button>
-                      <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowDetailModal(true); }}><Eye className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                        {canChangeStatus(proposta.status) && (
+                          <>
+                            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => { setSelectedProposta(proposta); setActionType('rejeitar'); setShowConfirmModal(true); }}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" onClick={() => { setSelectedProposta(proposta); setActionType('aprovar'); setShowConfirmModal(true); }}>
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -136,15 +173,41 @@ const Propostas = () => {
                   <div><label className="text-sm font-medium">Cliente</label><p>{selectedProposta.clientes?.razao_social || '-'}</p></div>
                   <div><label className="text-sm font-medium">Valor</label><p>{formatCurrency(selectedProposta.valor)}</p></div>
                   <div><label className="text-sm font-medium">Status</label><p>{getStatusLabel(selectedProposta.status)}</p></div>
+                  {selectedProposta.prazo_execucao && <div><label className="text-sm font-medium">Prazo</label><p>{selectedProposta.prazo_execucao}</p></div>}
+                  {selectedProposta.condicoes_pagamento && <div><label className="text-sm font-medium">Pagamento</label><p>{selectedProposta.condicoes_pagamento}</p></div>}
                 </div>
                 {selectedProposta.descricao && <div><label className="text-sm font-medium">Descrição</label><p className="text-sm text-muted-foreground">{selectedProposta.descricao}</p></div>}
-                <div className="flex justify-end"><Button variant="outline" onClick={() => setShowDetailModal(false)}>Fechar</Button></div>
+                <div className="flex justify-end gap-2">
+                  {canChangeStatus(selectedProposta.status) && (
+                    <>
+                      <Button variant="outline" className="text-red-600" onClick={() => { setShowDetailModal(false); setActionType('rejeitar'); setShowConfirmModal(true); }}>
+                        <X className="w-4 h-4 mr-2" />Rejeitar
+                      </Button>
+                      <Button onClick={() => { setShowDetailModal(false); setActionType('aprovar'); setShowConfirmModal(true); }}>
+                        <Check className="w-4 h-4 mr-2" />Aprovar
+                      </Button>
+                    </>
+                  )}
+                  <Button variant="outline" onClick={() => setShowDetailModal(false)}>Fechar</Button>
+                </div>
               </div>
             )}
           </DialogContent>
         </Dialog>
 
         <EditPropostaModal open={showEditModal} onClose={() => { setShowEditModal(false); setSelectedProposta(null); }} proposta={selectedProposta} onSave={() => { toast({ title: 'Proposta atualizada' }); }} />
+
+        <ConfirmationModal
+          open={showConfirmModal}
+          onClose={() => { setShowConfirmModal(false); setSelectedProposta(null); setActionType(''); }}
+          onConfirm={handleConfirmAction}
+          title={actionType === 'aprovar' ? 'Aprovar Proposta' : 'Rejeitar Proposta'}
+          description={selectedProposta ? `Tem certeza que deseja ${actionType === 'aprovar' ? 'aprovar' : 'rejeitar'} a proposta "${selectedProposta.titulo}"?` : ''}
+          confirmText={actionType === 'aprovar' ? 'Aprovar' : 'Rejeitar'}
+          cancelText="Cancelar"
+          type={actionType === 'aprovar' ? 'success' : 'danger'}
+          loading={updateProposta.isPending}
+        />
       </div>
     </MainLayout>
   );

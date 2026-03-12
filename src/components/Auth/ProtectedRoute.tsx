@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   allowedUserTypes = ['admin', 'gerenciador_tecnico', 'obras', 'financeira', 'comercial', 'cliente'] 
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, effectiveType } = useAuth();
 
   if (isLoading) {
     return (

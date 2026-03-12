@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth, UserType } from '@/contexts/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import logotipo from '@/assets/logotipo.png';
 import { toast } from 'sonner';
@@ -22,7 +22,11 @@ import {
   User,
   LogOut,
   X,
-  Menu
+  ArrowLeft,
+  HardHat,
+  DollarSign,
+  Briefcase,
+  UserCheck
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -32,9 +36,93 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+const IMPERSONATION_ROLES: { role: UserType; label: string; icon: React.ElementType; colorClass: string }[] = [
+  { role: 'obras', label: 'Obras', icon: HardHat, colorClass: 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30' },
+  { role: 'financeira', label: 'Financeiro', icon: DollarSign, colorClass: 'bg-green-500/20 text-green-400 hover:bg-green-500/30' },
+  { role: 'comercial', label: 'Comercial', icon: Briefcase, colorClass: 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' },
+  { role: 'cliente', label: 'Cliente', icon: UserCheck, colorClass: 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30' },
+];
+
+const getMenuItemsByRole = (role: UserType, hasPermission: (p: string) => boolean) => {
+  const baseItems = [
+    { icon: Home, label: 'Dashboard', path: '/', show: true }
+  ];
+
+  if (role === 'admin') {
+    return [
+      ...baseItems,
+      { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', show: hasPermission('canManageUsers') },
+      { icon: Shield, label: 'Permissões', path: '/permissoes', show: hasPermission('canManageUsers') },
+      { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: hasPermission('canApproveChanges') },
+      { icon: Settings, label: 'Automação', path: '/automacao', show: hasPermission('canManageAutomation') },
+      { icon: Calendar, label: 'Programação', path: '/programacao', show: true },
+      { icon: FileText, label: 'Propostas', path: '/propostas', show: true },
+      { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: true },
+      { icon: BarChart3, label: 'Relatórios', path: '/relatorios', show: hasPermission('canViewAllReports') },
+      { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
+      { icon: Wallet, label: 'Financeiro', path: '/financeiro', show: hasPermission('canAccessFinancialData') },
+      { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
+      { icon: Shield, label: 'EPIs', path: '/epis', show: true },
+      { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
+    ];
+  }
+
+  if (role === 'obras') {
+    return [
+      ...baseItems,
+      { icon: Calendar, label: 'Programação', path: '/programacao', show: true },
+      { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: true },
+      { icon: FileText, label: 'Alterações de Escopo', path: '/alteracoes-escopo', show: true },
+      { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
+      { icon: Shield, label: 'EPIs', path: '/epis', show: true },
+      { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
+      { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
+      { icon: BarChart3, label: 'Relatórios de Obra', path: '/relatorios-obra', show: true },
+    ];
+  }
+
+  if (role === 'financeira') {
+    return [
+      ...baseItems,
+      { icon: ClipboardList, label: 'Boletins de Medição', path: '/boletins-medicao', show: true },
+      { icon: Wallet, label: 'Controle Financeiro', path: '/financeiro', show: true },
+      { icon: BarChart3, label: 'Relatórios Financeiros', path: '/relatorios-financeiros', show: true },
+      { icon: FileText, label: 'Exportar Dados', path: '/exportar-dados', show: true },
+      { icon: Clock, label: 'Controle de Retenções', path: '/retencoes', show: true },
+      { icon: FileText, label: 'Fechamento Mensal', path: '/fechamento-mensal', show: true },
+      { icon: Wallet, label: 'Lançamento de Despesas', path: '/lancamento-despesas', show: true },
+    ];
+  }
+
+  if (role === 'comercial') {
+    return [
+      ...baseItems,
+      { icon: FileText, label: 'Propostas', path: '/propostas', show: true },
+      { icon: Package, label: 'Valores Unitários', path: '/valores-unitarios', show: true },
+      { icon: CheckSquare, label: 'Aceites Digitais', path: '/aceites', show: true },
+      { icon: ClipboardList, label: 'Modelos de Contrato', path: '/modelos-contrato', show: true },
+      { icon: BarChart3, label: 'Relatórios Comerciais', path: '/relatorios-comerciais', show: true },
+    ];
+  }
+
+  if (role === 'cliente') {
+    return [
+      ...baseItems,
+      { icon: Calendar, label: 'Solicitar Programação', path: '/solicitar-agendamento', show: true },
+      { icon: ClipboardList, label: 'Minhas Obras', path: '/minhas-obras', show: true },
+      { icon: FileText, label: 'Minhas Propostas', path: '/minhas-propostas', show: true },
+      { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: true },
+      { icon: Wallet, label: 'Meus Pagamentos', path: '/meus-pagamentos', show: true },
+    ];
+  }
+
+  return baseItems;
+};
+
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  const { user, hasPermission, logout } = useAuth();
+  const { user, hasPermission, logout, impersonatedRole, effectiveType, startImpersonation, stopImpersonation } = useAuth();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -47,116 +135,40 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     if (isMobile && onClose) onClose();
   };
 
+  const handleStartImpersonation = (role: UserType) => {
+    startImpersonation(role);
+    navigate('/');
+    if (isMobile && onClose) onClose();
+  };
+
+  const handleStopImpersonation = () => {
+    stopImpersonation();
+    navigate('/');
+    if (isMobile && onClose) onClose();
+  };
+
+  // Determine which menu to show
+  const isGerenciadorBase = user.type === 'gerenciador_tecnico' && !impersonatedRole;
+  
   const getMenuItems = () => {
-    const baseItems = [
-      { icon: Home, label: 'Dashboard', path: '/', show: true }
-    ];
-
-    if (user.type === 'admin') {
+    if (isGerenciadorBase) {
+      // Show admin-only menu items (management tools)
       return [
-        ...baseItems,
-        { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', show: hasPermission('canManageUsers') },
-        { icon: Shield, label: 'Permissões', path: '/permissoes', show: hasPermission('canManageUsers') },
-        { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: hasPermission('canApproveChanges') },
-        { icon: Settings, label: 'Automação', path: '/automacao', show: hasPermission('canManageAutomation') },
-        { icon: Calendar, label: 'Programação', path: '/programacao', show: true },
-        { icon: FileText, label: 'Propostas', path: '/propostas', show: true },
-        { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: true },
-        { icon: BarChart3, label: 'Relatórios', path: '/relatorios', show: hasPermission('canViewAllReports') },
-        { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
-        { icon: Wallet, label: 'Financeiro', path: '/financeiro', show: hasPermission('canAccessFinancialData') },
-        { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
-        { icon: Shield, label: 'EPIs', path: '/epis', show: true },
-        { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
-      ];
-    }
-
-    if (user.type === 'gerenciador_tecnico') {
-      return [
-        ...baseItems,
-        // Admin
+        { icon: Home, label: 'Dashboard', path: '/', show: true },
         { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', show: true },
         { icon: Shield, label: 'Permissões', path: '/permissoes', show: true },
         { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: true },
         { icon: Settings, label: 'Automação', path: '/automacao', show: true },
-        // Obras
-        { icon: Calendar, label: 'Programação', path: '/programacao', show: true },
-        { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: true },
-        { icon: FileText, label: 'Alterações de Escopo', path: '/alteracoes-escopo', show: true },
-        { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
-        { icon: Shield, label: 'EPIs', path: '/epis', show: true },
-        { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
-        { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
-        { icon: BarChart3, label: 'Relatórios de Obra', path: '/relatorios-obra', show: true },
-        // Financeira
-        { icon: ClipboardList, label: 'Boletins de Medição', path: '/boletins-medicao', show: true },
-        { icon: Wallet, label: 'Controle Financeiro', path: '/financeiro', show: true },
-        { icon: BarChart3, label: 'Relatórios Financeiros', path: '/relatorios-financeiros', show: true },
-        { icon: FileText, label: 'Exportar Dados', path: '/exportar-dados', show: true },
-        { icon: Clock, label: 'Controle de Retenções', path: '/retencoes', show: true },
-        { icon: FileText, label: 'Fechamento Mensal', path: '/fechamento-mensal', show: true },
-        { icon: Wallet, label: 'Lançamento de Despesas', path: '/lancamento-despesas', show: true },
-        // Comercial
-        { icon: FileText, label: 'Propostas', path: '/propostas', show: true },
-        { icon: Package, label: 'Valores Unitários', path: '/valores-unitarios', show: true },
-        { icon: CheckSquare, label: 'Aceites Digitais', path: '/aceites', show: true },
-        { icon: ClipboardList, label: 'Modelos de Contrato', path: '/modelos-contrato', show: true },
-        { icon: BarChart3, label: 'Relatórios Comerciais', path: '/relatorios-comerciais', show: true },
-        // Relatórios gerais
         { icon: BarChart3, label: 'Relatórios Gerais', path: '/relatorios', show: true },
       ];
     }
 
-    if (user.type === 'obras') {
-      return [
-        ...baseItems,
-        { icon: Calendar, label: 'Programação', path: '/programacao', show: hasPermission('canConfirmSchedules') },
-        { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: hasPermission('canInsertMeasurements') },
-        { icon: FileText, label: 'Alterações de Escopo', path: '/alteracoes-escopo', show: hasPermission('canSuggestScopeChanges') },
-        { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
-        { icon: Shield, label: 'EPIs', path: '/epis', show: true },
-        { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
-        { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
-        { icon: BarChart3, label: 'Relatórios de Obra', path: '/relatorios-obra', show: true },
-      ];
+    if (impersonatedRole) {
+      return getMenuItemsByRole(impersonatedRole, hasPermission);
     }
 
-    if (user.type === 'financeira') {
-      return [
-        ...baseItems,
-        { icon: ClipboardList, label: 'Boletins de Medição', path: '/boletins-medicao', show: hasPermission('canIssueMeasurementBulletins') },
-        { icon: Wallet, label: 'Controle Financeiro', path: '/financeiro', show: hasPermission('canAccessFinancialData') },
-        { icon: BarChart3, label: 'Relatórios Financeiros', path: '/relatorios-financeiros', show: hasPermission('canExportReports') },
-        { icon: FileText, label: 'Exportar Dados', path: '/exportar-dados', show: hasPermission('canExportReports') },
-        { icon: Clock, label: 'Controle de Retenções', path: '/retencoes', show: hasPermission('canAccessFinancialData') },
-        { icon: FileText, label: 'Fechamento Mensal', path: '/fechamento-mensal', show: hasPermission('canAccessFinancialData') },
-        { icon: Wallet, label: 'Lançamento de Despesas', path: '/lancamento-despesas', show: hasPermission('canAccessFinancialData') },
-      ];
-    }
-
-    if (user.type === 'comercial') {
-      return [
-        ...baseItems,
-        { icon: FileText, label: 'Propostas', path: '/propostas', show: hasPermission('canCreateProposals') },
-        { icon: Package, label: 'Valores Unitários', path: '/valores-unitarios', show: hasPermission('canManageUnitValues') },
-        { icon: CheckSquare, label: 'Aceites Digitais', path: '/aceites', show: hasPermission('canManageContracts') },
-        { icon: ClipboardList, label: 'Modelos de Contrato', path: '/modelos-contrato', show: hasPermission('canManageContracts') },
-        { icon: BarChart3, label: 'Relatórios Comerciais', path: '/relatorios-comerciais', show: true },
-      ];
-    }
-
-    if (user.type === 'cliente') {
-      return [
-        ...baseItems,
-        { icon: Calendar, label: 'Solicitar Programação', path: '/solicitar-agendamento', show: hasPermission('canScheduleWorks') },
-        { icon: ClipboardList, label: 'Minhas Obras', path: '/minhas-obras', show: hasPermission('canViewOwnData') },
-        { icon: FileText, label: 'Minhas Propostas', path: '/minhas-propostas', show: hasPermission('canViewOwnData') },
-        { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: hasPermission('canViewOwnData') },
-        { icon: Wallet, label: 'Meus Pagamentos', path: '/meus-pagamentos', show: hasPermission('canViewOwnData') },
-      ];
-    }
-
-    return baseItems;
+    // Fallback for other user types
+    return getMenuItemsByRole(user.type, hasPermission);
   };
 
   const menuItems = getMenuItems().filter(item => item.show);
@@ -179,7 +191,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
 
   const getUserTypeColor = (type: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       admin: 'text-red-400',
       gerenciador_tecnico: 'text-cyan-400',
       obras: 'text-orange-400',
@@ -187,11 +199,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       comercial: 'text-blue-400',
       cliente: 'text-purple-400'
     };
-    return colors[type as keyof typeof colors] || 'text-blue-400';
+    return colors[type] || 'text-blue-400';
   };
 
   const getUserTypeLabel = (type: string) => {
-    const types = {
+    const types: Record<string, string> = {
       admin: 'Admin Master',
       gerenciador_tecnico: 'Gerenciador Técnico',
       obras: 'Obras',
@@ -199,100 +211,69 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       comercial: 'Comercial',
       cliente: 'Cliente'
     };
-    return types[type as keyof typeof types] || type;
+    return types[type] || type;
   };
 
-  // Mobile: overlay drawer
-  if (isMobile) {
-    return (
-      <>
-        {/* Overlay */}
-        {isOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={onClose}
-          />
-        )}
-        {/* Drawer */}
-        <div className={`w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col z-50 transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}>
-          <div className="p-6 border-b border-sidebar-border">
-            <div className="flex items-center justify-between">
-              <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />
-              <Button variant="ghost" size="sm" onClick={onClose} className="text-sidebar-foreground hover:bg-sidebar-accent">
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-            <p className="text-sm font-body text-sidebar-foreground/70 mt-1">Sistema de Obras</p>
-            
-            <div className="mt-4 rounded-xl p-5" style={{ backgroundColor: '#89846b' }}>
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <User className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-base font-body font-bold text-white truncate">{user.name}</p>
-                  <p className={`text-sm font-body italic mt-1 truncate ${getUserTypeColor(user.type)}`}>
-                    {getUserTypeLabel(user.type)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <ScrollArea className="flex-1">
-            <nav className="mt-6">
-              {menuItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={handleNavClick}
-                  className={({ isActive }) =>
-                    `flex items-center px-6 py-3 text-sm font-body font-medium transition-colors hover:bg-sidebar-accent ${
-                      isActive ? 'bg-sidebar-primary border-r-4 border-sidebar-ring text-sidebar-primary-foreground' : 'text-sidebar-foreground'
-                    }`
-                  }
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-          </ScrollArea>
+  const displayType = impersonatedRole
+    ? `${getUserTypeLabel(impersonatedRole)} (Agente)`
+    : getUserTypeLabel(user.type);
 
-          {/* Bottom actions */}
-          <div className="border-t border-sidebar-border p-4 space-y-1">
-            <NavLink
-              to="/configuracoes"
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center px-3 py-2 text-sm font-body font-medium rounded-md transition-colors hover:bg-sidebar-accent ${
-                  isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground'
-                }`
-              }
-            >
-              <Settings className="w-4 h-4 mr-3" />
-              Configurações
-            </NavLink>
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-3 py-2 text-sm font-body font-medium rounded-md text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-            >
-              <LogOut className="w-4 h-4 mr-3" />
-              Sair
-            </button>
-          </div>
+  const displayTypeColor = impersonatedRole
+    ? getUserTypeColor(impersonatedRole)
+    : getUserTypeColor(user.type);
+
+  // Render the agent section for gerenciador_tecnico
+  const renderAgentSection = () => {
+    if (user.type !== 'gerenciador_tecnico') return null;
+
+    if (impersonatedRole) {
+      // Show "back" button
+      return (
+        <div className="px-4 py-3 border-b border-sidebar-border">
+          <button
+            onClick={handleStopImpersonation}
+            className="flex items-center w-full px-3 py-2.5 text-sm font-body font-medium rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Gerenciador
+          </button>
         </div>
-      </>
-    );
-  }
+      );
+    }
 
-  // Desktop: fixed sidebar
-  return (
-    <div data-tour="sidebar" className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
+    // Show role picker
+    return (
+      <div className="px-4 py-3 border-b border-sidebar-border">
+        <p className="text-xs font-body font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 px-1">
+          Agente Temporário
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {IMPERSONATION_ROLES.map(({ role, label, icon: Icon, colorClass }) => (
+            <button
+              key={role}
+              onClick={() => handleStartImpersonation(role)}
+              className={`flex items-center gap-2 px-3 py-2.5 text-xs font-body font-medium rounded-lg transition-colors ${colorClass}`}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const sidebarContent = (
+    <>
       <div className="p-6 border-b border-sidebar-border">
-        <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />
+        <div className="flex items-center justify-between">
+          <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />
+          {isMobile && (
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-sidebar-foreground hover:bg-sidebar-accent">
+              <X className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
         <p className="text-sm font-body text-sidebar-foreground/70 mt-1">Sistema de Obras</p>
         
         <div className="mt-4 rounded-xl p-5" style={{ backgroundColor: '#89846b' }}>
@@ -302,22 +283,25 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-base font-body font-bold text-white truncate">{user.name}</p>
-              <p className={`text-sm font-body italic mt-1 truncate ${getUserTypeColor(user.type)}`}>
-                {getUserTypeLabel(user.type)}
+              <p className={`text-sm font-body italic mt-1 truncate ${displayTypeColor}`}>
+                {displayType}
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {renderAgentSection()}
       
       <ScrollArea className="flex-1">
-        <nav className="mt-6">
+        <nav className="mt-4">
           {menuItems.map((item) => {
             const tourId = getTourId(item.path);
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={handleNavClick}
                 {...(tourId ? { 'data-tour': tourId } : {})}
                 className={({ isActive }) =>
                   `flex items-center px-6 py-3 text-sm font-body font-medium transition-colors hover:bg-sidebar-accent ${
@@ -337,6 +321,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       <div className="border-t border-sidebar-border p-4 space-y-1">
         <NavLink
           to="/configuracoes"
+          onClick={handleNavClick}
           className={({ isActive }) =>
             `flex items-center px-3 py-2 text-sm font-body font-medium rounded-md transition-colors hover:bg-sidebar-accent ${
               isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground'
@@ -354,6 +339,32 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           Sair
         </button>
       </div>
+    </>
+  );
+
+  // Mobile: overlay drawer
+  if (isMobile) {
+    return (
+      <>
+        {isOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={onClose}
+          />
+        )}
+        <div className={`w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col z-50 transition-transform duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          {sidebarContent}
+        </div>
+      </>
+    );
+  }
+
+  // Desktop: fixed sidebar
+  return (
+    <div data-tour="sidebar" className="w-64 bg-sidebar text-sidebar-foreground h-screen fixed left-0 top-0 shadow-xl flex flex-col">
+      {sidebarContent}
     </div>
   );
 };

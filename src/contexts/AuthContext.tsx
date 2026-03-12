@@ -42,6 +42,11 @@ interface AuthContextType {
   assignUserArea: (userId: string, area: UserType) => Promise<boolean>;
   updateProfile: (name: string, email: string) => Promise<{ success: boolean; error?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  // Impersonation
+  impersonatedRole: UserType | null;
+  effectiveType: UserType | null;
+  startImpersonation: (role: UserType) => void;
+  stopImpersonation: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,7 +63,7 @@ const isCompanyEmail = (email: string): boolean => {
   return email.endsWith('@ctguedes.com.br');
 };
 
-const getPermissionsByUserType = (userType: UserType): UserPermissions => {
+export const getPermissionsByUserType = (userType: UserType): UserPermissions => {
   switch (userType) {
     case 'admin':
     case 'gerenciador_tecnico':
@@ -195,18 +200,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [impersonatedRole, setImpersonatedRole] = useState<UserType | null>(null);
+
+  // Effective type: impersonated role if active, otherwise real type
+  const effectiveType = impersonatedRole || user?.type || null;
+
+  // Impersonation functions
+  const startImpersonation = (role: UserType) => {
+    if (user?.type !== 'gerenciador_tecnico') return;
+    setImpersonatedRole(role);
+    setPermissions(getPermissionsByUserType(role));
+  };
+
+  const stopImpersonation = () => {
+    setImpersonatedRole(null);
+    if (user) {
+      setPermissions(getPermissionsByUserType(user.type));
+    }
+  };
 
   // Fetch role and profile for a given user id
   const loadUserData = async (supabaseUser: SupabaseUser) => {
     try {
-      // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', supabaseUser.id)
         .single();
 
-      // Fetch role
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
@@ -229,20 +250,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
-          // Use setTimeout to avoid potential deadlock with Supabase client
           setTimeout(() => loadUserData(session.user), 0);
         } else {
           setUser(null);
           setPermissions(null);
+          setImpersonatedRole(null);
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         loadUserData(session.user).finally(() => setIsLoading(false));
@@ -262,7 +281,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false };
       }
 
-      // Fetch profile and role
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name')
@@ -279,7 +297,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const role = (roleData?.role as UserType) || null;
       const appUser = buildUser(data.user, fullName, role);
 
-      // Auto-assign gerenciador_tecnico for specific email
       if (email === 'diwonner13@gmail.com' && !role) {
         await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'gerenciador_tecnico' as any });
         const updatedUser = { ...appUser, type: 'gerenciador_tecnico' as UserType, areaAssigned: true };
@@ -288,9 +305,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: true };
       }
 
-      // If company employee without role assigned, prompt area selection
       if (isCompanyEmail(email) && !role) {
-        // Don't set user in state yet — wait for area selection
         return { success: true, needsAreaSelection: true, user: appUser };
       }
 
@@ -312,7 +327,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // Reload user data
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
         await loadUserData(currentUser);
@@ -340,7 +354,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // Auto-assign role based on email
       if (email === 'diwonner13@gmail.com') {
         await supabase
           .from('user_roles')
@@ -362,7 +375,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) return { success: false, error: 'Usuário não autenticado.' };
 
-      // Update profile table
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ full_name: name, email })
@@ -370,13 +382,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (profileError) return { success: false, error: profileError.message };
 
-      // Update email in Supabase Auth if changed
       if (email !== user.email) {
         const { error: authError } = await supabase.auth.updateUser({ email });
         if (authError) return { success: false, error: authError.message };
       }
 
-      // Update user metadata
       await supabase.auth.updateUser({ data: { full_name: name } });
 
       setUser(prev => prev ? { ...prev, name, email } : null);
@@ -390,7 +400,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) return { success: false, error: 'Usuário não autenticado.' };
 
-      // V4 fix: validate current password first
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: currentPassword,
@@ -410,6 +419,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setUser(null);
     setPermissions(null);
+    setImpersonatedRole(null);
   };
 
   const hasPermission = (permission: keyof UserPermissions): boolean => {
@@ -417,7 +427,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, permissions, login, register, logout, isLoading, hasPermission, assignUserArea, updateProfile, changePassword }}>
+    <AuthContext.Provider value={{
+      user, permissions, login, register, logout, isLoading, hasPermission, assignUserArea, updateProfile, changePassword,
+      impersonatedRole, effectiveType, startImpersonation, stopImpersonation,
+    }}>
       {children}
     </AuthContext.Provider>
   );

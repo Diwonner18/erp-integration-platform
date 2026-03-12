@@ -542,6 +542,18 @@ export const useCreateEPI = () => {
   });
 };
 
+export const useUpdateEPI = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: TablesUpdate<'epis'> & { id: string }) => {
+      const { data, error } = await supabase.from('epis').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['epis'] }); },
+  });
+};
+
 export const useCreateHorasExtras = () => {
   const queryClient = useQueryClient();
   return useMutation({

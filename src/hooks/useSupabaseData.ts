@@ -525,6 +525,7 @@ export const useCreateAlteracaoEscopo = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (alt: TablesInsert<'alteracoes_escopo'>) => {
+      validateInput(alteracaoEscopoInsertSchema, alt);
       const { data, error } = await supabase.from('alteracoes_escopo').insert(alt).select().single();
       if (error) throw error;
       return data;

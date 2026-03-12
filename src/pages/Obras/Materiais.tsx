@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import FileImportButton from '@/components/shared/FileImportButton';
 import AdicionarMaterialModal from '@/components/Obras/AdicionarMaterialModal';
 import EditMaterialModal from '@/components/Obras/EditMaterialModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';

@@ -279,6 +279,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const role = (roleData?.role as UserType) || null;
       const appUser = buildUser(data.user, fullName, role);
 
+      // Auto-assign gerenciador_tecnico for specific email
+      if (email === 'diwonner13@gmail.com' && !role) {
+        await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'gerenciador_tecnico' as any });
+        const updatedUser = { ...appUser, type: 'gerenciador_tecnico' as UserType, areaAssigned: true };
+        setUser(updatedUser);
+        setPermissions(getPermissionsByUserType('gerenciador_tecnico'));
+        return { success: true };
+      }
+
       // If company employee without role assigned, prompt area selection
       if (isCompanyEmail(email) && !role) {
         // Don't set user in state yet — wait for area selection

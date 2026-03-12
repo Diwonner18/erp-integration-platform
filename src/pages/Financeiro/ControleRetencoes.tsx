@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Wallet, CheckCircle, Clock } from 'lucide-react';
+import { Wallet, Clock } from 'lucide-react';
 import { useRetencoes } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const ControleRetencoes = () => {
+  const navigate = useNavigate();
   const { data: retencoes = [], isLoading } = useRetencoes();
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
@@ -32,7 +32,11 @@ const ControleRetencoes = () => {
           <Card><CardHeader><CardTitle>Retenções</CardTitle></CardHeader><CardContent>
             <div className="space-y-4">
               {retencoes.map((retencao) => (
-                <div key={retencao.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={retencao.id}
+                  className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => navigate(`/retencoes/${retencao.id}`)}
+                >
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center"><Wallet className="w-5 h-5 text-primary" /></div>
                     <div>

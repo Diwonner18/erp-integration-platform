@@ -278,7 +278,7 @@ const Configuracoes = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="language">Idioma</Label>
-                    <select id="language" value={preferences.language} onChange={(e) => setPreferences(prev => ({ ...prev, language: e.target.value }))} className="w-full p-2 border border-border rounded-md bg-background text-foreground">
+                    <select id="language" value={preferences.language} onChange={(e) => handlePreferenceChange('language', e.target.value)} className="w-full p-2 border border-border rounded-md bg-background text-foreground">
                       <option value="pt-BR">Português (Brasil)</option>
                       <option value="en-US">English (US)</option>
                       <option value="es-ES">Español</option>
@@ -286,14 +286,14 @@ const Configuracoes = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Fuso Horário</Label>
-                    <select id="timezone" value={preferences.timezone} onChange={(e) => setPreferences(prev => ({ ...prev, timezone: e.target.value }))} className="w-full p-2 border border-border rounded-md bg-background text-foreground">
+                    <select id="timezone" value={preferences.timezone} onChange={(e) => handlePreferenceChange('timezone', e.target.value)} className="w-full p-2 border border-border rounded-md bg-background text-foreground">
                       <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
                       <option value="America/New_York">New York (GMT-5)</option>
                       <option value="Europe/London">London (GMT+0)</option>
                     </select>
                   </div>
                 </div>
-                <Button onClick={handleSavePreferences}>Salvar Preferências</Button>
+                <p className="text-sm text-muted-foreground">As preferências são salvas automaticamente. A tradução completa do sistema será implementada futuramente.</p>
               </CardContent>
             </Card>
           </TabsContent>

@@ -1,77 +1,52 @@
+# Overview Final - Sistema CT Guedes
 
+## Estado Atual
 
-# Implementar Role "Gerenciador Tecnico" para diwonner13@gmail.com
+Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Role `gerenciador_tecnico` implementado para `diwonner13@gmail.com`.
 
-## Resumo
+## ✅ Implementado
 
-Criar o cargo `gerenciador_tecnico` no sistema, vinculado exclusivamente ao e-mail `diwonner13@gmail.com`. Este role terá acesso quase total ao sistema (visibilidade completa, gestao de usuarios), ficando abaixo apenas do Admin Principal (`carla@ctguedes.com.br`).
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend)
+- **RLS**: 24 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER (inclui gerenciador_tecnico) + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
+- **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only + gerenciador_tecnico
+- **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
+- **Gerenciador Tecnico**: Role `gerenciador_tecnico` no enum `app_role`, vinculado a `diwonner13@gmail.com`, com visibilidade total (SELECT em todas tabelas), gestao de usuarios (manage-user edge function), menu completo no Sidebar, rotas admin liberadas
 
-## 1. Migracoes de Banco de Dados
+## ✅ Roadmap - Todas as Etapas Concluidas
 
-### 1a. Adicionar valor ao enum `app_role`
-```sql
-ALTER TYPE public.app_role ADD VALUE 'gerenciador_tecnico';
+- **Etapa 1 - Nomenclatura**: Padronizada (Programacao)
+- **Etapa 2 - Filtros Avancados**: AdvancedFilters em Medicoes, Programacao, Propostas, Boletins, AlteracoesEscopo, HorasExtras
+- **Etapa 3 - Medicoes**: Auto-calculo com IGP-M, vinculo com programacoes executadas, NovaMedicaoModal refeito com Supabase
+- **Etapa 4 - Aceites Digitais**: Clientes podem aceitar propostas via MinhasPropostas com registro em aceites_digitais
+- **Etapa 5 - Relatorios com Export**: exportUtils.ts (jspdf + xlsx), exportacao PDF/Excel em Medicoes, HorasExtras e RelatoriosFinanceiros
+- **Etapa 6 - Horas/Custos**: Valor/hora configuravel por registro no formulario de HorasExtras
+- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (BarChart receita vs despesa, AreaChart fluxo de caixa) em ControleFinanceiro, RelatoriosComerciais e Dashboard
+- **Etapa 8 - Contratos com Alertas**: Badge "Vencendo" em Propostas + secao de alertas no Dashboard para propostas < 30 dias
+- **Etapa 9 - Materiais/Equipamentos Unificados**: Cards de resumo (total materiais, equipamentos, valor estoque, pendentes) em MateriaisEquipamentos
+- **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
+- **Etapa 11 - Fechamento Mensal**: Export real via exportUtils com dados filtrados por periodo (medicoes, despesas, boletins, horas extras)
+- **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
+- **Etapa 13 - Botoes Funcionais**: Aprovar/rejeitar em Medicoes, AlteracoesEscopo e Propostas com ConfirmationModal + mutations Supabase
+- **Etapa 14 - Gerenciador Tecnico**: Role `gerenciador_tecnico` para diwonner13@gmail.com com acesso total de leitura + gestao de usuarios
+
+## ⚠️ Pendente (apenas media/baixa severidade)
+
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
+
+## Arquitetura
+
 ```
-
-### 1b. Adicionar RLS policies para o novo role
-Adicionar policies PERMISSIVE de SELECT em todas as tabelas de dados (obras, propostas, medicoes, despesas, materiais, equipamentos, epis, horas_extras, programacoes, boletins_medicao, relatorios_diarios, clientes, alteracoes_escopo, retencoes, logs_auditoria, notificacoes, aprovacoes, aceites_digitais, modelos_contrato, valores_unitarios, profiles, user_roles, acessos_compartilhados) para que `gerenciador_tecnico` tenha visibilidade total (SELECT).
-
-Tambem adicionar policies ALL nas tabelas de gestao de usuarios (`user_roles`, `profiles`) para permitir gestao de usuarios.
-
-### 1c. Adicionar policy de leitura de logs para gerenciador_tecnico
-```sql
-CREATE POLICY "Gerenciador tecnico can view logs"
-ON public.logs_auditoria FOR SELECT TO authenticated
-USING (has_role(auth.uid(), 'gerenciador_tecnico'::app_role));
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
+    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
 ```
-
-## 2. Edge Function `manage-user`
-
-Atualizar para:
-- Permitir que `gerenciador_tecnico` (alem de `admin`) chame a funcao
-- Impedir que `gerenciador_tecnico` altere o role do Admin Principal (`carla@ctguedes.com.br`)
-- Impedir que `gerenciador_tecnico` remova a si proprio
-- Permitir que `gerenciador_tecnico` atribua qualquer role, incluindo `admin` (promover usuarios)
-- Validar que o role `gerenciador_tecnico` so pode ser atribuido a `diwonner13@gmail.com`
-- Permitir `diwonner13@gmail.com` como excecao a regra de e-mails `@ctguedes.com.br` para roles internos
-
-## 3. Frontend - AuthContext.tsx
-
-- Adicionar `'gerenciador_tecnico'` ao type `UserType`
-- Adicionar case `gerenciador_tecnico` em `getPermissionsByUserType` com todas as permissoes = `true` (identico ao admin)
-
-## 4. Frontend - Sidebar.tsx
-
-- Adicionar bloco de menu para `gerenciador_tecnico` com os mesmos itens do admin
-- Adicionar cor e label: `'gerenciador_tecnico': 'text-cyan-400'` / `'Gerenciador Tecnico'`
-
-## 5. Frontend - App.tsx (Rotas)
-
-- Adicionar `'gerenciador_tecnico'` em todas as rotas que possuem `'admin'` no `allowedUserTypes`
-
-## 6. Frontend - GerenciarUsuarioModal.tsx
-
-- Adicionar opcao `gerenciador_tecnico` no Select de tipo de usuario
-- Adicionar validacao: nao permitir editar o role do Admin Principal
-
-## 7. Frontend - GerenciarUsuarios.tsx
-
-- Adicionar `gerenciador_tecnico` no filtro e no `roleLabels`
-
-## 8. DB Functions
-
-Atualizar `assign_internal_role` para aceitar chamadas de `gerenciador_tecnico` alem de `admin`, e adicionar validacao de que `gerenciador_tecnico` so pode ser atribuido a `diwonner13@gmail.com`.
-
-## Arquivos Modificados
-
-| Arquivo | Mudanca |
-|---|---|
-| Migration SQL | Enum + RLS policies |
-| `supabase/functions/manage-user/index.ts` | Permitir gerenciador_tecnico como caller + protecoes |
-| `src/contexts/AuthContext.tsx` | Novo UserType + permissoes |
-| `src/components/Layout/Sidebar.tsx` | Menu + label + cor |
-| `src/App.tsx` | Adicionar role nas rotas admin |
-| `src/components/Admin/GerenciarUsuarioModal.tsx` | Opcao no select |
-| `src/pages/Admin/GerenciarUsuarios.tsx` | Filtro + label |
-| `src/components/Auth/ProtectedRoute.tsx` | Adicionar ao default allowedUserTypes |
-

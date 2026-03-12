@@ -63,6 +63,8 @@ import Relatorios from "./pages/Shared/Relatorios";
 
 const queryClient = new QueryClient();
 
+const gt = 'gerenciador_tecnico' as const;
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -91,178 +93,178 @@ const App = () => (
 
             {/* Admin routes */}
             <Route path="/usuarios" element={
-              <ProtectedRoute allowedUserTypes={['admin']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
                 <GerenciarUsuarios />
               </ProtectedRoute>
             } />
             <Route path="/permissoes" element={
-              <ProtectedRoute allowedUserTypes={['admin']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
                 <Permissoes />
               </ProtectedRoute>
             } />
             <Route path="/aprovacoes" element={
-              <ProtectedRoute allowedUserTypes={['admin']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
                 <Aprovacoes />
               </ProtectedRoute>
             } />
             <Route path="/automacao" element={
-              <ProtectedRoute allowedUserTypes={['admin']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
                 <Automacao />
               </ProtectedRoute>
             } />
 
             {/* Shared routes */}
             <Route path="/programacao" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <Programacao />
               </ProtectedRoute>
             } />
             <Route path="/relatorios" element={
-              <ProtectedRoute allowedUserTypes={['admin']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
                 <Relatorios />
               </ProtectedRoute>
             } />
 
             {/* Commercial routes */}
             <Route path="/propostas" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
                 <Propostas />
               </ProtectedRoute>
             } />
             <Route path="/valores-unitarios" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
                 <ValoresUnitarios />
               </ProtectedRoute>
             } />
             <Route path="/aceites" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
                 <AceitesDigitais />
               </ProtectedRoute>
             } />
             <Route path="/modelos-contrato" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
                 <ModelosContrato />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-comerciais" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
                 <RelatoriosComerciais />
               </ProtectedRoute>
             } />
 
             {/* Operations routes */}
             <Route path="/medicoes" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']}>
                 <Medicoes />
               </ProtectedRoute>
             } />
             <Route path="/alteracoes-escopo" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <AlteracoesEscopo />
               </ProtectedRoute>
             } />
             <Route path="/materiais" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <Materiais />
               </ProtectedRoute>
             } />
             <Route path="/horas-extras" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']}>
                 <HorasExtras />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-obra" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <RelatoriosObra />
               </ProtectedRoute>
             } />
 
             {/* New Operations detail routes */}
             <Route path="/obras-concluidas" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <ObrasConcluidas />
               </ProtectedRoute>
             } />
             <Route path="/obras-em-andamento" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <ObrasEmAndamento />
               </ProtectedRoute>
             } />
             <Route path="/obras-agendadas" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <ObrasAgendadas />
               </ProtectedRoute>
             } />
             <Route path="/equipe-ativa" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <EquipeAtiva />
               </ProtectedRoute>
             } />
             <Route path="/central-alertas" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <CentralAlertas />
               </ProtectedRoute>
             } />
 
             {/* Financial routes */}
             <Route path="/boletins-medicao" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <BoletinsMedicao />
               </ProtectedRoute>
             } />
             <Route path="/financeiro" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <ControleFinanceiro />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-financeiros" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <RelatoriosFinanceiros />
               </ProtectedRoute>
             } />
             <Route path="/exportar-dados" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <ExportarDados />
               </ProtectedRoute>
             } />
             <Route path="/retencoes" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <ControleRetencoes />
               </ProtectedRoute>
             } />
             <Route path="/retencoes/:id" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <DetalhesRetencao />
               </ProtectedRoute>
             } />
             <Route path="/fechamento-mensal" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
                 <FechamentoMensal />
               </ProtectedRoute>
             } />
             <Route path="/lancamento-despesas" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'financeira', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira', 'obras']}>
                 <LancamentoDespesas />
               </ProtectedRoute>
             } />
 
             {/* Materiais e Equipamentos - Nova rota unificada */}
             <Route path="/materiais-equipamentos" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <MateriaisEquipamentos />
               </ProtectedRoute>
             } />
 
             {/* EPIs */}
             <Route path="/epis" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <EPIs />
               </ProtectedRoute>
             } />
 
             {/* Relatório Diário de Obra */}
             <Route path="/relatorio-diario-obra" element={
-              <ProtectedRoute allowedUserTypes={['admin', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <RelatorioDiarioObra />
               </ProtectedRoute>
             } />

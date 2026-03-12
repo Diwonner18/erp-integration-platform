@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Verify caller is admin
     const supabaseAnon = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
@@ -34,13 +33,12 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Check admin role
-    const { data: roleData } = await supabaseAnon.rpc('has_role', {
-      _user_id: caller.id,
-      _role: 'admin',
-    })
-    if (!roleData) {
-      return new Response(JSON.stringify({ error: 'Apenas administradores podem gerenciar usuários.' }), {
+    // Check admin or gerenciador_tecnico role
+    const { data: isAdmin } = await supabaseAnon.rpc('has_role', { _user_id: caller.id, _role: 'admin' })
+    const { data: isGT } = await supabaseAnon.rpc('has_role', { _user_id: caller.id, _role: 'gerenciador_tecnico' })
+
+    if (!isAdmin && !isGT) {
+      return new Response(JSON.stringify({ error: 'Apenas administradores e gerenciadores técnicos podem gerenciar usuários.' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -70,14 +68,20 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role !== 'cliente' && !email.endsWith('@ctguedes.com.br')) {
+      if (role === 'gerenciador_tecnico' && email !== 'diwonner13@gmail.com') {
+        return new Response(JSON.stringify({ error: 'O role gerenciador_tecnico só pode ser atribuído a diwonner13@gmail.com' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      if (role !== 'cliente' && role !== 'gerenciador_tecnico' && !email.endsWith('@ctguedes.com.br')) {
         return new Response(JSON.stringify({ error: 'Roles internos só podem ser atribuídos a e-mails @ctguedes.com.br' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
-      // Create user via Admin API
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
@@ -92,7 +96,6 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Assign role
       const { error: roleError } = await supabaseAdmin
         .from('user_roles')
         .insert({ user_id: newUser.user.id, role })
@@ -116,11 +119,26 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Get target email for validation
       const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(userId)
       if (!targetUser?.user) {
         return new Response(JSON.stringify({ error: 'Usuário não encontrado' }), {
           status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Protect main admin
+      if (targetUser.user.email === 'carla@ctguedes.com.br' && !isAdmin) {
+        return new Response(JSON.stringify({ error: 'Apenas o admin principal pode alterar o próprio role.' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      // Prevent GT from removing themselves
+      if (isGT && !isAdmin && targetUser.user.id === caller.id) {
+        return new Response(JSON.stringify({ error: 'Você não pode alterar seu próprio role.' }), {
+          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
@@ -132,7 +150,13 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Upsert role
+      if (role === 'gerenciador_tecnico' && targetUser.user.email !== 'diwonner13@gmail.com') {
+        return new Response(JSON.stringify({ error: 'O role gerenciador_tecnico só pode ser atribuído a diwonner13@gmail.com' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
       const { error: deleteError } = await supabaseAdmin
         .from('user_roles')
         .delete()

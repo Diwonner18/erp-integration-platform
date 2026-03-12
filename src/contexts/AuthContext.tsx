@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
-export type UserType = 'admin' | 'obras' | 'financeira' | 'comercial' | 'cliente';
+export type UserType = 'admin' | 'gerenciador_tecnico' | 'obras' | 'financeira' | 'comercial' | 'cliente';
 
 export interface User {
   id: string;
@@ -61,6 +61,7 @@ const isCompanyEmail = (email: string): boolean => {
 const getPermissionsByUserType = (userType: UserType): UserPermissions => {
   switch (userType) {
     case 'admin':
+    case 'gerenciador_tecnico':
       return {
         canManageUsers: true,
         canApproveChanges: true,

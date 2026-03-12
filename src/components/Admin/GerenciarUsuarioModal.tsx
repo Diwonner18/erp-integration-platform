@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 const userSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  type: z.enum(['admin', 'obras', 'financeira', 'comercial', 'cliente']),
+  type: z.enum(['admin', 'gerenciador_tecnico', 'obras', 'financeira', 'comercial', 'cliente']),
   password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres')
     .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiúscula')
     .regex(/[0-9]/, 'Deve conter pelo menos um número')
@@ -167,6 +167,7 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="gerenciador_tecnico">Gerenciador Técnico</SelectItem>
                 <SelectItem value="obras">Obras</SelectItem>
                 <SelectItem value="financeira">Financeiro</SelectItem>
                 <SelectItem value="comercial">Comercial</SelectItem>

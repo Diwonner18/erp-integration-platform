@@ -20,7 +20,7 @@ const HorasExtrasPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRegistro, setSelectedRegistro] = useState<any>(null);
-  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '' });
+  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '', valor_hora: '30' });
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({
     obra: '',

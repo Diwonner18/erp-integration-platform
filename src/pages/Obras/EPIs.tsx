@@ -14,6 +14,7 @@ import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Plus, FileText, Filter, Pencil, Trash2, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { useEPIs, useObras, useCreateEPI, useUpdateEPI, useDeleteEPI } from '@/hooks/useSupabaseData';
+import FileImportButton from '@/components/shared/FileImportButton';
 
 const tiposEPI = [
   'Capacete de Segurança',

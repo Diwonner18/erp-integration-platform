@@ -99,7 +99,37 @@ const HorasExtrasPage = () => {
             <h1 className="text-3xl font-bold text-foreground">Controle de Horas Extras</h1>
             <p className="text-muted-foreground mt-1">Registrar e acompanhar horas extras</p>
           </div>
-          <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const columns = [
+                { header: 'Funcionário', key: 'funcionario' },
+                { header: 'Obra', key: 'obra_nome' },
+                { header: 'Data', key: 'data', format: formatDateExport },
+                { header: 'Horas', key: 'horas' },
+                { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
+                { header: 'Total', key: 'total', format: formatCurrencyExport },
+                { header: 'Status', key: 'status' },
+              ];
+              const data = filteredRegistros.map(r => ({ ...r, obra_nome: r.obras?.nome || '-', total: (r.horas || 0) * (r.valor_hora || 0) }));
+              exportToPDF({ title: 'Relatório de Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
+              toast({ title: 'PDF exportado' });
+            }}><Download className="w-4 h-4 mr-2" />PDF</Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const columns = [
+                { header: 'Funcionário', key: 'funcionario' },
+                { header: 'Obra', key: 'obra_nome' },
+                { header: 'Data', key: 'data', format: formatDateExport },
+                { header: 'Horas', key: 'horas' },
+                { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
+                { header: 'Total', key: 'total', format: formatCurrencyExport },
+                { header: 'Status', key: 'status' },
+              ];
+              const data = filteredRegistros.map(r => ({ ...r, obra_nome: r.obras?.nome || '-', total: (r.horas || 0) * (r.valor_hora || 0) }));
+              exportToExcel({ title: 'Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
+              toast({ title: 'Excel exportado' });
+            }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
+            <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+          </div>
         </div>
 
         <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />

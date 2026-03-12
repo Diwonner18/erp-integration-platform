@@ -236,9 +236,9 @@ const DetalhesRetencao = () => {
               <CardHeader><CardTitle>Status Atual</CardTitle></CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-3">
-                  {statusRetencao === 'liberado' ? <CheckCircle className="w-5 h-5 text-green-600" /> :
+                  {statusRetencao === 'liberado' ? <CheckCircle className="w-5 h-5 text-chart-2" /> :
                    statusRetencao === 'atrasado' ? <AlertCircle className="w-5 h-5 text-destructive" /> :
-                   <Clock className="w-5 h-5 text-yellow-600" />}
+                   <Clock className="w-5 h-5 text-chart-4" />}
                   <Badge variant={statusRetencao === 'liberado' ? 'default' : 'secondary'}>
                     {statusRetencao === 'liberado' ? 'Liberado' : statusRetencao === 'atrasado' ? 'Atrasado' : 'Pendente'}
                   </Badge>

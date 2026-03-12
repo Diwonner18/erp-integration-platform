@@ -1352,7 +1352,13 @@ export type Database = {
         | "em_analise"
         | "aprovada"
         | "rejeitada"
-      app_role: "admin" | "obras" | "financeira" | "comercial" | "cliente"
+      app_role:
+        | "admin"
+        | "obras"
+        | "financeira"
+        | "comercial"
+        | "cliente"
+        | "gerenciador_tecnico"
       aprovacao_status: "pendente" | "aprovada" | "rejeitada"
       boletim_status: "rascunho" | "emitido" | "aprovado" | "pago"
       despesa_categoria:
@@ -1519,7 +1525,14 @@ export const Constants = {
         "aprovada",
         "rejeitada",
       ],
-      app_role: ["admin", "obras", "financeira", "comercial", "cliente"],
+      app_role: [
+        "admin",
+        "obras",
+        "financeira",
+        "comercial",
+        "cliente",
+        "gerenciador_tecnico",
+      ],
       aprovacao_status: ["pendente", "aprovada", "rejeitada"],
       boletim_status: ["rascunho", "emitido", "aprovado", "pago"],
       despesa_categoria: [

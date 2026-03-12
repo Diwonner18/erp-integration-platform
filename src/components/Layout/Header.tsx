@@ -13,7 +13,7 @@ interface HeaderProps {
   onStartTour?: () => void;
 }
 
-const Header = ({ onToggleSidebar }: HeaderProps) => {
+const Header = ({ onToggleSidebar, onStartTour }: HeaderProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);

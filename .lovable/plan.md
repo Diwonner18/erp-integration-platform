@@ -2,7 +2,7 @@
 
 ## Estado Atual
 
-Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado.
+Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Bug RLS em `acessos_compartilhados` corrigido (RESTRICTIVE → PERMISSIVE).
 
 ## ✅ Implementado
 

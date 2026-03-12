@@ -1,41 +1,75 @@
-# Overview Final de Seguranca - Sistema CT Guedes
 
-## Estado Atual
 
-Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Bug RLS em `acessos_compartilhados` corrigido (RESTRICTIVE → PERMISSIVE).
+# Execucao das 13 Etapas do Roadmap - Plano em Lotes
 
-## ✅ Implementado
+## Realidade
 
-- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, rate limiting login (frontend)
-- **RLS**: 24 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies
-- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
-- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
-- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
-- **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
-- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
-- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
-- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
-- **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
+Implementar tudo de uma vez em uma unica mensagem nao e viavel -- sao mudancas em 30+ arquivos com logica complexa. A melhor abordagem e dividir em **5 lotes**, cada um em uma mensagem separada.
 
-## ⚠️ Pendente (apenas media/baixa severidade)
+## Sequencia de Lotes
 
-- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
-- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
-- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
-- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
+### Lote 1 (esta mensagem, apos aprovacao)
+- **Etapa 12 - Identidade Visual**: Layout split-screen moderno nas telas de Login, Cadastro e Reset Password
+- **Etapa 1 - Nomenclatura**: Ja foi implementada (Programacao no lugar de Agendamentos) -- apenas validar
 
-## Arquitetura
+### Lote 2 (proxima mensagem)
+- **Etapa 2 - Filtros Avancados**: Componente `AdvancedFilters` ja existe e esta em uso em Medicoes. Padronizar em todas as telas de listagem (Propostas, Obras, Materiais, Boletins, etc.)
+- **Etapa 10 - Gestao de Senhas**: Fluxo de troca de senha ja implementado com re-autenticacao
 
+### Lote 3
+- **Etapa 13 - Botoes Funcionais**: Tornar funcionais botoes de aprovar/rejeitar/editar em Medicoes, Alteracoes de Escopo e Propostas
+- **Etapa 4 - Edicao Obras + Aceites Digitais**: Formularios de edicao e assinatura digital
+
+### Lote 4
+- **Etapa 3 - Medicoes**: Calculo automatico, anexos, vinculo com programacoes
+- **Etapa 5 - Relatorios com Export**: PDF/Excel via bibliotecas client-side
+- **Etapa 6 - Horas/Custos**: Taxas configuraveis por obra
+
+### Lote 5
+- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (receita vs despesa, fluxo de caixa)
+- **Etapa 8 - Contratos com Alertas**: Vencimentos e renovacoes automaticas
+- **Etapa 9 - Materiais/Equipamentos Unificados**: Controle de inventario
+- **Etapa 11 - Fechamento Mensal**: Automacao de fechamento
+
+## Lote 1 - Detalhamento Tecnico
+
+### Etapa 12: Identidade Visual (Login, Cadastro, Reset Password)
+
+**O que muda:**
+- Layout split-screen: lado esquerdo com banner CT Guedes (fundo primary, logotipo, slogan), lado direito com formulario
+- Responsivo: em mobile, banner vira header compacto
+- Cores do tema CT Guedes (primary, sidebar background)
+- Tipografia Eymen Pro (titulos) + Open Sans (corpo)
+
+**Arquivos a modificar:**
+- `src/pages/Login.tsx` -- layout split-screen com painel esquerdo decorativo
+- `src/pages/Cadastro.tsx` -- mesmo layout split-screen
+- `src/pages/ResetPassword.tsx` -- mesmo layout split-screen
+
+**Estrutura do layout:**
+```text
+┌──────────────────┬──────────────────┐
+│                  │                  │
+│   CT GUEDES      │   [Formulario]   │
+│   Logotipo       │   Email          │
+│   "Sistema de    │   Senha          │
+│    Gestao de     │   [Entrar]       │
+│    Obras"        │                  │
+│                  │                  │
+│   bg-sidebar     │   bg-background  │
+└──────────────────┴──────────────────┘
 ```
-Frontend (React + AccessGuard + Zod)
-  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
-    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
-    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
-```
 
-## Proximo passo sugerido
+### Etapa 1: Nomenclatura
+Ja implementada. Verificar se algum link residual aponta para `/agendamentos`.
 
-- Habilitar rate limiting server-side no Supabase Dashboard
-- Traduzir templates de e-mail para PT-BR
-- Conectar n8n workflows ao Supabase
-- Continuar roadmap de produto (13 etapas)
+## Creditos Estimados
+
+Cada lote consumira 1 credito (1 mensagem). Total: ~5 mensagens para completar todas as 13 etapas.
+
+## Etapas que NAO podem ser feitas por codigo
+
+- **Rate limiting server-side**: Configuracao manual no Supabase Dashboard
+- **Templates de e-mail PT-BR**: Configuracao manual no Supabase Dashboard
+- **Integracao n8n**: Requer instancia n8n do usuario
+

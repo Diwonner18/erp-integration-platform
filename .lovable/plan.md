@@ -17,6 +17,30 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 - **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only
 - **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
 
+## ✅ Roadmap - Etapas Concluidas
+
+- **Etapa 1 - Nomenclatura**: Padronizada (Programacao)
+- **Etapa 2 - Filtros Avancados**: AdvancedFilters em Medicoes, Programacao, Propostas, Boletins, AlteracoesEscopo, HorasExtras
+- **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
+- **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
+
+## ⏳ Roadmap - Proximos Lotes
+
+### Lote 3
+- **Etapa 13 - Botoes Funcionais**: Tornar funcionais botoes de aprovar/rejeitar/editar em Medicoes, Alteracoes de Escopo e Propostas
+- **Etapa 4 - Edicao Obras + Aceites Digitais**: Formularios de edicao e assinatura digital
+
+### Lote 4
+- **Etapa 3 - Medicoes**: Calculo automatico, anexos, vinculo com programacoes
+- **Etapa 5 - Relatorios com Export**: PDF/Excel via bibliotecas client-side
+- **Etapa 6 - Horas/Custos**: Taxas configuraveis por obra
+
+### Lote 5
+- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (receita vs despesa, fluxo de caixa)
+- **Etapa 8 - Contratos com Alertas**: Vencimentos e renovacoes automaticas
+- **Etapa 9 - Materiais/Equipamentos Unificados**: Controle de inventario
+- **Etapa 11 - Fechamento Mensal**: Automacao de fechamento
+
 ## ⚠️ Pendente (apenas media/baixa severidade)
 
 - **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
@@ -27,15 +51,8 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 ## Arquitetura
 
 ```
-Frontend (React + AccessGuard + Zod)
+Frontend (React + AccessGuard + Zod + AdvancedFilters)
   → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
     → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
     → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
 ```
-
-## Proximo passo sugerido
-
-- Habilitar rate limiting server-side no Supabase Dashboard
-- Traduzir templates de e-mail para PT-BR
-- Conectar n8n workflows ao Supabase
-- Continuar roadmap de produto (13 etapas)

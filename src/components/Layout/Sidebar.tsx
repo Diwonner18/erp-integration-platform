@@ -125,6 +125,23 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const menuItems = getMenuItems().filter(item => item.show);
 
+  const getTourId = (path: string): string | null => {
+    const map: Record<string, string> = {
+      '/usuarios': 'sidebar-usuarios',
+      '/permissoes': 'sidebar-permissoes',
+      '/aprovacoes': 'sidebar-aprovacoes',
+      '/programacao': 'sidebar-programacao',
+      '/medicoes': 'sidebar-medicoes',
+      '/boletins-medicao': 'sidebar-boletins',
+      '/financeiro': 'sidebar-financeiro',
+      '/propostas': 'sidebar-propostas',
+      '/valores-unitarios': 'sidebar-valores',
+      '/minhas-obras': 'sidebar-minhas-obras',
+      '/solicitar-agendamento': 'sidebar-agendamento',
+    };
+    return map[path] || null;
+  };
+
   const getUserTypeColor = (type: string) => {
     const colors = {
       admin: 'text-red-400',

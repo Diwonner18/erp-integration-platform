@@ -654,6 +654,27 @@ export const useDeleteProgramacao = () => {
   });
 };
 
+export const useCreateAceiteDigital = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { proposta_id: string; cliente_id: string }) => {
+      const { data, error } = await supabase.from('aceites_digitais').insert({
+        proposta_id: params.proposta_id,
+        cliente_id: params.cliente_id,
+        assinatura_digital: `aceite_digital_${Date.now()}`,
+      }).select().single();
+      if (error) throw error;
+      // Also update proposta status to aprovada
+      await supabase.from('propostas').update({ status: 'aprovada' as any }).eq('id', params.proposta_id);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aceites_digitais'] });
+      queryClient.invalidateQueries({ queryKey: ['propostas'] });
+    },
+  });
+};
+
 export const useDeleteEPI = () => {
   const queryClient = useQueryClient();
   return useMutation({

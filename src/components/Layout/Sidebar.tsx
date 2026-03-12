@@ -52,7 +52,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       { icon: Home, label: 'Dashboard', path: '/', show: true }
     ];
 
-    if (user.type === 'admin' || user.type === 'gerenciador_tecnico') {
+    if (user.type === 'admin') {
       return [
         ...baseItems,
         { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', show: hasPermission('canManageUsers') },
@@ -68,6 +68,42 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
         { icon: Shield, label: 'EPIs', path: '/epis', show: true },
         { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
+      ];
+    }
+
+    if (user.type === 'gerenciador_tecnico') {
+      return [
+        ...baseItems,
+        // Admin
+        { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', show: true },
+        { icon: Shield, label: 'Permissões', path: '/permissoes', show: true },
+        { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: true },
+        { icon: Settings, label: 'Automação', path: '/automacao', show: true },
+        // Obras
+        { icon: Calendar, label: 'Programação', path: '/programacao', show: true },
+        { icon: ClipboardList, label: 'Medições', path: '/medicoes', show: true },
+        { icon: FileText, label: 'Alterações de Escopo', path: '/alteracoes-escopo', show: true },
+        { icon: Package, label: 'Materiais e Equipamentos', path: '/materiais-equipamentos', show: true },
+        { icon: Shield, label: 'EPIs', path: '/epis', show: true },
+        { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
+        { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
+        { icon: BarChart3, label: 'Relatórios de Obra', path: '/relatorios-obra', show: true },
+        // Financeira
+        { icon: ClipboardList, label: 'Boletins de Medição', path: '/boletins-medicao', show: true },
+        { icon: Wallet, label: 'Controle Financeiro', path: '/financeiro', show: true },
+        { icon: BarChart3, label: 'Relatórios Financeiros', path: '/relatorios-financeiros', show: true },
+        { icon: FileText, label: 'Exportar Dados', path: '/exportar-dados', show: true },
+        { icon: Clock, label: 'Controle de Retenções', path: '/retencoes', show: true },
+        { icon: FileText, label: 'Fechamento Mensal', path: '/fechamento-mensal', show: true },
+        { icon: Wallet, label: 'Lançamento de Despesas', path: '/lancamento-despesas', show: true },
+        // Comercial
+        { icon: FileText, label: 'Propostas', path: '/propostas', show: true },
+        { icon: Package, label: 'Valores Unitários', path: '/valores-unitarios', show: true },
+        { icon: CheckSquare, label: 'Aceites Digitais', path: '/aceites', show: true },
+        { icon: ClipboardList, label: 'Modelos de Contrato', path: '/modelos-contrato', show: true },
+        { icon: BarChart3, label: 'Relatórios Comerciais', path: '/relatorios-comerciais', show: true },
+        // Relatórios gerais
+        { icon: BarChart3, label: 'Relatórios Gerais', path: '/relatorios', show: true },
       ];
     }
 

@@ -13,7 +13,6 @@ const FechamentoMensal = () => {
   const { toast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: medicoes = [] } = useMedicoes();
   const { data: despesas = [] } = useDespesas();
@@ -28,6 +27,7 @@ const FechamentoMensal = () => {
   ];
   const years = ['2023', '2024', '2025', '2026'];
   const prefix = `${selectedYear}-${selectedMonth}`;
+  const periodSelected = selectedMonth !== '';
 
   const filtered = useMemo(() => ({
     medicoes: medicoes.filter(m => (m.data_medicao || m.created_at).startsWith(prefix)),
@@ -68,21 +68,11 @@ const FechamentoMensal = () => {
     }},
   ];
 
-  const handleGenerateDocuments = () => {
-    if (!selectedMonth || !selectedYear) {
-      toast({ title: 'Dados incompletos', description: 'Selecione o mês e ano', variant: 'destructive' });
-      return;
-    }
-    setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      toast({ title: 'Período selecionado', description: `Documentos prontos para ${months.find(m => m.value === selectedMonth)?.label}/${selectedYear}` });
-    }, 500);
-  };
+  const availableDocs = documentos.filter(d => d.count > 0);
+  const hasAnyData = availableDocs.length > 0;
 
   const handleBackup = () => {
-    if (!selectedMonth) { toast({ title: 'Selecione um período', variant: 'destructive' }); return; }
-    documentos.forEach(d => { if (d.count > 0) { d.export(d.tipo === 'XLSX' ? 'excel' : 'pdf'); }});
+    availableDocs.forEach(d => d.export(d.tipo === 'XLSX' ? 'excel' : 'pdf'));
     toast({ title: 'Backup completo', description: 'Todos os documentos foram exportados' });
   };
 
@@ -109,35 +99,48 @@ const FechamentoMensal = () => {
                   <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleGenerateDocuments} disabled={isGenerating} className="w-full">
-                {isGenerating ? 'Carregando...' : 'Filtrar Período'}
-              </Button>
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-2">
             <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Documentos</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {documentos.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center"><FileText className="w-4 h-4 text-primary" /></div>
-                      <div>
-                        <p className="font-medium text-foreground">{doc.nome}</p>
-                        <p className="text-sm text-muted-foreground">{doc.tipo} • {doc.count} registros</p>
+              {!periodSelected ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Selecione um período</p>
+                  <p className="text-sm">Escolha o mês e ano para visualizar os documentos disponíveis</p>
+                </div>
+              ) : !hasAnyData ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Nenhum registro encontrado para o período selecionado</p>
+                  <p className="text-sm">Não há medições, despesas, boletins ou horas extras em {months.find(m => m.value === selectedMonth)?.label}/{selectedYear}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {availableDocs.map((doc, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center"><FileText className="w-4 h-4 text-primary" /></div>
+                          <div>
+                            <p className="font-medium text-foreground">{doc.nome}</p>
+                            <p className="text-sm text-muted-foreground">{doc.tipo} • {doc.count} registros</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => doc.export('pdf')}><Download className="w-4 h-4 mr-1" />PDF</Button>
+                          <Button variant="outline" size="sm" onClick={() => doc.export('excel')}><Download className="w-4 h-4 mr-1" />Excel</Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => doc.export('pdf')} disabled={doc.count === 0}><Download className="w-4 h-4 mr-1" />PDF</Button>
-                      <Button variant="outline" size="sm" onClick={() => doc.export('excel')} disabled={doc.count === 0}><Download className="w-4 h-4 mr-1" />Excel</Button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-4 border-t">
-                <Button variant="outline" onClick={handleBackup} className="w-full"><Archive className="w-4 h-4 mr-2" />Exportar Todos</Button>
-              </div>
+                  <div className="mt-6 pt-4 border-t">
+                    <Button variant="outline" onClick={handleBackup} className="w-full"><Archive className="w-4 h-4 mr-2" />Exportar Todos</Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

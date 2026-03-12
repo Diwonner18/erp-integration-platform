@@ -146,9 +146,11 @@ const Configuracoes = () => {
     toast.success('Preferências de notificação atualizadas!');
   };
 
-  const handleSavePreferences = () => {
-    savePreferencesToDb(notifications, preferences);
-    toast.success('Preferências salvas com sucesso!');
+  const handlePreferenceChange = (key: keyof typeof preferences, value: string) => {
+    const updated = { ...preferences, [key]: value };
+    setPreferences(updated);
+    savePreferencesToDb(notifications, updated);
+    toast.success('Preferência atualizada!');
   };
 
   return (

@@ -193,6 +193,7 @@ const HorasExtrasPage = () => {
                 </Select>
               </div>
               <div><Label>Motivo</Label><Input value={formData.motivo} onChange={(e) => setFormData({...formData, motivo: e.target.value})} /></div>
+              <div><Label>Valor por Hora (R$)</Label><Input type="number" step="0.01" value={formData.valor_hora} onChange={(e) => setFormData({...formData, valor_hora: e.target.value})} placeholder="30.00" /></div>
               <div className="flex justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancelar</Button>
                 <Button type="submit" disabled={createHE.isPending}>{createHE.isPending ? 'Salvando...' : 'Registrar'}</Button>

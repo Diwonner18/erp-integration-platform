@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   allowedUserTypes = ['admin', 'gerenciador_tecnico', 'obras', 'financeira', 'comercial', 'cliente'] 
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, effectiveType } = useAuth();
 
   if (isLoading) {
     return (
@@ -29,7 +29,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedUserTypes && !allowedUserTypes.includes(user.type)) {
+  // gerenciador_tecnico always has access regardless of impersonation
+  const realType = user.type;
+  const checkType = effectiveType || realType;
+  if (realType === 'gerenciador_tecnico') {
+    return <>{children}</>;
+  }
+  if (allowedUserTypes && !allowedUserTypes.includes(checkType)) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">

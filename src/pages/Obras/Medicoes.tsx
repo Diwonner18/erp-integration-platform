@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Ruler, Plus, Search, Eye, Check, X, Loader2, Download, FileSpreadsheet } from 'lucide-react';
+import FileImportButton from '@/components/shared/FileImportButton';
 import NovaMedicaoModal from '@/components/Obras/NovaMedicaoModal';
 import MedicaoDetailModal from '@/components/Obras/MedicaoDetailModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';

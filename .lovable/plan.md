@@ -28,19 +28,16 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 
 ## ⏳ Roadmap - Proximos Lotes
 
-### Lote 4
-- **Etapa 4 - Edicao Obras + Aceites Digitais**: Formularios de edicao e assinatura digital
-
-### Lote 4
-- **Etapa 3 - Medicoes**: Calculo automatico, anexos, vinculo com programacoes
-- **Etapa 5 - Relatorios com Export**: PDF/Excel via bibliotecas client-side
-- **Etapa 6 - Horas/Custos**: Taxas configuraveis por obra
-
 ### Lote 5
 - **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (receita vs despesa, fluxo de caixa)
 - **Etapa 8 - Contratos com Alertas**: Vencimentos e renovacoes automaticas
 - **Etapa 9 - Materiais/Equipamentos Unificados**: Controle de inventario
 - **Etapa 11 - Fechamento Mensal**: Automacao de fechamento
+
+## ✅ Lote 4 - Concluido
+- **Etapa 3 - Medicoes**: Auto-calculo com IGP-M, vinculo com programacoes executadas, NovaMedicaoModal refeito com Supabase
+- **Etapa 5 - Relatorios com Export**: exportUtils.ts (jspdf + xlsx), exportacao PDF/Excel em Medicoes, HorasExtras e RelatoriosFinanceiros
+- **Etapa 6 - Horas/Custos**: Valor/hora configuravel por registro no formulario de HorasExtras
 
 ## ⚠️ Pendente (apenas media/baixa severidade)
 

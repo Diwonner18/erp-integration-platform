@@ -128,6 +128,25 @@ export const relatorioDiarioInsertSchema = z.object({
   temperatura_max: optionalPositiveNumber,
 });
 
+export const horasExtrasInsertSchema = z.object({
+  funcionario: nonEmptyString,
+  horas: z.number().min(0.5, 'Mínimo 0.5 horas').max(24, 'Máximo 24 horas'),
+  obra_id: uuidSchema,
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  motivo: optionalString,
+  valor_hora: optionalPositiveNumber,
+  status: z.enum(['pendente', 'aprovada', 'rejeitada']).optional(),
+});
+
+export const alteracaoEscopoInsertSchema = z.object({
+  descricao: nonEmptyString,
+  obra_id: uuidSchema,
+  justificativa: optionalString,
+  impacto_valor: optionalPositiveNumber,
+  impacto_prazo: z.number().int().min(0).optional().nullable(),
+  status: z.enum(['pendente', 'em_analise', 'aprovada', 'rejeitada']).optional(),
+});
+
 // ==================== HELPER ====================
 
 export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {

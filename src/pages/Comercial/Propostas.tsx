@@ -136,6 +136,10 @@ const Propostas = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
+                      {proposta.data_validade && !['aprovada','rejeitada','cancelada'].includes(proposta.status) && (() => {
+                        const days = Math.ceil((new Date(proposta.data_validade).getTime() - Date.now()) / (1000*60*60*24));
+                        return days >= 0 && days <= 30 ? <Badge variant="outline" className="text-yellow-700 border-yellow-500 text-xs">Vence em {days}d</Badge> : null;
+                      })()}
                       <Badge variant={proposta.status === 'aprovada' ? 'default' : proposta.status === 'pendente' ? 'secondary' : proposta.status === 'rejeitada' ? 'destructive' : 'outline'}>
                         {getStatusLabel(proposta.status)}
                       </Badge>

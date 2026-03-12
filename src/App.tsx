@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import NotFound from "./pages/NotFound";
 import Configuracoes from "./pages/Configuracoes";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
 import GerenciarUsuarios from "./pages/Admin/GerenciarUsuarios";
@@ -72,6 +73,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Dashboard - All users */}
             <Route path="/" element={

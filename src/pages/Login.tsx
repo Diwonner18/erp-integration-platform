@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth, User, UserType } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import AreaSelectionModal from '@/components/Auth/AreaSelectionModal';
 import logotipo from '@/assets/logotipo.png';
 
@@ -149,7 +150,27 @@ const Login = () => {
                 {isLockedOut ? 'Aguarde...' : isLoading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!email) {
+                    toast.error('Digite seu e-mail para recuperar a senha');
+                    return;
+                  }
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) {
+                    toast.error('Erro ao enviar e-mail de recuperação');
+                  } else {
+                    toast.success('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+                  }
+                }}
+                className="text-sm font-body text-primary hover:underline font-medium"
+              >
+                Esqueci minha senha
+              </button>
               <p className="text-sm font-body text-muted-foreground">
                 Não tem uma conta?{' '}
                 <Link to="/cadastro" className="text-primary hover:underline font-medium">

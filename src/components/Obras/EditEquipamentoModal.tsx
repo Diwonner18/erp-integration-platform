@@ -27,7 +27,6 @@ const EditEquipamentoModal = ({ open, onClose, equipamento, onSave }: EditEquipa
   const { data: hasAccess, isLoading: accessLoading } = useCheckRecordAccess(
     'equipamentos',
     equipamento?.id,
-    equipamento?.created_by,
     'edit'
   );
 

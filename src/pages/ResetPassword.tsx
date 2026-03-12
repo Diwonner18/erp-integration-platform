@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
-import logotipo from '@/assets/logotipo.png';
+import AuthLayout from '@/components/Auth/AuthLayout';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -18,7 +18,6 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for recovery token in URL hash
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type');
     
@@ -26,7 +25,6 @@ const ResetPassword = () => {
       setIsValidSession(true);
     }
 
-    // Also listen for auth state changes (recovery event)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true);
@@ -73,11 +71,10 @@ const ResetPassword = () => {
 
   if (!isValidSession) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
+      <AuthLayout>
+        <Card className="shadow-lg border-border/50">
           <CardHeader className="text-center">
-            <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto mb-4" />
-            <CardTitle className="font-title text-primary">Link inválido</CardTitle>
+            <CardTitle className="font-title text-primary text-2xl">Link inválido</CardTitle>
             <CardDescription className="font-body">
               Este link de recuperação é inválido ou já expirou. Solicite um novo link na tela de login.
             </CardDescription>
@@ -88,21 +85,18 @@ const ResetPassword = () => {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <AuthLayout>
+      <Card className="shadow-lg border-border/50">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <img src={logotipo} alt="CT Guedes" className="h-16 mx-auto" />
-          </div>
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
             <KeyRound className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="font-title text-primary">Redefinir Senha</CardTitle>
+          <CardTitle className="font-title text-primary text-2xl">Redefinir Senha</CardTitle>
           <CardDescription className="font-body">
             Digite sua nova senha abaixo
           </CardDescription>
@@ -151,7 +145,7 @@ const ResetPassword = () => {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </AuthLayout>
   );
 };
 

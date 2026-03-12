@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Clock, Plus, Search } from 'lucide-react';
+import { Clock, Plus, Search, Download, FileSpreadsheet } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useHorasExtras, useCreateHorasExtras, useUpdateHorasExtras, useObras } from '@/hooks/useSupabaseData';
+import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const HorasExtrasPage = () => {
@@ -19,7 +20,7 @@ const HorasExtrasPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRegistro, setSelectedRegistro] = useState<any>(null);
-  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '' });
+  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '', valor_hora: '30' });
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({
     obra: '',
@@ -67,7 +68,7 @@ const HorasExtrasPage = () => {
         obra_id: formData.obra_id,
         motivo: formData.motivo,
         data: new Date().toISOString().split('T')[0],
-        valor_hora: 30,
+        valor_hora: parseFloat(formData.valor_hora) || 30,
       });
       toast({ title: 'Horas registradas', description: 'Registro criado com sucesso.' });
       setShowAddModal(false);
@@ -98,7 +99,37 @@ const HorasExtrasPage = () => {
             <h1 className="text-3xl font-bold text-foreground">Controle de Horas Extras</h1>
             <p className="text-muted-foreground mt-1">Registrar e acompanhar horas extras</p>
           </div>
-          <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const columns = [
+                { header: 'Funcionário', key: 'funcionario' },
+                { header: 'Obra', key: 'obra_nome' },
+                { header: 'Data', key: 'data', format: formatDateExport },
+                { header: 'Horas', key: 'horas' },
+                { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
+                { header: 'Total', key: 'total', format: formatCurrencyExport },
+                { header: 'Status', key: 'status' },
+              ];
+              const data = filteredRegistros.map(r => ({ ...r, obra_nome: r.obras?.nome || '-', total: (r.horas || 0) * (r.valor_hora || 0) }));
+              exportToPDF({ title: 'Relatório de Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
+              toast({ title: 'PDF exportado' });
+            }}><Download className="w-4 h-4 mr-2" />PDF</Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const columns = [
+                { header: 'Funcionário', key: 'funcionario' },
+                { header: 'Obra', key: 'obra_nome' },
+                { header: 'Data', key: 'data', format: formatDateExport },
+                { header: 'Horas', key: 'horas' },
+                { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
+                { header: 'Total', key: 'total', format: formatCurrencyExport },
+                { header: 'Status', key: 'status' },
+              ];
+              const data = filteredRegistros.map(r => ({ ...r, obra_nome: r.obras?.nome || '-', total: (r.horas || 0) * (r.valor_hora || 0) }));
+              exportToExcel({ title: 'Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
+              toast({ title: 'Excel exportado' });
+            }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
+            <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+          </div>
         </div>
 
         <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />
@@ -162,6 +193,7 @@ const HorasExtrasPage = () => {
                 </Select>
               </div>
               <div><Label>Motivo</Label><Input value={formData.motivo} onChange={(e) => setFormData({...formData, motivo: e.target.value})} /></div>
+              <div><Label>Valor por Hora (R$)</Label><Input type="number" step="0.01" value={formData.valor_hora} onChange={(e) => setFormData({...formData, valor_hora: e.target.value})} placeholder="30.00" /></div>
               <div className="flex justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancelar</Button>
                 <Button type="submit" disabled={createHE.isPending}>{createHE.isPending ? 'Salvando...' : 'Registrar'}</Button>

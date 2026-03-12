@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Ruler, Plus, Search, Eye, Check, X, Loader2 } from 'lucide-react';
+import { Ruler, Plus, Search, Eye, Check, X, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 import NovaMedicaoModal from '@/components/Obras/NovaMedicaoModal';
 import MedicaoDetailModal from '@/components/Obras/MedicaoDetailModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
@@ -12,6 +12,7 @@ import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters'
 import { useToast } from '@/hooks/use-toast';
 import { useMedicoes, useUpdateMedicao, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport, formatPercentExport } from '@/lib/exportUtils';
 
 const Medicoes = () => {
   const { toast } = useToast();
@@ -126,10 +127,44 @@ const Medicoes = () => {
             <h1 className="text-3xl font-bold font-title text-foreground">Medições</h1>
             <p className="text-muted-foreground mt-1">Controle de medições das obras</p>
           </div>
-          <Button onClick={() => setShowModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Medição
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              exportToPDF({
+                title: 'Relatório de Medições',
+                columns: [
+                  { header: 'Obra', key: 'obra_nome' },
+                  { header: 'Número', key: 'numero' },
+                  { header: 'Data', key: 'data_medicao', format: formatDateExport },
+                  { header: 'Valor', key: 'valor', format: formatCurrencyExport },
+                  { header: '% Exec.', key: 'percentual', format: formatPercentExport },
+                  { header: 'Status', key: 'status' },
+                ],
+                data: filteredMedicoes.map(m => ({ ...m, obra_nome: m.obras?.nome || '-' })),
+                filename: `medicoes_${new Date().toISOString().split('T')[0]}`,
+              });
+              toast({ title: 'PDF exportado' });
+            }}><Download className="w-4 h-4 mr-2" />PDF</Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              exportToExcel({
+                title: 'Medições',
+                columns: [
+                  { header: 'Obra', key: 'obra_nome' },
+                  { header: 'Número', key: 'numero' },
+                  { header: 'Data', key: 'data_medicao', format: formatDateExport },
+                  { header: 'Valor', key: 'valor', format: formatCurrencyExport },
+                  { header: '% Exec.', key: 'percentual', format: formatPercentExport },
+                  { header: 'Status', key: 'status' },
+                ],
+                data: filteredMedicoes.map(m => ({ ...m, obra_nome: m.obras?.nome || '-' })),
+                filename: `medicoes_${new Date().toISOString().split('T')[0]}`,
+              });
+              toast({ title: 'Excel exportado' });
+            }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
+            <Button onClick={() => setShowModal(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Medição
+            </Button>
+          </div>
         </div>
 
         <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />

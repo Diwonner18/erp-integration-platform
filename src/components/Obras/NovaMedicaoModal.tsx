@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,42 +10,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2 } from 'lucide-react';
+import { useObras, useCreateMedicao, useProgramacoes } from '@/hooks/useSupabaseData';
 
 const medicaoSchema = z.object({
-  obra: z.string().min(1, 'Selecione uma obra'),
-  periodo: z.string().min(1, 'Período é obrigatório'),
+  obra_id: z.string().min(1, 'Selecione uma obra'),
+  numero: z.string().optional(),
+  periodo_inicio: z.string().optional(),
+  periodo_fim: z.string().optional(),
+  data_medicao: z.string().optional(),
   percentual: z.number().min(0).max(100, 'Percentual deve estar entre 0 e 100'),
-  valor: z.number().min(0, 'Valor deve ser positivo'),
-  desconto: z.number().min(0, 'Desconto deve ser positivo').optional(),
-  tipoDesconto: z.enum(['fixo', 'percentual']).optional(),
-  correcaoMonetaria: z.number().min(0, 'Correção monetária deve ser positiva').optional(),
-  taxaMobilizacao: z.number().min(0, 'Taxa de mobilização deve ser positiva').optional(),
-  observacaoMobilizacao: z.string().optional(),
+  valor_bruto: z.number().min(0, 'Valor deve ser positivo'),
+  taxa_igpm: z.number().min(0).optional(),
   observacoes: z.string().optional(),
-  status: z.enum(['pendente', 'aprovada', 'rejeitada']),
-}).refine((data) => {
-  // Se taxa de mobilização for maior que 0, observação é obrigatória
-  if (data.taxaMobilizacao && data.taxaMobilizacao > 0 && !data.observacaoMobilizacao?.trim()) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Observação é obrigatória quando taxa de mobilização for aplicada",
-  path: ["observacaoMobilizacao"]
+  descricao: z.string().optional(),
 });
 
 type MedicaoFormData = z.infer<typeof medicaoSchema>;
-
-interface Despesa {
-  id: string;
-  descricao: string;
-  valor: number;
-  vinculacao: 'obra' | 'data';
-  data?: string;
-  tipo: 'fixa' | 'recorrente' | 'pontual';
-}
 
 interface NovaMedicaoModalProps {
   isOpen: boolean;
@@ -54,125 +37,78 @@ interface NovaMedicaoModalProps {
 
 const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [tipoDesconto, setTipoDesconto] = useState<'fixo' | 'percentual'>('fixo');
-  const [despesas, setDespesas] = useState<Despesa[]>([]);
-  const [novaDespesa, setNovaDespesa] = useState({
-    descricao: '',
-    valor: 0,
-    vinculacao: 'obra' as 'obra' | 'data',
-    data: '',
-    tipo: 'fixa' as 'fixa' | 'recorrente' | 'pontual'
-  });
-
-  const obras: string[] = [];
+  const { data: obrasData = [] } = useObras();
+  const { data: programacoes = [] } = useProgramacoes();
+  const createMedicao = useCreateMedicao();
+  const [selectedProgramacoes, setSelectedProgramacoes] = useState<string[]>([]);
+  const [selectedObraId, setSelectedObraId] = useState('');
 
   const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors }
+    register, handleSubmit, setValue, watch, reset, formState: { errors }
   } = useForm<MedicaoFormData>({
     resolver: zodResolver(medicaoSchema),
-    defaultValues: {
-      status: 'pendente',
-      percentual: 0,
-      valor: 0,
-      desconto: 0,
-      tipoDesconto: 'fixo',
-      correcaoMonetaria: 0,
-      taxaMobilizacao: 0,
-    }
+    defaultValues: { percentual: 0, valor_bruto: 0, taxa_igpm: 0 }
   });
 
-  const valorBase = watch('valor') || 0;
-  const desconto = watch('desconto') || 0;
+  const valorBruto = watch('valor_bruto') || 0;
+  const taxaIgpm = watch('taxa_igpm') || 0;
 
-  const adicionarDespesa = () => {
-    if (!novaDespesa.descricao || novaDespesa.valor <= 0) {
-      toast({
-        title: 'Erro',
-        description: 'Preencha todos os campos da despesa',
-        variant: 'destructive',
-      });
-      return;
+  // Auto-calculate correction and final value
+  const correcaoIgpm = valorBruto * (taxaIgpm / 100);
+  const valorFinal = valorBruto + correcaoIgpm;
+
+  // Filter programações by selected obra
+  const obraProgramacoes = programacoes.filter(
+    p => p.obra_id === selectedObraId && p.status === 'executada'
+  );
+
+  // Auto-calculate valor from selected programações (sum of servicos_executados)
+  useEffect(() => {
+    if (selectedProgramacoes.length > 0 && selectedObraId) {
+      const obra = obrasData.find(o => o.id === selectedObraId);
+      if (obra && obra.valor_contrato) {
+        // Calculate proportional value based on number of programações
+        const totalExecutadas = obraProgramacoes.length;
+        if (totalExecutadas > 0) {
+          const proporcao = selectedProgramacoes.length / Math.max(totalExecutadas, selectedProgramacoes.length);
+          const valorCalculado = (obra.valor_contrato || 0) * proporcao;
+          setValue('valor_bruto', Math.round(valorCalculado * 100) / 100);
+        }
+      }
     }
+  }, [selectedProgramacoes, selectedObraId]);
 
-    if (novaDespesa.vinculacao === 'data' && !novaDespesa.data) {
-      toast({
-        title: 'Erro',
-        description: 'Selecione uma data para a despesa',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const despesa: Despesa = {
-      id: Date.now().toString(),
-      ...novaDespesa
-    };
-
-    setDespesas([...despesas, despesa]);
-    setNovaDespesa({
-      descricao: '',
-      valor: 0,
-      vinculacao: 'obra',
-      data: '',
-      tipo: 'fixa'
-    });
-
-    toast({
-      title: 'Despesa adicionada',
-      description: 'A despesa foi vinculada à medição',
-    });
-  };
-
-  const removerDespesa = (id: string) => {
-    setDespesas(despesas.filter(d => d.id !== id));
-  };
-
-  const calcularValorFinal = () => {
-    const valorDesconto = tipoDesconto === 'percentual' 
-      ? valorBase * (desconto / 100) 
-      : desconto;
-    
-    return valorBase - valorDesconto;
+  const toggleProgramacao = (id: string) => {
+    setSelectedProgramacoes(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
   };
 
   const onSubmit = async (data: MedicaoFormData) => {
-    setIsLoading(true);
-    
     try {
-      // Simular chamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const medicaoCompleta = {
-        ...data,
-        tipoDesconto,
-        despesas,
-        valorFinal: calcularValorFinal()
-      };
-      
-      
-      
-      toast({
-        title: 'Medição criada',
-        description: `Nova medição para ${data.obra} foi registrada com sucesso`,
+      await createMedicao.mutateAsync({
+        obra_id: data.obra_id,
+        numero: data.numero || null,
+        periodo_inicio: data.periodo_inicio || null,
+        periodo_fim: data.periodo_fim || null,
+        data_medicao: data.data_medicao || null,
+        percentual: data.percentual,
+        valor_bruto: data.valor_bruto,
+        valor: valorFinal,
+        taxa_igpm: data.taxa_igpm || 0,
+        correcao_igpm: correcaoIgpm,
+        observacoes: data.observacoes || null,
+        descricao: data.descricao || null,
+        programacoes_ids: selectedProgramacoes.length > 0 ? selectedProgramacoes : null,
+        status: 'em_elaboracao',
       });
-      
+      toast({ title: 'Medição criada', description: 'Nova medição registrada com sucesso.' });
       reset();
-      setDespesas([]);
+      setSelectedProgramacoes([]);
+      setSelectedObraId('');
       onClose();
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro ao criar a medição',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+    } catch {
+      toast({ title: 'Erro', description: 'Falha ao criar medição.', variant: 'destructive' });
     }
   };
 
@@ -182,310 +118,126 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
         <DialogHeader>
           <DialogTitle>Nova Medição</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Obra */}
           <div className="space-y-2">
-            <Label htmlFor="obra">Obra</Label>
-            <Select onValueChange={(value) => setValue('obra', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a obra" />
-              </SelectTrigger>
+            <Label>Obra</Label>
+            <Select onValueChange={(v) => { setValue('obra_id', v); setSelectedObraId(v); setSelectedProgramacoes([]); }}>
+              <SelectTrigger><SelectValue placeholder="Selecione a obra" /></SelectTrigger>
               <SelectContent>
-                {obras.map((obra) => (
-                  <SelectItem key={obra} value={obra}>
-                    {obra}
-                  </SelectItem>
+                {obrasData.map(o => (
+                  <SelectItem key={o.id} value={o.id}>{o.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.obra && (
-              <p className="text-sm text-red-600">{errors.obra.message}</p>
-            )}
+            {errors.obra_id && <p className="text-sm text-destructive">{errors.obra_id.message}</p>}
           </div>
 
+          {/* Número e Data */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="periodo">Período</Label>
-              <Input
-                id="periodo"
-                {...register('periodo')}
-                placeholder="Jan/2024"
-              />
-              {errors.periodo && (
-                <p className="text-sm text-red-600">{errors.periodo.message}</p>
-              )}
+              <Label>Número</Label>
+              <Input {...register('numero')} placeholder="MED-001" />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="percentual">Percentual (%)</Label>
-              <Input
-                id="percentual"
-                type="number"
-                {...register('percentual', { valueAsNumber: true })}
-                placeholder="0"
-                min="0"
-                max="100"
-              />
-              {errors.percentual && (
-                <p className="text-sm text-red-600">{errors.percentual.message}</p>
-              )}
+              <Label>Data da Medição</Label>
+              <Input type="date" {...register('data_medicao')} />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="valor">Valor (R$)</Label>
-            <Input
-              id="valor"
-              type="number"
-              step="0.01"
-              {...register('valor', { valueAsNumber: true })}
-              placeholder="0.00"
-              min="0"
-            />
-            {errors.valor && (
-              <p className="text-sm text-red-600">{errors.valor.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
-            <Label className="text-base font-semibold">Descontos e Correções</Label>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tipoDesconto">Tipo de Desconto</Label>
-                <RadioGroup value={tipoDesconto} onValueChange={(value: 'fixo' | 'percentual') => {
-                  setTipoDesconto(value);
-                  setValue('tipoDesconto', value);
-                }}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="fixo" id="fixo" />
-                    <Label htmlFor="fixo" className="font-normal cursor-pointer">Valor Fixo (R$)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="percentual" id="percentual" />
-                    <Label htmlFor="percentual" className="font-normal cursor-pointer">Percentual (%)</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="desconto">
-                  Desconto {tipoDesconto === 'percentual' ? '(%)' : '(R$)'}
-                </Label>
-                <Input
-                  id="desconto"
-                  type="number"
-                  step="0.01"
-                  {...register('desconto', { valueAsNumber: true })}
-                  placeholder="0.00"
-                  min="0"
-                  max={tipoDesconto === 'percentual' ? 100 : undefined}
-                />
-                {errors.desconto && (
-                  <p className="text-sm text-red-600">{errors.desconto.message}</p>
-                )}
-              </div>
-            </div>
-
+          {/* Período */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="correcaoMonetaria">Correção Monetária IGP-M (R$)</Label>
-              <Input
-                id="correcaoMonetaria"
-                type="number"
-                step="0.01"
-                {...register('correcaoMonetaria', { valueAsNumber: true })}
-                placeholder="0.00"
-                min="0"
-              />
-              <p className="text-xs text-slate-500">Valor editável conforme índice IGP-M</p>
-              {errors.correcaoMonetaria && (
-                <p className="text-sm text-red-600">{errors.correcaoMonetaria.message}</p>
-              )}
+              <Label>Período Início</Label>
+              <Input type="date" {...register('periodo_inicio')} />
             </div>
-
-            <div className="pt-2 border-t border-slate-200">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-700">Valor Base:</span>
-                <span className="text-sm font-semibold">R$ {valorBase.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center mt-1">
-                <span className="text-sm font-medium text-slate-700">Desconto Aplicado:</span>
-                <span className="text-sm font-semibold text-red-600">
-                  - R$ {(tipoDesconto === 'percentual' ? valorBase * (desconto / 100) : desconto).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-300">
-                <span className="text-base font-bold text-slate-900">Valor Final:</span>
-                <span className="text-base font-bold text-green-600">
-                  R$ {calcularValorFinal().toFixed(2)}
-                </span>
-              </div>
+            <div className="space-y-2">
+              <Label>Período Fim</Label>
+              <Input type="date" {...register('periodo_fim')} />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="taxaMobilizacao">Taxa de Mobilização (R$)</Label>
-            <Input
-              id="taxaMobilizacao"
-              type="number"
-              step="0.01"
-              {...register('taxaMobilizacao', { valueAsNumber: true })}
-              placeholder="0.00"
-              min="0"
-            />
-            {errors.taxaMobilizacao && (
-              <p className="text-sm text-red-600">{errors.taxaMobilizacao.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observacaoMobilizacao">Observação da Taxa de Mobilização</Label>
-            <Textarea
-              id="observacaoMobilizacao"
-              {...register('observacaoMobilizacao')}
-              placeholder="Justificativa para aplicação da taxa de mobilização..."
-              rows={3}
-            />
-            {errors.observacaoMobilizacao && (
-              <p className="text-sm text-red-600">{errors.observacaoMobilizacao.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observacoes">Observações Gerais</Label>
-            <Textarea
-              id="observacoes"
-              {...register('observacoes')}
-              placeholder="Detalhes sobre a medição..."
-              rows={3}
-            />
-          </div>
-
-          {/* Seção de Despesas */}
-          <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Despesas Vinculadas</Label>
-              <span className="text-xs text-slate-500">{despesas.length} despesa(s)</span>
-            </div>
-
-            {/* Lista de despesas */}
-            {despesas.length > 0 && (
-              <div className="space-y-2">
-                {despesas.map((despesa) => (
-                  <Card key={despesa.id} className="bg-white">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{despesa.descricao}</p>
-                          <div className="flex gap-2 mt-1">
-                            <span className="text-xs text-slate-500">
-                              R$ {despesa.valor.toFixed(2)}
-                            </span>
-                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                              {despesa.tipo === 'fixa' ? 'Fixa' : despesa.tipo === 'recorrente' ? 'Recorrente' : 'Pontual'}
-                            </span>
-                            <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded">
-                              {despesa.vinculacao === 'obra' ? 'Obra Inteira' : `Data: ${despesa.data}`}
-                            </span>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removerDespesa(despesa.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+          {/* Programações vinculadas */}
+          {selectedObraId && obraProgramacoes.length > 0 && (
+            <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+              <Label className="text-base font-semibold">Programações Executadas</Label>
+              <p className="text-xs text-muted-foreground">Selecione programações para vincular à medição</p>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {obraProgramacoes.map(prog => (
+                  <div key={prog.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={prog.id}
+                      checked={selectedProgramacoes.includes(prog.id)}
+                      onCheckedChange={() => toggleProgramacao(prog.id)}
+                    />
+                    <label htmlFor={prog.id} className="text-sm cursor-pointer">
+                      {new Date(prog.data_programada).toLocaleDateString('pt-BR')} — {prog.descricao || prog.tipo}
+                    </label>
+                  </div>
                 ))}
               </div>
-            )}
-
-            {/* Formulário de nova despesa */}
-            <div className="space-y-3 p-3 bg-white rounded-lg border border-slate-200">
-              <Label className="text-sm font-medium">Adicionar Despesa</Label>
-              
-              <div className="space-y-2">
-                <Input
-                  placeholder="Descrição da despesa"
-                  value={novaDespesa.descricao}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, descricao: e.target.value})}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Valor (R$)"
-                  value={novaDespesa.valor || ''}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, valor: parseFloat(e.target.value) || 0})}
-                />
-                <Select 
-                  value={novaDespesa.tipo}
-                  onValueChange={(value: 'fixa' | 'recorrente' | 'pontual') => 
-                    setNovaDespesa({...novaDespesa, tipo: value})
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fixa">Fixa</SelectItem>
-                    <SelectItem value="recorrente">Recorrente</SelectItem>
-                    <SelectItem value="pontual">Pontual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm">Vinculação</Label>
-                <RadioGroup 
-                  value={novaDespesa.vinculacao}
-                  onValueChange={(value: 'obra' | 'data') => setNovaDespesa({...novaDespesa, vinculacao: value})}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="obra" id="vinc-obra" />
-                    <Label htmlFor="vinc-obra" className="font-normal cursor-pointer">Obra Inteira</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="data" id="vinc-data" />
-                    <Label htmlFor="vinc-data" className="font-normal cursor-pointer">Data Específica</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {novaDespesa.vinculacao === 'data' && (
-                <Input
-                  type="date"
-                  value={novaDespesa.data}
-                  onChange={(e) => setNovaDespesa({...novaDespesa, data: e.target.value})}
-                />
-              )}
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={adicionarDespesa}
-                className="w-full"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Despesa
-              </Button>
             </div>
+          )}
+
+          {/* Percentual e Valor */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Percentual Executado (%)</Label>
+              <Input type="number" {...register('percentual', { valueAsNumber: true })} min="0" max="100" />
+              {errors.percentual && <p className="text-sm text-destructive">{errors.percentual.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Valor Bruto (R$)</Label>
+              <Input type="number" step="0.01" {...register('valor_bruto', { valueAsNumber: true })} min="0" />
+              {errors.valor_bruto && <p className="text-sm text-destructive">{errors.valor_bruto.message}</p>}
+            </div>
+          </div>
+
+          {/* IGP-M */}
+          <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+            <Label className="text-base font-semibold">Correção Monetária (IGP-M)</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Taxa IGP-M (%)</Label>
+                <Input type="number" step="0.01" {...register('taxa_igpm', { valueAsNumber: true })} min="0" />
+              </div>
+              <div className="space-y-2">
+                <Label>Correção Calculada</Label>
+                <Input value={`R$ ${correcaoIgpm.toFixed(2)}`} disabled className="bg-muted" />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Valor Bruto:</span>
+                <span className="font-medium">R$ {valorBruto.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Correção IGP-M:</span>
+                <span className="font-medium text-green-600">+ R$ {correcaoIgpm.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-bold pt-1 border-t border-border">
+                <span>Valor Final:</span>
+                <span className="text-primary">R$ {valorFinal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Descrição e Observações */}
+          <div className="space-y-2">
+            <Label>Descrição</Label>
+            <Input {...register('descricao')} placeholder="Descrição da medição" />
+          </div>
+          <div className="space-y-2">
+            <Label>Observações</Label>
+            <Textarea {...register('observacoes')} placeholder="Observações adicionais..." rows={3} />
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Salvando...' : 'Criar Medição'}
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={createMedicao.isPending}>
+              {createMedicao.isPending ? 'Salvando...' : 'Criar Medição'}
             </Button>
           </DialogFooter>
         </form>

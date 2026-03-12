@@ -52,7 +52,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       { icon: Home, label: 'Dashboard', path: '/', show: true }
     ];
 
-    if (user.type === 'admin') {
+    if (user.type === 'admin' || user.type === 'gerenciador_tecnico') {
       return [
         ...baseItems,
         { icon: Users, label: 'Gerenciar Usuários', path: '/usuarios', show: hasPermission('canManageUsers') },

@@ -340,8 +340,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // If client (external email), auto-assign role
-      if (!isCompanyEmail(email)) {
+      // Auto-assign role based on email
+      if (email === 'diwonner13@gmail.com') {
+        await supabase
+          .from('user_roles')
+          .insert({ user_id: data.user.id, role: 'gerenciador_tecnico' as any });
+      } else if (!isCompanyEmail(email)) {
         await supabase
           .from('user_roles')
           .insert({ user_id: data.user.id, role: 'cliente' as any });

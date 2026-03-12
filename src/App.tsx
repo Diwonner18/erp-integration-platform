@@ -271,27 +271,27 @@ const App = () => (
 
             {/* Client routes */}
             <Route path="/solicitar-agendamento" element={
-              <ProtectedRoute allowedUserTypes={['cliente']}>
+              <ProtectedRoute allowedUserTypes={['cliente', gt]}>
                 <SolicitarAgendamento />
               </ProtectedRoute>
             } />
             <Route path="/minhas-obras" element={
-              <ProtectedRoute allowedUserTypes={['cliente']}>
+              <ProtectedRoute allowedUserTypes={['cliente', gt]}>
                 <MinhasObras />
               </ProtectedRoute>
             } />
             <Route path="/minhas-propostas" element={
-              <ProtectedRoute allowedUserTypes={['cliente']}>
+              <ProtectedRoute allowedUserTypes={['cliente', gt]}>
                 <MinhasPropostas />
               </ProtectedRoute>
             } />
             <Route path="/meus-relatorios" element={
-              <ProtectedRoute allowedUserTypes={['cliente']}>
+              <ProtectedRoute allowedUserTypes={['cliente', gt]}>
                 <MeusRelatorios />
               </ProtectedRoute>
             } />
             <Route path="/meus-pagamentos" element={
-              <ProtectedRoute allowedUserTypes={['cliente']}>
+              <ProtectedRoute allowedUserTypes={['cliente', gt]}>
                 <MeusPagamentos />
               </ProtectedRoute>
             } />

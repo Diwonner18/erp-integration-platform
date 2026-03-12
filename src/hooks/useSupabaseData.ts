@@ -5,7 +5,8 @@ import {
   obraInsertSchema, propostaInsertSchema, medicaoInsertSchema,
   materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
   epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
-  relatorioDiarioInsertSchema, validateInput,
+  relatorioDiarioInsertSchema, horasExtrasInsertSchema, alteracaoEscopoInsertSchema,
+  validateInput,
 } from '@/lib/validationSchemas';
 
 const DEFAULT_LIMIT = 1000;

@@ -21,7 +21,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
             <h1 className="font-title text-2xl lg:text-4xl font-bold tracking-tight">
               CT Guedes
             </h1>
-            <p className="font-body text-sidebar-primary-foreground/80 mt-2 lg:mt-4 text-sm lg:text-lg max-w-md">
+            <p className="font-body text-sidebar-primary-foreground/80 mt-2 lg:mt-4 text-base lg:text-2xl max-w-md">
               Sistema de Gestão de Obras
             </p>
           </div>

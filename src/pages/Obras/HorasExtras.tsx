@@ -152,7 +152,7 @@ const HorasExtrasPage = () => {
             <p className="font-medium">Nenhum registro encontrado</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {filteredRegistros.map((registro) => (
               <Card key={registro.id}>
                 <CardContent className="p-6">

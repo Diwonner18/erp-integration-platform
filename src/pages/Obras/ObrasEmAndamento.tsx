@@ -36,7 +36,7 @@ const ObrasEmAndamento = () => {
             <p className="font-medium">Nenhuma obra em andamento</p>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {obrasEmAndamento.map((obra) => (
               <Card key={obra.id}>
                 <CardHeader>

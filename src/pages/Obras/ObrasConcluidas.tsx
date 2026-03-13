@@ -45,7 +45,7 @@ const ObrasConcluidas = () => {
             <p className="font-medium">Nenhuma obra concluída</p>
           </div>
         ) : (
-          <Card>
+          <Card data-tour="page-list">
             <CardHeader><CardTitle>Lista de Obras Concluídas</CardTitle></CardHeader>
             <CardContent>
               <Table>

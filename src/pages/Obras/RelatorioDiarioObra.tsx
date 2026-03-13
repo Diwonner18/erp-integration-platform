@@ -125,7 +125,7 @@ const RelatorioDiarioObra = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" data-tour="page-tabs">
           <TabsList>
             <TabsTrigger value="registro">Novo Registro</TabsTrigger>
             <TabsTrigger value="visualizar">Visualizar Relatórios ({relatorios.length})</TabsTrigger>

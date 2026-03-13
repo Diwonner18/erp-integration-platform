@@ -26,7 +26,7 @@ const ObrasAgendadas = () => {
             <p className="font-medium">Nenhuma obra agendada</p>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {obrasAgendadas.map((obra) => (
               <Card key={obra.id}>
                 <CardHeader>

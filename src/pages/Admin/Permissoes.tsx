@@ -80,6 +80,7 @@ const Permissoes = () => {
               onClick={handleManualSave} 
               disabled={!hasChanges}
               className="transition-all duration-150 hover:scale-105"
+              data-tour="page-actions"
             >
               <Save className="w-4 h-4 mr-2" />
               {hasChanges ? 'Salvar Agora' : 'Salvo'}

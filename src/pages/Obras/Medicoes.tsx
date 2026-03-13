@@ -123,12 +123,12 @@ const Medicoes = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold font-title text-foreground">Medições</h1>
             <p className="text-muted-foreground mt-1">Controle de medições das obras</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap" data-tour="page-export">
             <FileImportButton targetType="medicoes" />
             <Button variant="outline" size="sm" onClick={() => {
               exportToPDF({
@@ -162,14 +162,14 @@ const Medicoes = () => {
               });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
-            <Button onClick={() => setShowModal(true)}>
+            <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
               <Plus className="w-4 h-4 mr-2" />
               Nova Medição
             </Button>
           </div>
         </div>
 
-        <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />
+        <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>
 
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">

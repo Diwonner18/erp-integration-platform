@@ -61,13 +61,13 @@ const SolicitarAgendamento = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold text-slate-900">Solicitar Agendamento</h1>
           <p className="text-slate-600 mt-1">Programe uma nova obra ou manutenção</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card data-tour="page-form">
             <CardHeader>
               <CardTitle>Detalhes do Agendamento</CardTitle>
             </CardHeader>
@@ -155,7 +155,7 @@ const SolicitarAgendamento = () => {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading} data-tour="page-actions">
                   <Calendar className="w-4 h-4 mr-2" />
                   {isLoading ? 'Enviando...' : 'Enviar Solicitação'}
                 </Button>

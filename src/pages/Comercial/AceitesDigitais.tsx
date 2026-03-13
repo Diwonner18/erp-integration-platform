@@ -13,7 +13,7 @@ const AceitesDigitais = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold text-foreground">Aceites Digitais</h1>
           <p className="text-muted-foreground mt-1">Controlar aprovações de propostas pelos clientes</p>
         </div>
@@ -26,7 +26,7 @@ const AceitesDigitais = () => {
             <p className="font-medium">Nenhum aceite digital registrado</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {aceites.map((aceite) => (
               <Card key={aceite.id}>
                 <CardContent className="p-6">

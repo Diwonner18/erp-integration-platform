@@ -46,14 +46,14 @@ const MinhasPropostas = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold text-foreground">Minhas Propostas</h1><p className="text-muted-foreground mt-1">Revisar e aceitar propostas</p></div>
+        <div data-tour="page-header"><h1 className="text-3xl font-bold text-foreground">Minhas Propostas</h1><p className="text-muted-foreground mt-1">Revisar e aceitar propostas</p></div>
 
         {isLoading ? (
           <div className="grid gap-6">{[1,2].map(i => <Skeleton key={i} className="h-48 w-full" />)}</div>
         ) : propostas.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><FileText className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhuma proposta encontrada</p></div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {propostas.map((proposta) => (
               <Card key={proposta.id}>
                 <CardHeader>

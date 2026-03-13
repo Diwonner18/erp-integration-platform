@@ -52,9 +52,9 @@ const ValoresUnitarios = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-foreground">Valores Unitários</h1><p className="text-muted-foreground mt-1">Gerenciar preços por serviço</p></div>
-          <Button onClick={() => { setFormData({ servico: '', unidade: '', valor: '' }); setSelectedItem(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Valor</Button>
+          <Button data-tour="page-new-btn" onClick={() => { setFormData({ servico: '', unidade: '', valor: '' }); setSelectedItem(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Valor</Button>
         </div>
 
         {isLoading ? (
@@ -62,7 +62,7 @@ const ValoresUnitarios = () => {
         ) : valores.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><Package className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum valor unitário cadastrado</p></div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {valores.map((item) => (
               <Card key={item.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">

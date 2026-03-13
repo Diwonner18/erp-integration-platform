@@ -126,18 +126,18 @@ const Relatorios = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Relatórios Gerais</h1>
             <p className="text-muted-foreground mt-1">Visão completa de todos os indicadores</p>
           </div>
-          <Button onClick={handleExportPDF} disabled={filteredObras.length === 0}>
+          <Button onClick={handleExportPDF} disabled={filteredObras.length === 0} data-tour="page-export">
             <Download className="w-4 h-4 mr-2" />
             Exportar Dashboard
           </Button>
         </div>
 
-        <Card>
+        <Card data-tour="page-filters">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Filter className="w-5 h-5 mr-2" />
@@ -265,7 +265,7 @@ const Relatorios = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tour="page-list">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">

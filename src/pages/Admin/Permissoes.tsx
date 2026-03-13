@@ -66,7 +66,7 @@ const Permissoes = () => {
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
+          <div data-tour="page-header">
             <h1 className="text-3xl font-bold text-primary">Permissões do Sistema</h1>
             <p className="text-muted-foreground mt-1">Configure permissões por tipo de usuário</p>
           </div>
@@ -80,6 +80,7 @@ const Permissoes = () => {
               onClick={handleManualSave} 
               disabled={!hasChanges}
               className="transition-all duration-150 hover:scale-105"
+              data-tour="page-actions"
             >
               <Save className="w-4 h-4 mr-2" />
               {hasChanges ? 'Salvar Agora' : 'Salvo'}
@@ -87,7 +88,7 @@ const Permissoes = () => {
           </div>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-6" data-tour="page-list">
           {permissions.map((group, index) => (
             <Card key={index} className="transition-all duration-150 hover:shadow-md">
               <CardHeader>

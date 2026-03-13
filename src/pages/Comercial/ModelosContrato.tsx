@@ -54,9 +54,9 @@ const ModelosContrato = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-foreground">Modelos de Contrato</h1><p className="text-muted-foreground mt-1">Gerenciar templates</p></div>
-          <Button onClick={() => { setFormData({ titulo: '', tipo: '', conteudo: '' }); setSelectedModelo(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Modelo</Button>
+          <Button data-tour="page-new-btn" onClick={() => { setFormData({ titulo: '', tipo: '', conteudo: '' }); setSelectedModelo(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Modelo</Button>
         </div>
 
         {isLoading ? (
@@ -64,7 +64,7 @@ const ModelosContrato = () => {
         ) : modelos.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><FileText className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum modelo cadastrado</p></div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {modelos.map((modelo) => (
               <Card key={modelo.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">

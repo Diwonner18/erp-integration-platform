@@ -16,9 +16,9 @@ const MeusPagamentos = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold text-foreground">Meus Pagamentos</h1><p className="text-muted-foreground mt-1">Acompanhe seus pagamentos</p></div>
+        <div data-tour="page-header"><h1 className="text-3xl font-bold text-foreground">Meus Pagamentos</h1><p className="text-muted-foreground mt-1">Acompanhe seus pagamentos</p></div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-tour="page-stats">
           <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Pago</CardTitle><CheckCircle className="h-4 w-4" /></CardHeader>
             <CardContent><div className="text-2xl font-bold text-green-600">{formatCurrency(totalPago)}</div></CardContent></Card>
           <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pendente</CardTitle><AlertCircle className="h-4 w-4" /></CardHeader>
@@ -27,7 +27,7 @@ const MeusPagamentos = () => {
             <CardContent><div className="text-2xl font-bold">{boletins.length}</div></CardContent></Card>
         </div>
 
-        <Card><CardHeader><CardTitle>Histórico</CardTitle></CardHeader><CardContent>
+        <Card data-tour="page-list"><CardHeader><CardTitle>Histórico</CardTitle></CardHeader><CardContent>
           {isLoading ? <Skeleton className="h-48 w-full" /> : boletins.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground"><DollarSign className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum pagamento registrado</p></div>
           ) : (

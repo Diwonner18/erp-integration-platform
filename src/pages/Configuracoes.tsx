@@ -156,7 +156,7 @@ const Configuracoes = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4" data-tour="page-header">
           <div className="bg-primary/10 p-3 rounded-lg">
             <User className="w-6 h-6 text-primary" />
           </div>
@@ -166,7 +166,7 @@ const Configuracoes = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue="profile" className="space-y-6" data-tour="page-list">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="profile" className="flex items-center space-x-2">
               <User className="w-4 h-4" />

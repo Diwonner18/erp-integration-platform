@@ -31,12 +31,16 @@ const MainLayout = ({ children, onStartTour }: MainLayoutProps) => {
   const { impersonatedRole, stopImpersonation } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-hidden bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onStartTour={onStartTour} />
 
+      <main className={`pt-16 p-4 md:p-6 overflow-y-auto h-[calc(100vh)] ${isMobile ? 'ml-0' : 'ml-64'} ${impersonatedRole ? 'pb-14' : ''}`}>
+        {children}
+      </main>
+
       {impersonatedRole && (
-        <div className={`fixed top-0 left-0 right-0 z-50 ${ROLE_BANNER_COLORS[impersonatedRole] || 'bg-primary'} text-white`}>
+        <div className={`fixed bottom-0 left-0 right-0 z-50 ${ROLE_BANNER_COLORS[impersonatedRole] || 'bg-primary'} text-white`}>
           <div className={`flex items-center justify-center gap-3 py-1.5 text-xs font-medium ${isMobile ? 'ml-0' : 'ml-64'}`}>
             <span>Visualizando como: <strong>{ROLE_LABELS[impersonatedRole] || impersonatedRole}</strong></span>
             <button
@@ -49,10 +53,6 @@ const MainLayout = ({ children, onStartTour }: MainLayoutProps) => {
           </div>
         </div>
       )}
-
-      <main className={`pt-16 p-4 md:p-6 ${isMobile ? 'ml-0' : 'ml-64'} ${impersonatedRole ? 'mt-7' : ''}`}>
-        {children}
-      </main>
     </div>
   );
 };

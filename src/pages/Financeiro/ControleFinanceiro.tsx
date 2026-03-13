@@ -50,7 +50,7 @@ const ControleFinanceiro = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold text-primary">Controle Financeiro</h1><p className="text-muted-foreground mt-1">Gestão financeira geral</p></div>
+        <div data-tour="page-header"><h1 className="text-3xl font-bold text-primary">Controle Financeiro</h1><p className="text-muted-foreground mt-1">Gestão financeira geral</p></div>
 
         {isLoading ? <div className="grid grid-cols-1 md:grid-cols-4 gap-6">{[1,2,3,4].map(i => <Skeleton key={i} className="h-32" />)}</div> : (
           <>

@@ -28,7 +28,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
           {/* Decorative elements - desktop only */}
           <div className="hidden lg:flex flex-col items-center gap-3 mt-8 text-sidebar-primary-foreground/60">
             <div className="w-16 h-px bg-sidebar-primary" />
-            <p className="font-body text-xs text-center max-w-xs">
+            <p className="font-body text-sm lg:text-base text-center max-w-xs">
               Gerencie propostas, obras, medições e finanças em um único lugar
             </p>
           </div>

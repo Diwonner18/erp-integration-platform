@@ -1,88 +1,59 @@
+# Overview Final - Sistema CT Guedes
 
+## Estado Atual
 
-# Auditoria Completa de Seguranca - Resultado Final
+Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de segurança corrigidas. Modelo de acesso granular intra-role implementado. Role `gerenciador_tecnico` implementado para `diwonner13@gmail.com`.
 
-## Pontos Seguros Confirmados
+## ✅ Implementado
 
-| Area | Status |
-|---|---|
-| RLS em 26 tabelas | Todas habilitadas com politicas por role |
-| Funcoes SECURITY DEFINER | `has_role`, `get_user_role`, `has_record_access`, `insert_audit_log`, `get_cliente_ids_for_user`, `get_related_cliente_ids`, `get_obra_ids_for_cliente` |
-| Recursao infinita RLS | Corrigida com funcoes SECURITY DEFINER que bypassam RLS |
-| PII de clientes escopada (LGPD) | `obras` e `financeira` so veem clientes vinculados as suas obras |
-| Escalacao via INSERT em user_roles | Bloqueada por RESTRICTIVE `GT cannot assign admin role` |
-| Escalacao via UPDATE em user_roles | Bloqueada por RESTRICTIVE `GT cannot update to admin role` |
-| Edge Function manage-user | getClaims() + validacao de email para admin/GT |
-| Edge Function purge-expired-logs | Retorna 403 para chamadas nao autorizadas |
-| Auditoria SECURITY DEFINER | Captura UID do token, nao do frontend |
-| Validacao Zod em todas as mutations | `validateInput()` aplicado em hooks de criacao |
-| Validacao Zod no FileImportModal | Validacao por registro + limite 10MB |
-| RESTRICTIVE em UPDATE/DELETE operacional | `created_by = auth.uid()` ou `has_record_access()` |
-| Frontend sem inserts diretos em user_roles | Delegado a trigger e RPC |
-| Troca de senha com re-auth | Exige senha atual antes de alterar |
-| Tratamento de erros | Edge Functions retornam mensagens genericas, sem stacktrace |
-| logs_auditoria sem INSERT/UPDATE/DELETE direto | Apenas via RPC `insert_audit_log` |
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend + GoTrue)
+- **RLS**: 26 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
+- **RLS user_roles**: RESTRICTIVE INSERT bloqueia inserts de usuarios normais. RESTRICTIVE UPDATE bloqueia escalação para admin. **RESTRICTIVE DELETE bloqueia remoção de role admin por não-admins.**
+- **RLS clientes (LGPD)**: Funcionarios obras/financeira so veem clientes vinculados a suas obras (via `get_related_cliente_ids()` SECURITY DEFINER)
+- **Recursão RLS corrigida**: Funções `get_cliente_ids_for_user`, `get_related_cliente_ids`, `get_obra_ids_for_cliente` (SECURITY DEFINER) quebram ciclo circular entre obras↔clientes
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras`, `clientes` e `user_roles`
+- **V6 Zod validation**: Schemas Zod para todas as entidades com validateInput + validação no FileImportModal
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos). Chamadas não autorizadas retornam 403.
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only + gerenciador_tecnico
+- **Validacao**: Zod em forms + bulk import, senha forte, re-autenticacao em troca de senha
+- **Gerenciador Tecnico**: Role `gerenciador_tecnico` no enum `app_role`, vinculado a `diwonner13@gmail.com`, com visibilidade total (SELECT em todas tabelas), gestao de usuarios (manage-user edge function), menu completo no Sidebar, rotas admin liberadas
+- **File Import**: Importação automática Excel/PDF com parsing inteligente, preview, mapeamento de colunas, validação Zod, limite 10MB
+- **handle_new_user trigger**: Auto-assign roles (GT para diwonner13, admin para carla, cliente para non-company, self_assign_area para company)
+- **Edge Functions Auth**: manage-user usa getClaims() para verificação JWT eficiente
 
----
+## ✅ Auditorias de Segurança - Todas as Correções Aplicadas
 
-## Vulnerabilidade Encontrada
-
-### ALTA - GT pode deletar role admin via API direta
-
-**Fonte**: Security scan (finding `PRIVILEGE_ESCALATION`)
-
-As politicas RESTRICTIVE existentes cobrem apenas INSERT e UPDATE. A politica PERMISSIVE `Gerenciador tecnico can manage roles` concede ALL (incluindo DELETE). Um GT pode executar:
-
-```sql
-DELETE FROM user_roles WHERE role = 'admin'
-```
-
-Isso remove o acesso do admin (carla@ctguedes.com.br) sem possibilidade de restauracao via API.
-
-**Risco**: Denial of service administrativo. O GT nao se torna admin, mas elimina todos os admins do sistema, tornando-se o usuario de maior privilegio de facto.
-
-**Solucao**: Adicionar politica RESTRICTIVE para DELETE:
-
-```sql
-CREATE POLICY "GT cannot delete admin role"
-ON public.user_roles AS RESTRICTIVE
-FOR DELETE TO authenticated
-USING (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role != 'admin'::app_role
-);
-```
-
----
-
-### MEDIA (Nao aplicavel) - Leaked Password Protection
-
-Recurso exclusivo do plano Pro do Supabase. No plano Free, mitigado parcialmente pela validacao de senha forte no frontend (8+ caracteres, maiuscula, numero).
-
----
-
-### BAIXA (Stale - Ja corrigida) - PII de clientes overexposure
-
-O scanner ainda reporta este finding como stale (timestamp anterior a correcao). A politica `Internal users can view related clientes` ja usa `get_related_cliente_ids()` confirmado na query direta. Finding pode ser marcado como resolvido.
-
----
-
-## Resumo
-
-| Severidade | Qtd | Itens |
+| Vulnerabilidade | Severidade | Status |
 |---|---|---|
-| CRITICA | 0 | - |
-| ALTA | 1 | GT pode deletar role admin via DELETE em `user_roles` |
-| MEDIA | 0 | Leaked Password Protection (Pro-only, nao aplicavel) |
-| BAIXA | 0 | PII finding stale (ja corrigido) |
+| user_roles sem RLS para INSERT | ALTA | ✅ RESTRICTIVE policy + trigger |
+| Frontend insere direto em user_roles | ALTA | ✅ Removido do AuthContext |
+| GT pode escalar para admin via API (INSERT) | ALTA | ✅ RESTRICTIVE "GT cannot assign admin role" |
+| GT pode escalar para admin via API (UPDATE) | ALTA | ✅ RESTRICTIVE "GT cannot update to admin role" |
+| GT pode deletar role admin via API (DELETE) | ALTA | ✅ RESTRICTIVE "GT cannot delete admin role" |
+| Recursão infinita RLS obras↔clientes | CRÍTICA | ✅ Funções SECURITY DEFINER |
+| PII de clientes exposta para todos internos | MEDIA | ✅ SELECT escopado via get_related_cliente_ids() |
+| manage-user usa getUser() | MEDIA | ✅ Migrado para getClaims() |
+| File Import sem limite tamanho | MEDIA | ✅ 10MB limit adicionado |
+| File Import sem validação Zod | MEDIA | ✅ Validação Zod antes do insert |
+| purge-expired-logs público | BAIXA | ✅ Retorna 403 para chamadas não autorizadas |
 
-## Plano de Correcao
+## ⚠️ Pendente (apenas baixa severidade ou ação manual)
 
-1. **Criar migration SQL** com politica RESTRICTIVE DELETE em `user_roles` que bloqueia remocao de registros com `role = 'admin'` por nao-admins
-2. **Marcar finding stale** de PII como resolvido
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
+- **Leaked Password Protection**: Habilitar no Supabase Auth Dashboard (Auth > Password Security) - requer plano Pro
 
-### Arquivo a modificar
-| Arquivo | Acao |
-|---|---|
-| Migration SQL (nova) | `CREATE POLICY "GT cannot delete admin role" ON public.user_roles AS RESTRICTIVE FOR DELETE TO authenticated USING (has_role(auth.uid(), 'admin'::app_role) OR role != 'admin'::app_role)` |
+## Arquitetura
 
+```
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts + FileImport)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access() + get_*_ids SECURITY DEFINER)
+    → Edge Functions (manage-user [getClaims], purge-expired-logs [403 unauthorized], insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
+    → Trigger handle_new_user (auto-assign roles)
+```

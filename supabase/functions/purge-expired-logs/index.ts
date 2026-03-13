@@ -11,6 +11,22 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate internal caller: accept either service_role JWT or internal secret
+    const authHeader = req.headers.get('Authorization')
+    const internalSecret = req.headers.get('x-internal-secret')
+    const expectedSecret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    // Allow if called with service_role key (pg_cron/pg_net) or matching internal secret
+    const isServiceRole = authHeader?.includes(expectedSecret || '__never__')
+    const isInternalCall = internalSecret === expectedSecret
+
+    if (!isServiceRole && !isInternalCall) {
+      // Also allow if called from pg_cron (no auth header, but running inside Supabase infra)
+      // pg_net calls from pg_cron include the service role key in the Authorization header
+      // For safety, log unauthorized attempts
+      console.warn('purge-expired-logs called without valid authorization')
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

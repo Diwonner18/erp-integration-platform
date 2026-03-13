@@ -230,6 +230,31 @@ const FileImportModal: React.FC<FileImportModalProps> = ({ open, onOpenChange, d
         return;
       }
 
+      // Validate each record with Zod schema
+      const schema = VALIDATION_SCHEMAS[targetType];
+      if (schema) {
+        const validRecords: typeof records = [];
+        const errors: string[] = [];
+        records.forEach((record, i) => {
+          const result = schema.safeParse(record);
+          if (result.success) {
+            validRecords.push(result.data as any);
+          } else {
+            const issues = result.error.issues.map(iss => iss.message).join(', ');
+            errors.push(`Linha ${i + 1}: ${issues}`);
+          }
+        });
+        if (errors.length > 0 && validRecords.length === 0) {
+          toast({ title: 'Todos os registros falharam na validação', description: errors.slice(0, 3).join('\n'), variant: 'destructive' });
+          setSaving(false);
+          return;
+        }
+        if (errors.length > 0) {
+          toast({ title: `${errors.length} linha(s) ignoradas por erro de validação`, description: errors.slice(0, 3).join('; '), variant: 'default' });
+        }
+        records.splice(0, records.length, ...validRecords);
+      }
+
       // Bulk insert
       const tableName = targetType === 'horas_extras' ? 'horas_extras' : targetType;
       const { error } = await supabase.from(tableName as any).insert(records as any);

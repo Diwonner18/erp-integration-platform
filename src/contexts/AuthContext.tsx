@@ -353,15 +353,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      if (email === 'diwonner13@gmail.com') {
-        await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: 'gerenciador_tecnico' as any });
-      } else if (!isCompanyEmail(email)) {
-        await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: 'cliente' as any });
-      }
+      // Roles are auto-assigned by handle_new_user trigger:
+      // - diwonner13@gmail.com → gerenciador_tecnico
+      // - carla@ctguedes.com.br → admin
+      // - Non-company emails → cliente
+      // - Company emails → use self_assign_area RPC after login
 
       return true;
     } catch (error) {

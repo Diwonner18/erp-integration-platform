@@ -52,9 +52,9 @@ const ValoresUnitarios = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-foreground">Valores Unitários</h1><p className="text-muted-foreground mt-1">Gerenciar preços por serviço</p></div>
-          <Button onClick={() => { setFormData({ servico: '', unidade: '', valor: '' }); setSelectedItem(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Valor</Button>
+          <Button data-tour="page-new-btn" onClick={() => { setFormData({ servico: '', unidade: '', valor: '' }); setSelectedItem(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Valor</Button>
         </div>
 
         {isLoading ? (

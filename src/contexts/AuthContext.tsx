@@ -49,6 +49,7 @@ interface AuthContextType {
   stopImpersonation: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {

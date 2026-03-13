@@ -88,7 +88,7 @@ const Permissoes = () => {
           </div>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-6" data-tour="page-list">
           {permissions.map((group, index) => (
             <Card key={index} className="transition-all duration-150 hover:shadow-md">
               <CardHeader>

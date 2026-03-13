@@ -155,7 +155,7 @@ const SolicitarAgendamento = () => {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading} data-tour="page-actions">
                   <Calendar className="w-4 h-4 mr-2" />
                   {isLoading ? 'Enviando...' : 'Enviar Solicitação'}
                 </Button>

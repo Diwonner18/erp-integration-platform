@@ -217,7 +217,7 @@ const MeusRelatorios = () => {
         </div>
 
         {/* Seção de Reembolsos */}
-        <Card>
+        <Card data-tour="page-list">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">

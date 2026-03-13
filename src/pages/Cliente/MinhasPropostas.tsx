@@ -53,7 +53,7 @@ const MinhasPropostas = () => {
         ) : propostas.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><FileText className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhuma proposta encontrada</p></div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {propostas.map((proposta) => (
               <Card key={proposta.id}>
                 <CardHeader>

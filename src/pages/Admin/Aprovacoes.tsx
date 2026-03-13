@@ -80,7 +80,7 @@ const Aprovacoes = () => {
             <p className="text-muted-foreground">Todas as solicitações foram processadas</p>
           </CardContent></Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {pendentes.map((item) => (
               <Card key={item.id}><CardContent className="p-6">
                 <div className="flex items-start justify-between">

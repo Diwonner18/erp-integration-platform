@@ -27,7 +27,7 @@ const MeusPagamentos = () => {
             <CardContent><div className="text-2xl font-bold">{boletins.length}</div></CardContent></Card>
         </div>
 
-        <Card><CardHeader><CardTitle>Histórico</CardTitle></CardHeader><CardContent>
+        <Card data-tour="page-list"><CardHeader><CardTitle>Histórico</CardTitle></CardHeader><CardContent>
           {isLoading ? <Skeleton className="h-48 w-full" /> : boletins.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground"><DollarSign className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum pagamento registrado</p></div>
           ) : (

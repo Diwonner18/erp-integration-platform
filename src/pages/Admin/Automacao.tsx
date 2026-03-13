@@ -41,7 +41,7 @@ const Automacao = () => {
             <p className="text-sm">Configure automações para otimizar seus fluxos</p>
           </div>
         ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-6" data-tour="page-list">
           {automations.map((automation, index) => (
             <Card key={index} className="transition-all duration-150 hover:shadow-md">
               <CardHeader>

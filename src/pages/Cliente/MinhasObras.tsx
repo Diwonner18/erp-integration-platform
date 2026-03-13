@@ -26,7 +26,7 @@ const MinhasObras = () => {
         ) : obras.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-50" /><p className="font-medium">Nenhuma obra encontrada</p></div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {obras.map((obra) => (
               <Card key={obra.id}>
                 <CardHeader>

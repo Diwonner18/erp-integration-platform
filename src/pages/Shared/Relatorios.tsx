@@ -265,7 +265,7 @@ const Relatorios = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tour="page-list">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">

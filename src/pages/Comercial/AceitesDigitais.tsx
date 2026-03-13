@@ -26,7 +26,7 @@ const AceitesDigitais = () => {
             <p className="font-medium">Nenhum aceite digital registrado</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {aceites.map((aceite) => (
               <Card key={aceite.id}>
                 <CardContent className="p-6">

@@ -62,7 +62,7 @@ const RelatoriosComerciais = () => {
         </div>
 
         {chartData.length > 0 && (
-          <Card>
+          <Card data-tour="page-list">
             <CardHeader><CardTitle>Propostas por Mês</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>

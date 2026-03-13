@@ -40,7 +40,10 @@ const MainLayout = ({ children, onStartTour }: MainLayoutProps) => {
       </main>
 
       {impersonatedRole && (
-        <div className={`fixed bottom-0 left-0 right-0 z-50 ${ROLE_BANNER_COLORS[impersonatedRole] || 'bg-primary'} text-white`}>
+        <div
+          className={`fixed left-0 right-0 z-40 ${ROLE_BANNER_COLORS[impersonatedRole] || 'bg-primary'} text-white`}
+          style={{ bottom: 0, top: 'auto' }}
+        >
           <div className={`flex items-center justify-center gap-3 py-1.5 text-xs font-medium ${isMobile ? 'ml-0' : 'ml-64'}`}>
             <span>Visualizando como: <strong>{ROLE_LABELS[impersonatedRole] || impersonatedRole}</strong></span>
             <button

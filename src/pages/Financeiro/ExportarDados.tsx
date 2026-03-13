@@ -153,7 +153,7 @@ const ExportarDados = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {/* Planilhas para NF */}
             <Card>
               <CardHeader>

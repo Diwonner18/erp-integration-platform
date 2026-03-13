@@ -75,7 +75,7 @@ const FechamentoMensal = () => {
         <div data-tour="page-header"><h1 className="text-3xl font-bold text-primary">Fechamento Mensal</h1><p className="text-muted-foreground mt-1">Gerar e exportar documentos por data</p></div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <Card>
+          <Card data-tour="page-calendar">
             <CardHeader><CardTitle className="flex items-center gap-2"><CalendarIcon className="w-5 h-5" />Período</CardTitle></CardHeader>
             <CardContent>
               {selectedDate && (

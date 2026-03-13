@@ -147,7 +147,7 @@ const RelatoriosFinanceiros = () => {
               </Card>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-4" data-tour="page-list">
               {availableReports.map(report => (
                 <Card key={report.key}>
                   <CardContent className="p-6">

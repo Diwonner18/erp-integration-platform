@@ -2,38 +2,36 @@
 
 ## Estado Atual
 
-Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigidas. Modelo de acesso granular intra-role implementado. Role `gerenciador_tecnico` implementado para `diwonner13@gmail.com`.
+Sistema seguro e funcional. Todas as vulnerabilidades da auditoria de segurança corrigidas. Modelo de acesso granular intra-role implementado. Role `gerenciador_tecnico` implementado para `diwonner13@gmail.com`.
 
 ## ✅ Implementado
 
-- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend)
-- **RLS**: 24 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend + GoTrue)
+- **RLS**: 24+ tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
+- **RLS user_roles**: RESTRICTIVE INSERT policy bloqueia inserts diretos de usuarios normais. Somente admin/GT via policies ou SECURITY DEFINER functions podem inserir.
 - **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER (inclui gerenciador_tecnico) + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
 - **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
 - **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
-- **V6 Zod validation**: Schemas Zod para `horas_extras` e `alteracoes_escopo` com validateInput
+- **V6 Zod validation**: Schemas Zod para todas as entidades com validateInput + validação no FileImportModal
 - **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
 - **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos)
 - **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only + gerenciador_tecnico
-- **Validacao**: Zod em forms, senha forte, re-autenticacao em troca de senha
+- **Validacao**: Zod em forms + bulk import, senha forte, re-autenticacao em troca de senha
 - **Gerenciador Tecnico**: Role `gerenciador_tecnico` no enum `app_role`, vinculado a `diwonner13@gmail.com`, com visibilidade total (SELECT em todas tabelas), gestao de usuarios (manage-user edge function), menu completo no Sidebar, rotas admin liberadas
+- **File Import**: Importação automática Excel/PDF com parsing inteligente, preview, mapeamento de colunas, validação Zod, limite 10MB
+- **handle_new_user trigger**: Auto-assign roles (GT para diwonner13, admin para carla, cliente para non-company, self_assign_area para company)
+- **Edge Functions Auth**: manage-user usa getClaims() para verificação JWT eficiente
 
-## ✅ Roadmap - Todas as Etapas Concluidas
+## ✅ Auditoria de Segurança - Todas as Correções Aplicadas
 
-- **Etapa 1 - Nomenclatura**: Padronizada (Programacao)
-- **Etapa 2 - Filtros Avancados**: AdvancedFilters em Medicoes, Programacao, Propostas, Boletins, AlteracoesEscopo, HorasExtras
-- **Etapa 3 - Medicoes**: Auto-calculo com IGP-M, vinculo com programacoes executadas, NovaMedicaoModal refeito com Supabase
-- **Etapa 4 - Aceites Digitais**: Clientes podem aceitar propostas via MinhasPropostas com registro em aceites_digitais
-- **Etapa 5 - Relatorios com Export**: exportUtils.ts (jspdf + xlsx), exportacao PDF/Excel em Medicoes, HorasExtras e RelatoriosFinanceiros
-- **Etapa 6 - Horas/Custos**: Valor/hora configuravel por registro no formulario de HorasExtras
-- **Etapa 7 - Dashboards Financeiros**: Graficos Recharts (BarChart receita vs despesa, AreaChart fluxo de caixa) em ControleFinanceiro, RelatoriosComerciais e Dashboard
-- **Etapa 8 - Contratos com Alertas**: Badge "Vencendo" em Propostas + secao de alertas no Dashboard para propostas < 30 dias
-- **Etapa 9 - Materiais/Equipamentos Unificados**: Cards de resumo (total materiais, equipamentos, valor estoque, pendentes) em MateriaisEquipamentos
-- **Etapa 10 - Gestao de Senhas**: Troca de senha com re-autenticacao + Zod em Configuracoes
-- **Etapa 11 - Fechamento Mensal**: Export real via exportUtils com dados filtrados por periodo (medicoes, despesas, boletins, horas extras)
-- **Etapa 12 - Identidade Visual**: Layout split-screen em Login, Cadastro, ResetPassword com AuthLayout
-- **Etapa 13 - Botoes Funcionais**: Aprovar/rejeitar em Medicoes, AlteracoesEscopo e Propostas com ConfirmationModal + mutations Supabase
-- **Etapa 14 - Gerenciador Tecnico**: Role `gerenciador_tecnico` para diwonner13@gmail.com com acesso total de leitura + gestao de usuarios
+| Vulnerabilidade | Severidade | Status |
+|---|---|---|
+| user_roles sem RLS para INSERT | ALTA | ✅ RESTRICTIVE policy + trigger |
+| Frontend insere direto em user_roles | ALTA | ✅ Removido do AuthContext |
+| manage-user usa getUser() | MEDIA | ✅ Migrado para getClaims() |
+| File Import sem limite tamanho | MEDIA | ✅ 10MB limit adicionado |
+| File Import sem validação Zod | MEDIA | ✅ Validação Zod antes do insert |
+| purge-expired-logs público | BAIXA | ✅ Validação de origem adicionada |
 
 ## ⚠️ Pendente (apenas media/baixa severidade)
 
@@ -41,12 +39,14 @@ Sistema seguro e funcional. Todas as vulnerabilidades criticas e altas corrigida
 - **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
 - **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
 - **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
+- **Leaked Password Protection**: Habilitar no Supabase Auth Dashboard (Auth > Password Security)
 
 ## Arquitetura
 
 ```
-Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts)
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts + FileImport)
   → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
-    → Edge Functions (manage-user, purge-expired-logs, insert_audit_log)
+    → Edge Functions (manage-user [getClaims], purge-expired-logs [origin validation], insert_audit_log)
     → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
+    → Trigger handle_new_user (auto-assign roles)
 ```

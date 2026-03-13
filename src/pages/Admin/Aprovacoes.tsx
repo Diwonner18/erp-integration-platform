@@ -69,7 +69,7 @@ const Aprovacoes = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold font-title text-foreground">Aprovações Pendentes</h1><p className="text-muted-foreground mt-1">Itens aguardando aprovação</p></div>
+        <div data-tour="page-header"><h1 className="text-3xl font-bold font-title text-foreground">Aprovações Pendentes</h1><p className="text-muted-foreground mt-1">Itens aguardando aprovação</p></div>
 
         {isLoading ? (
           <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>

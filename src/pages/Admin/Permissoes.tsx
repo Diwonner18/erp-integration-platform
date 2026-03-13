@@ -66,7 +66,7 @@ const Permissoes = () => {
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
+          <div data-tour="page-header">
             <h1 className="text-3xl font-bold text-primary">Permissões do Sistema</h1>
             <p className="text-muted-foreground mt-1">Configure permissões por tipo de usuário</p>
           </div>

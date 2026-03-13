@@ -205,7 +205,7 @@ const Programacao = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm border">
+        <div className="bg-card rounded-lg shadow-sm border" data-tour="page-list">
           <div className="p-6 border-b">
             <h3 className="text-lg font-semibold text-foreground">Obras Programadas</h3>
           </div>

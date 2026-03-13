@@ -57,7 +57,7 @@ const GerenciarUsuarios = () => {
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><Users className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum usuário encontrado</p></div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {filteredUsers.map((user) => (
               <Card key={user.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">

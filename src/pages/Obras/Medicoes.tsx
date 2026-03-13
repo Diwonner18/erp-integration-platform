@@ -192,7 +192,7 @@ const Medicoes = () => {
             <p className="text-sm">Crie uma nova medição para começar</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {filteredMedicoes.map((medicao) => (
               <Card key={medicao.id}>
                 <CardContent className="p-6">

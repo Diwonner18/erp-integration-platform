@@ -84,7 +84,7 @@ const BoletinsMedicao = () => {
         ) : filteredBoletins.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><FileText className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhum boletim encontrado</p></div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {filteredBoletins.map((boletim) => (
               <Card key={boletim.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">

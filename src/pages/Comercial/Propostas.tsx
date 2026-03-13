@@ -120,7 +120,7 @@ const Propostas = () => {
             <p className="font-medium">Nenhuma proposta encontrada</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {filteredPropostas.map((proposta) => (
               <Card key={proposta.id}>
                 <CardContent className="p-6">

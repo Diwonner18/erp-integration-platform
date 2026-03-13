@@ -156,7 +156,7 @@ const Configuracoes = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4" data-tour="page-header">
           <div className="bg-primary/10 p-3 rounded-lg">
             <User className="w-6 h-6 text-primary" />
           </div>

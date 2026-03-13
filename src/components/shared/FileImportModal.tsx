@@ -23,6 +23,14 @@ import {
   type TargetType,
   type FieldMapping,
 } from '@/lib/fileParser';
+import {
+  medicaoInsertSchema,
+  despesaInsertSchema,
+  horasExtrasInsertSchema,
+  materialInsertSchema,
+  epiInsertSchema,
+} from '@/lib/validationSchemas';
+import { z } from 'zod';
 
 interface FileImportModalProps {
   open: boolean;

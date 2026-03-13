@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -25,17 +25,21 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user: caller }, error: authError } = await supabaseAnon.auth.getUser()
-    if (authError || !caller) {
+    // Use getClaims for efficient JWT verification
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await supabaseAnon.auth.getClaims(token)
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    const callerId = claimsData.claims.sub as string
+
     // Check admin or gerenciador_tecnico role
-    const { data: isAdmin } = await supabaseAnon.rpc('has_role', { _user_id: caller.id, _role: 'admin' })
-    const { data: isGT } = await supabaseAnon.rpc('has_role', { _user_id: caller.id, _role: 'gerenciador_tecnico' })
+    const { data: isAdmin } = await supabaseAnon.rpc('has_role', { _user_id: callerId, _role: 'admin' })
+    const { data: isGT } = await supabaseAnon.rpc('has_role', { _user_id: callerId, _role: 'gerenciador_tecnico' })
 
     if (!isAdmin && !isGT) {
       return new Response(JSON.stringify({ error: 'Apenas administradores e gerenciadores técnicos podem gerenciar usuários.' }), {
@@ -60,7 +64,6 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Validate role restrictions
       if (role === 'admin' && email !== 'carla@ctguedes.com.br') {
         return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a carla@ctguedes.com.br' }), {
           status: 400,
@@ -127,7 +130,6 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Protect main admin
       if (targetUser.user.email === 'carla@ctguedes.com.br' && !isAdmin) {
         return new Response(JSON.stringify({ error: 'Apenas o admin principal pode alterar o próprio role.' }), {
           status: 403,
@@ -135,8 +137,7 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Prevent GT from removing themselves
-      if (isGT && !isAdmin && targetUser.user.id === caller.id) {
+      if (isGT && !isAdmin && targetUser.user.id === callerId) {
         return new Response(JSON.stringify({ error: 'Você não pode alterar seu próprio role.' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

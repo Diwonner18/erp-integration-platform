@@ -23,6 +23,14 @@ import {
   type TargetType,
   type FieldMapping,
 } from '@/lib/fileParser';
+import {
+  medicaoInsertSchema,
+  despesaInsertSchema,
+  horasExtrasInsertSchema,
+  materialInsertSchema,
+  epiInsertSchema,
+} from '@/lib/validationSchemas';
+import { z } from 'zod';
 
 interface FileImportModalProps {
   open: boolean;
@@ -31,6 +39,16 @@ interface FileImportModalProps {
 }
 
 const ACCEPTED_EXTENSIONS = '.xlsx,.xls,.xlsm,.pdf';
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+const VALIDATION_SCHEMAS: Partial<Record<TargetType, z.ZodSchema>> = {
+  medicoes: medicaoInsertSchema,
+  despesas: despesaInsertSchema,
+  horas_extras: horasExtrasInsertSchema,
+  materiais: materialInsertSchema,
+  epis: epiInsertSchema,
+};
 
 const FileImportModal: React.FC<FileImportModalProps> = ({ open, onOpenChange, defaultTargetType }) => {
   const { toast } = useToast();
@@ -68,6 +86,10 @@ const FileImportModal: React.FC<FileImportModalProps> = ({ open, onOpenChange, d
   };
 
   const handleFileSelect = async (file: File) => {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({ title: 'Arquivo muito grande', description: `O tamanho máximo é ${MAX_FILE_SIZE_MB}MB.`, variant: 'destructive' });
+      return;
+    }
     setParsing(true);
     try {
       const result = await parseFile(file);
@@ -206,6 +228,31 @@ const FileImportModal: React.FC<FileImportModalProps> = ({ open, onOpenChange, d
         toast({ title: 'Nenhuma linha selecionada', variant: 'destructive' });
         setSaving(false);
         return;
+      }
+
+      // Validate each record with Zod schema
+      const schema = VALIDATION_SCHEMAS[targetType];
+      if (schema) {
+        const validRecords: typeof records = [];
+        const errors: string[] = [];
+        records.forEach((record, i) => {
+          const result = schema.safeParse(record);
+          if (result.success) {
+            validRecords.push(result.data as any);
+          } else {
+            const issues = result.error.issues.map(iss => iss.message).join(', ');
+            errors.push(`Linha ${i + 1}: ${issues}`);
+          }
+        });
+        if (errors.length > 0 && validRecords.length === 0) {
+          toast({ title: 'Todos os registros falharam na validação', description: errors.slice(0, 3).join('\n'), variant: 'destructive' });
+          setSaving(false);
+          return;
+        }
+        if (errors.length > 0) {
+          toast({ title: `${errors.length} linha(s) ignoradas por erro de validação`, description: errors.slice(0, 3).join('; '), variant: 'default' });
+        }
+        records.splice(0, records.length, ...validRecords);
       }
 
       // Bulk insert

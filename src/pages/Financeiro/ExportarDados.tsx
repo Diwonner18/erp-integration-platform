@@ -124,7 +124,7 @@ const ExportarDados = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold text-primary">Exportar Dados</h1>
           <p className="text-muted-foreground mt-1">Gerar planilhas e relatórios para NF e auditoria</p>
         </div>

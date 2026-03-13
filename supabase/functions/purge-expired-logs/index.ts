@@ -21,10 +21,11 @@ Deno.serve(async (req) => {
     const isInternalCall = internalSecret === expectedSecret
 
     if (!isServiceRole && !isInternalCall) {
-      // Also allow if called from pg_cron (no auth header, but running inside Supabase infra)
-      // pg_net calls from pg_cron include the service role key in the Authorization header
-      // For safety, log unauthorized attempts
       console.warn('purge-expired-logs called without valid authorization')
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const supabaseAdmin = createClient(

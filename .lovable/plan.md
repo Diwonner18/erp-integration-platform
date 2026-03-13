@@ -40,6 +40,8 @@ Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de seguran�
 | File Import sem validação Zod | MEDIA | ✅ Validação Zod antes do insert |
 | purge-expired-logs público | BAIXA | ✅ Retorna 403 para chamadas não autorizadas |
 
+- **V10 Self-role escalation**: RESTRICTIVE INSERT/UPDATE/DELETE em `user_roles` com `user_id <> auth.uid()` bloqueia auto-atribuição de roles
+
 ## ⚠️ Pendente (apenas baixa severidade ou ação manual)
 
 - **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)

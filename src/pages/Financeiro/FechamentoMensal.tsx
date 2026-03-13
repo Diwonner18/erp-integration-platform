@@ -2,64 +2,57 @@ import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Download, Archive, Calendar } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { FileText, Download, Archive, Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useMedicoes, useDespesas, useHorasExtras, useBoletins } from '@/hooks/useSupabaseData';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const FechamentoMensal = () => {
   const { toast } = useToast();
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   const { data: medicoes = [] } = useMedicoes();
   const { data: despesas = [] } = useDespesas();
   const { data: horasExtras = [] } = useHorasExtras();
   const { data: boletins = [] } = useBoletins();
 
-  const months = [
-    { value: '01', label: 'Janeiro' }, { value: '02', label: 'Fevereiro' }, { value: '03', label: 'Março' },
-    { value: '04', label: 'Abril' }, { value: '05', label: 'Maio' }, { value: '06', label: 'Junho' },
-    { value: '07', label: 'Julho' }, { value: '08', label: 'Agosto' }, { value: '09', label: 'Setembro' },
-    { value: '10', label: 'Outubro' }, { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' }
-  ];
-  const years = ['2023', '2024', '2025', '2026'];
-  const prefix = `${selectedYear}-${selectedMonth}`;
-  const periodSelected = selectedMonth !== '';
+  const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
+  const dateLabel = selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: ptBR }) : '';
 
   const filtered = useMemo(() => ({
-    medicoes: medicoes.filter(m => (m.data_medicao || m.created_at).startsWith(prefix)),
-    despesas: despesas.filter(d => d.data.startsWith(prefix)),
-    horasExtras: horasExtras.filter(h => h.data.startsWith(prefix)),
-    boletins: boletins.filter(b => (b.data_emissao || b.created_at).startsWith(prefix)),
-  }), [medicoes, despesas, horasExtras, boletins, prefix]);
+    medicoes: medicoes.filter(m => (m.data_medicao || m.created_at?.slice(0, 10)) === dateStr),
+    despesas: despesas.filter(d => d.data === dateStr),
+    horasExtras: horasExtras.filter(h => h.data === dateStr),
+    boletins: boletins.filter(b => (b.data_emissao || b.created_at?.slice(0, 10)) === dateStr),
+  }), [medicoes, despesas, horasExtras, boletins, dateStr]);
 
   const documentos = [
     { nome: 'Relatório de Medições', tipo: 'PDF', count: filtered.medicoes.length, export: (fmt: 'pdf'|'excel') => {
-      const opts = { title: `Medições - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `medicoes_${prefix}`, columns: [
+      const opts = { title: `Medições - ${dateLabel}`, filename: `medicoes_${dateStr}`, columns: [
         { header: 'Nº', key: 'numero' }, { header: 'Obra', key: 'obra' }, { header: 'Data', key: 'data_medicao', format: formatDateExport },
         { header: 'Valor', key: 'valor', format: formatCurrencyExport }, { header: 'Status', key: 'status' },
       ], data: filtered.medicoes.map(m => ({ ...m, obra: (m as any).obras?.nome || '-' })) };
       fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
     }},
     { nome: 'Planilha de Despesas', tipo: 'XLSX', count: filtered.despesas.length, export: (fmt: 'pdf'|'excel') => {
-      const opts = { title: `Despesas - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `despesas_${prefix}`, columns: [
+      const opts = { title: `Despesas - ${dateLabel}`, filename: `despesas_${dateStr}`, columns: [
         { header: 'Descrição', key: 'descricao' }, { header: 'Data', key: 'data', format: formatDateExport },
         { header: 'Categoria', key: 'categoria' }, { header: 'Valor', key: 'valor', format: formatCurrencyExport },
       ], data: filtered.despesas };
       fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
     }},
     { nome: 'Boletins de Medição', tipo: 'PDF', count: filtered.boletins.length, export: (fmt: 'pdf'|'excel') => {
-      const opts = { title: `Boletins - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `boletins_${prefix}`, columns: [
+      const opts = { title: `Boletins - ${dateLabel}`, filename: `boletins_${dateStr}`, columns: [
         { header: 'Nº', key: 'numero' }, { header: 'Obra', key: 'obra' },
         { header: 'Valor', key: 'valor', format: formatCurrencyExport }, { header: 'Status', key: 'status' },
       ], data: filtered.boletins.map(b => ({ ...b, obra: (b as any).obras?.nome || '-' })) };
       fmt === 'pdf' ? exportToPDF(opts) : exportToExcel(opts);
     }},
     { nome: 'Relatório de Horas Extras', tipo: 'XLSX', count: filtered.horasExtras.length, export: (fmt: 'pdf'|'excel') => {
-      const opts = { title: `Horas Extras - ${months.find(m=>m.value===selectedMonth)?.label}/${selectedYear}`, filename: `horas_extras_${prefix}`, columns: [
+      const opts = { title: `Horas Extras - ${dateLabel}`, filename: `horas_extras_${dateStr}`, columns: [
         { header: 'Funcionário', key: 'funcionario' }, { header: 'Data', key: 'data', format: formatDateExport },
         { header: 'Horas', key: 'horas' }, { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
         { header: 'Total', key: 'total', format: formatCurrencyExport },
@@ -79,43 +72,41 @@ const FechamentoMensal = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold text-primary">Fechamento Mensal</h1><p className="text-muted-foreground mt-1">Gerar e exportar documentos mensais</p></div>
+        <div><h1 className="text-3xl font-bold text-primary">Fechamento Mensal</h1><p className="text-muted-foreground mt-1">Gerar e exportar documentos por data</p></div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="w-5 h-5" />Período</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Mês</Label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o mês" /></SelectTrigger>
-                  <SelectContent>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Ano</Label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o ano" /></SelectTrigger>
-                  <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
+            <CardHeader><CardTitle className="flex items-center gap-2"><CalendarIcon className="w-5 h-5" />Período</CardTitle></CardHeader>
+            <CardContent>
+              {selectedDate && (
+                <p className="text-sm font-medium text-foreground mb-3">
+                  Data selecionada: <span className="text-primary">{dateLabel}</span>
+                </p>
+              )}
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                locale={ptBR}
+                className="rounded-md border pointer-events-auto"
+              />
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-2">
             <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Documentos</CardTitle></CardHeader>
             <CardContent>
-              {!periodSelected ? (
+              {!selectedDate ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                  <p className="font-medium">Selecione um período</p>
-                  <p className="text-sm">Escolha o mês e ano para visualizar os documentos disponíveis</p>
+                  <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Selecione uma data</p>
+                  <p className="text-sm">Escolha uma data no calendário para visualizar os documentos disponíveis</p>
                 </div>
               ) : !hasAnyData ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                  <p className="font-medium">Nenhum registro encontrado para o período selecionado</p>
-                  <p className="text-sm">Não há medições, despesas, boletins ou horas extras em {months.find(m => m.value === selectedMonth)?.label}/{selectedYear}</p>
+                  <p className="font-medium">Nenhum registro encontrado</p>
+                  <p className="text-sm">Não há medições, despesas, boletins ou horas extras em {dateLabel}</p>
                 </div>
               ) : (
                 <>

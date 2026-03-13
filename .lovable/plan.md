@@ -1,22 +1,18 @@
 
 
-# Configurar o Send Email Hook no Supabase
+# Adicionar SEND_EMAIL_HOOK_SECRET
 
-## O que você está vendo
+## O que será feito
 
-Essa é a tela correta. Você precisa mudar o **Hook type** de "Postgres" para **"HTTPS"**, pois nossa função é uma Edge Function (endpoint HTTP), não uma função Postgres.
+Usar a ferramenta de secrets para solicitar ao usuário o valor do HMAC Secret gerado pelo Supabase e salvá-lo como `SEND_EMAIL_HOOK_SECRET` nas secrets do projeto.
 
-## Passo a passo
+## Após isso
 
-1. **Hook type**: Selecione **HTTPS** (em vez de Postgres)
-2. **URL**: Cole a URL da Edge Function:
-   ```
-   https://mpuocbbascmfpfmsrdwo.supabase.co/functions/v1/send-auth-email
-   ```
-3. O Supabase vai gerar um **HMAC Secret** — copie esse valor
-4. Clique em **Save** para ativar o hook
+A configuração estará completa:
+- ✅ Edge Function `send-auth-email` deployada
+- ✅ `RESEND_API_KEY` configurada
+- ✅ Hook HTTPS ativado no Supabase
+- ✅ `SEND_EMAIL_HOOK_SECRET` configurado
 
-## Depois de salvar
-
-Me envie o **HMAC Secret** gerado pelo Supabase para que eu configure como `SEND_EMAIL_HOOK_SECRET` nas secrets do projeto. Isso garante que a Edge Function valide a autenticidade das requisições.
+O sistema de e-mails personalizados estará funcional para signup, recovery, email_change e magiclink.
 

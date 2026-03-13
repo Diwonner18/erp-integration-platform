@@ -39,6 +39,16 @@ interface FileImportModalProps {
 }
 
 const ACCEPTED_EXTENSIONS = '.xlsx,.xls,.xlsm,.pdf';
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+const VALIDATION_SCHEMAS: Partial<Record<TargetType, z.ZodSchema>> = {
+  medicoes: medicaoInsertSchema,
+  despesas: despesaInsertSchema,
+  horas_extras: horasExtrasInsertSchema,
+  materiais: materialInsertSchema,
+  epis: epiInsertSchema,
+};
 
 const FileImportModal: React.FC<FileImportModalProps> = ({ open, onOpenChange, defaultTargetType }) => {
   const { toast } = useToast();

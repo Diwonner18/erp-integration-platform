@@ -8,11 +8,12 @@ Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de seguran�
 
 - **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend + GoTrue)
 - **RLS**: 26 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
-- **RLS user_roles**: RESTRICTIVE INSERT policy bloqueia inserts diretos de usuarios normais. Policy "GT cannot assign admin role" impede GT de escalar para admin via API direta.
-- **RLS clientes (LGPD)**: Funcionarios obras/financeira so veem clientes vinculados a suas obras (created_by, responsavel_id ou acessos_compartilhados)
-- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER (inclui gerenciador_tecnico) + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **RLS user_roles**: RESTRICTIVE INSERT bloqueia inserts de usuarios normais. RESTRICTIVE UPDATE bloqueia escalação para admin. **RESTRICTIVE DELETE bloqueia remoção de role admin por não-admins.**
+- **RLS clientes (LGPD)**: Funcionarios obras/financeira so veem clientes vinculados a suas obras (via `get_related_cliente_ids()` SECURITY DEFINER)
+- **Recursão RLS corrigida**: Funções `get_cliente_ids_for_user`, `get_related_cliente_ids`, `get_obra_ids_for_cliente` (SECURITY DEFINER) quebram ciclo circular entre obras↔clientes
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
 - **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
-- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras` e `clientes` (created_by ou admin/shared)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras`, `clientes` e `user_roles`
 - **V6 Zod validation**: Schemas Zod para todas as entidades com validateInput + validação no FileImportModal
 - **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
 - **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos). Chamadas não autorizadas retornam 403.
@@ -29,8 +30,11 @@ Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de seguran�
 |---|---|---|
 | user_roles sem RLS para INSERT | ALTA | ✅ RESTRICTIVE policy + trigger |
 | Frontend insere direto em user_roles | ALTA | ✅ Removido do AuthContext |
-| GT pode escalar para admin via API | ALTA | ✅ RESTRICTIVE policy "GT cannot assign admin role" |
-| PII de clientes exposta para todos internos | MEDIA | ✅ SELECT escopado por obras relacionadas |
+| GT pode escalar para admin via API (INSERT) | ALTA | ✅ RESTRICTIVE "GT cannot assign admin role" |
+| GT pode escalar para admin via API (UPDATE) | ALTA | ✅ RESTRICTIVE "GT cannot update to admin role" |
+| GT pode deletar role admin via API (DELETE) | ALTA | ✅ RESTRICTIVE "GT cannot delete admin role" |
+| Recursão infinita RLS obras↔clientes | CRÍTICA | ✅ Funções SECURITY DEFINER |
+| PII de clientes exposta para todos internos | MEDIA | ✅ SELECT escopado via get_related_cliente_ids() |
 | manage-user usa getUser() | MEDIA | ✅ Migrado para getClaims() |
 | File Import sem limite tamanho | MEDIA | ✅ 10MB limit adicionado |
 | File Import sem validação Zod | MEDIA | ✅ Validação Zod antes do insert |
@@ -42,13 +46,13 @@ Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de seguran�
 - **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
 - **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
 - **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
-- **Leaked Password Protection**: Habilitar no Supabase Auth Dashboard (Auth > Password Security)
+- **Leaked Password Protection**: Habilitar no Supabase Auth Dashboard (Auth > Password Security) - requer plano Pro
 
 ## Arquitetura
 
 ```
 Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts + FileImport)
-  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access())
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access() + get_*_ids SECURITY DEFINER)
     → Edge Functions (manage-user [getClaims], purge-expired-logs [403 unauthorized], insert_audit_log)
     → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
     → Trigger handle_new_user (auto-assign roles)

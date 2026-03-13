@@ -173,7 +173,7 @@ const MateriaisEquipamentos = () => {
           <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Itens Pendentes</p><p className="text-2xl font-bold text-foreground">{materiais.filter(m => m.status === 'pendente').length + equipamentos.filter(e => e.status === 'disponivel').length}</p></CardContent></Card>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4" data-tour="page-search">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input placeholder="Buscar..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />

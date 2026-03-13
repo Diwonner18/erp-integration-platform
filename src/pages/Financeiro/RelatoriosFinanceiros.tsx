@@ -115,10 +115,10 @@ const RelatoriosFinanceiros = () => {
                 Cadastre medições, despesas ou retenções para gerar relatórios financeiros.
               </p>
               <div className="flex flex-wrap justify-center gap-3">
-                <Button variant="outline" onClick={() => navigate('/obras/medicoes')}>
+                <Button variant="outline" onClick={() => navigate('/medicoes')}>
                   <PlusCircle className="w-4 h-4 mr-2" />Criar primeira medição
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/financeiro/despesas')}>
+                <Button variant="outline" onClick={() => navigate('/lancamento-despesas')}>
                   <PlusCircle className="w-4 h-4 mr-2" />Registrar despesa
                 </Button>
               </div>

@@ -180,7 +180,7 @@ const MateriaisEquipamentos = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="materiais" className="space-y-4">
+        <Tabs defaultValue="materiais" className="space-y-4" data-tour="page-tabs">
           <TabsList>
             <TabsTrigger value="materiais" className="flex items-center gap-2">
               <Package className="w-4 h-4" />

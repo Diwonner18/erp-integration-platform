@@ -137,7 +137,7 @@ const Materiais = () => {
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4" data-tour="page-list">
           {filteredMateriais.map((material) => (
             <Card key={material.id}>
               <CardContent className="p-6">

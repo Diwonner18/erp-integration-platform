@@ -106,7 +106,7 @@ const AlteracoesEscopo = () => {
             <p className="font-medium">Nenhuma alteração de escopo encontrada</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {filteredAlteracoes.map((alteracao) => (
               <Card key={alteracao.id}>
                 <CardContent className="p-6">

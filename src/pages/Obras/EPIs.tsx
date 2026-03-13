@@ -186,7 +186,7 @@ const EPIs = () => {
           <Card><CardContent className="p-4 text-center"><Users className="w-5 h-5 mx-auto mb-1 text-primary" /><div className="text-2xl font-bold text-foreground">{stats.colaboradores}</div><div className="text-xs text-muted-foreground">Colaboradores</div></CardContent></Card>
         </div>
 
-        <Tabs defaultValue="registros" className="space-y-4">
+        <Tabs defaultValue="registros" className="space-y-4" data-tour="page-tabs">
           <TabsList>
             <TabsTrigger value="registros">Registros</TabsTrigger>
             <TabsTrigger value="relatorios">Relatórios</TabsTrigger>

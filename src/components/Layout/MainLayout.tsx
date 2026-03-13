@@ -35,7 +35,10 @@ const MainLayout = ({ children, onStartTour }: MainLayoutProps) => {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onStartTour={onStartTour} />
 
-      <main className={`pt-16 p-4 md:p-6 overflow-y-auto h-[calc(100vh)] ${isMobile ? 'ml-0' : 'ml-64'} ${impersonatedRole ? 'pb-14' : ''}`}>
+      <main
+        className={`mt-16 p-4 md:p-6 overflow-y-auto overflow-x-hidden ${isMobile ? 'ml-0' : 'ml-64'} ${impersonatedRole ? 'h-[calc(100vh-4rem-2.5rem)] pb-4' : 'h-[calc(100vh-4rem)]'}`}
+        style={{ scrollbarGutter: 'stable' }}
+      >
         {children}
       </main>
 

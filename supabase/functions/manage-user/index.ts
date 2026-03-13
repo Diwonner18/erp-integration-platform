@@ -78,12 +78,9 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role !== 'cliente' && role !== 'gerenciador_tecnico' && !email.endsWith('@ctguedes.com.br')) {
-        return new Response(JSON.stringify({ error: 'Roles internos só podem ser atribuídos a e-mails @ctguedes.com.br' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
+      // Domain restriction removed for operational roles (obras, financeira, comercial)
+      // Admin can create users with any email for testing/flexibility
+      // Only admin and gerenciador_tecnico remain locked to specific emails (checked above)
 
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,

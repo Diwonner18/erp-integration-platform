@@ -38,9 +38,9 @@ const GerenciarUsuarios = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold font-title text-foreground">Gerenciar Usuários</h1><p className="text-muted-foreground mt-1">Controle total sobre usuários</p></div>
-          <Button onClick={() => { setModalMode('create'); setSelectedUser(null); setShowModal(true); }}><UserPlus className="w-4 h-4 mr-2" />Novo Usuário</Button>
+          <Button onClick={() => { setModalMode('create'); setSelectedUser(null); setShowModal(true); }} data-tour="page-new-btn"><UserPlus className="w-4 h-4 mr-2" />Novo Usuário</Button>
         </div>
 
         <div className="flex items-center space-x-4">

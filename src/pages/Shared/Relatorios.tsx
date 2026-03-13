@@ -126,12 +126,12 @@ const Relatorios = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Relatórios Gerais</h1>
             <p className="text-muted-foreground mt-1">Visão completa de todos os indicadores</p>
           </div>
-          <Button onClick={handleExportPDF} disabled={filteredObras.length === 0}>
+          <Button onClick={handleExportPDF} disabled={filteredObras.length === 0} data-tour="page-export">
             <Download className="w-4 h-4 mr-2" />
             Exportar Dashboard
           </Button>

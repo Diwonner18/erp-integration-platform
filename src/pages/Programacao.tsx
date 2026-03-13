@@ -178,20 +178,20 @@ const Programacao = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center" data-tour="page-header">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Programação de Obras</h1>
             <p className="text-muted-foreground mt-1">Gerencie a programação e execução das obras</p>
           </div>
-          <Button onClick={() => setShowForm(true)}>
+          <Button onClick={() => setShowForm(true)} data-tour="page-new-btn">
             <Plus className="w-4 h-4 mr-2" />
             Nova Programação
           </Button>
         </div>
 
-        <AdvancedFilters onFiltersChange={setFilters} obras={obrasOptions} statusOptions={statusOptions} />
+        <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obrasOptions} statusOptions={statusOptions} /></div>
 
-        <div className="bg-card rounded-lg shadow-sm border p-6">
+        <div className="bg-card rounded-lg shadow-sm border p-6" data-tour="page-search">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -205,7 +205,7 @@ const Programacao = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm border">
+        <div className="bg-card rounded-lg shadow-sm border" data-tour="page-list">
           <div className="p-6 border-b">
             <h3 className="text-lg font-semibold text-foreground">Obras Programadas</h3>
           </div>

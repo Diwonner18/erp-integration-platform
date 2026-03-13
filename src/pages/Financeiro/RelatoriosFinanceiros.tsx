@@ -90,7 +90,7 @@ const RelatoriosFinanceiros = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Relatórios Financeiros</h1>
             <p className="text-muted-foreground mt-1">Exporte dados em PDF ou Excel</p>
@@ -126,7 +126,7 @@ const RelatoriosFinanceiros = () => {
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-tour="page-stats">
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-sm text-muted-foreground">Receita Aprovada</p>
@@ -147,7 +147,7 @@ const RelatoriosFinanceiros = () => {
               </Card>
             </div>
 
-            <div className="grid gap-4">
+            <div className="grid gap-4" data-tour="page-list">
               {availableReports.map(report => (
                 <Card key={report.key}>
                   <CardContent className="p-6">

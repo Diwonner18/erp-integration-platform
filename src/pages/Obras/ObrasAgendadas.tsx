@@ -13,7 +13,7 @@ const ObrasAgendadas = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold text-foreground">Obras Agendadas</h1>
           <p className="text-muted-foreground mt-1">Próximas obras programadas para execução</p>
         </div>
@@ -26,7 +26,7 @@ const ObrasAgendadas = () => {
             <p className="font-medium">Nenhuma obra agendada</p>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {obrasAgendadas.map((obra) => (
               <Card key={obra.id}>
                 <CardHeader>

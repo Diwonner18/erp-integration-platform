@@ -1,65 +1,59 @@
+# Overview Final - Sistema CT Guedes
 
+## Estado Atual
 
-# Tours Independentes por Página (mantendo Dashboard como está)
+Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de segurança corrigidas. Modelo de acesso granular intra-role implementado. Role `gerenciador_tecnico` implementado para `diwonner13@gmail.com`.
 
-O tour do Dashboard permanece intacto. Cada página ganha seu próprio tour independente, ativado pelo botão "?" no Header.
+## ✅ Implementado
 
-## Abordagem
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend + GoTrue)
+- **RLS**: 26 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
+- **RLS user_roles**: RESTRICTIVE INSERT bloqueia inserts de usuarios normais. RESTRICTIVE UPDATE bloqueia escalação para admin. **RESTRICTIVE DELETE bloqueia remoção de role admin por não-admins.**
+- **RLS clientes (LGPD)**: Funcionarios obras/financeira so veem clientes vinculados a suas obras (via `get_related_cliente_ids()` SECURITY DEFINER)
+- **Recursão RLS corrigida**: Funções `get_cliente_ids_for_user`, `get_related_cliente_ids`, `get_obra_ids_for_cliente` (SECURITY DEFINER) quebram ciclo circular entre obras↔clientes
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras`, `clientes` e `user_roles`
+- **V6 Zod validation**: Schemas Zod para todas as entidades com validateInput + validação no FileImportModal
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos). Chamadas não autorizadas retornam 403.
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only + gerenciador_tecnico
+- **Validacao**: Zod em forms + bulk import, senha forte, re-autenticacao em troca de senha
+- **Gerenciador Tecnico**: Role `gerenciador_tecnico` no enum `app_role`, vinculado a `diwonner13@gmail.com`, com visibilidade total (SELECT em todas tabelas), gestao de usuarios (manage-user edge function), menu completo no Sidebar, rotas admin liberadas
+- **File Import**: Importação automática Excel/PDF com parsing inteligente, preview, mapeamento de colunas, validação Zod, limite 10MB
+- **handle_new_user trigger**: Auto-assign roles (GT para diwonner13, admin para carla, cliente para non-company, self_assign_area para company)
+- **Edge Functions Auth**: manage-user usa getClaims() para verificação JWT eficiente
 
-Cada página que tiver tour disponível vai usar o mesmo `useTour` + `ProductTour` internamente (igual ao Dashboard). O Header passa `onStartTour` do MainLayout, que por sua vez repassa para a página ativa. Como cada página é independente, a solução mais simples é: cada página importa `useTour`, `ProductTour`, e define seus steps localmente.
+## ✅ Auditorias de Segurança - Todas as Correções Aplicadas
 
-Porém, como são ~25 páginas, para evitar repetir imports em todas, vamos criar um **hook wrapper** (`usePageTour`) e um **componente wrapper** (`PageTourProvider`) que cada página usa com uma linha. Os steps ficam centralizados em `pageTourSteps.ts`.
+| Vulnerabilidade | Severidade | Status |
+|---|---|---|
+| user_roles sem RLS para INSERT | ALTA | ✅ RESTRICTIVE policy + trigger |
+| Frontend insere direto em user_roles | ALTA | ✅ Removido do AuthContext |
+| GT pode escalar para admin via API (INSERT) | ALTA | ✅ RESTRICTIVE "GT cannot assign admin role" |
+| GT pode escalar para admin via API (UPDATE) | ALTA | ✅ RESTRICTIVE "GT cannot update to admin role" |
+| GT pode deletar role admin via API (DELETE) | ALTA | ✅ RESTRICTIVE "GT cannot delete admin role" |
+| Recursão infinita RLS obras↔clientes | CRÍTICA | ✅ Funções SECURITY DEFINER |
+| PII de clientes exposta para todos internos | MEDIA | ✅ SELECT escopado via get_related_cliente_ids() |
+| manage-user usa getUser() | MEDIA | ✅ Migrado para getClaims() |
+| File Import sem limite tamanho | MEDIA | ✅ 10MB limit adicionado |
+| File Import sem validação Zod | MEDIA | ✅ Validação Zod antes do insert |
+| purge-expired-logs público | BAIXA | ✅ Retorna 403 para chamadas não autorizadas |
 
-## Arquivos
+## ⚠️ Pendente (apenas baixa severidade ou ação manual)
 
-### 1. Novo: `src/components/Tour/pageTourSteps.ts`
-Exporta `getPageTourSteps(pathname: string): TourStep[]` com 3-6 steps por rota. Rotas cobertas (~25):
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
+- **Leaked Password Protection**: Habilitar no Supabase Auth Dashboard (Auth > Password Security) - requer plano Pro
 
-**Obras:** `/programacao`, `/medicoes`, `/alteracoes-escopo`, `/materiais-equipamentos`, `/materiais`, `/epis`, `/horas-extras`, `/relatorio-diario-obra`, `/obras-em-andamento`, `/obras-concluidas`, `/obras-agendadas`, `/equipe-ativa`, `/central-alertas`, `/relatorios-obra`
+## Arquitetura
 
-**Financeiro:** `/boletins-medicao`, `/financeiro`, `/lancamento-despesas`, `/retencoes`, `/fechamento-mensal`, `/relatorios-financeiros`, `/exportar-dados`
-
-**Comercial:** `/propostas`, `/valores-unitarios`, `/aceites`, `/modelos-contrato`, `/relatorios-comerciais`
-
-**Admin:** `/usuarios`, `/permissoes`, `/aprovacoes`, `/automacao`
-
-**Cliente:** `/minhas-obras`, `/solicitar-agendamento`, `/minhas-propostas`, `/meus-relatorios`, `/meus-pagamentos`
-
-**Geral:** `/configuracoes`, `/relatorios`
-
-### 2. Novo: `src/hooks/usePageTour.ts`
-Hook que combina `useLocation()` + `useTour` + busca steps de `getPageTourSteps`. Retorna `{ tourProps, startTour }` — tudo que a página precisa para renderizar o `ProductTour`.
-
-### 3. Novo: `src/components/Tour/PageTourWrapper.tsx`
-Componente simples que recebe `usePageTour` e renderiza `<ProductTour>` automaticamente. Cada página adiciona `<PageTourWrapper />` ao seu JSX.
-
-### 4. Modificar: `src/components/Layout/MainLayout.tsx`
-- Integrar `usePageTour` para que o botão "?" do Header chame `startTour` da página atual
-- Usar `useLocation` para detectar rota e buscar steps correspondentes
-- Renderizar `<ProductTour>` no nível do layout (assim as páginas não precisam adicionar nada)
-- Manter a prop `onStartTour` do Dashboard funcionando (rota `/` usa o tour existente do Dashboard)
-
-### 5. Sem mudanças no Dashboard
-O `Dashboard.tsx` continua com `useTour`, `WelcomeModal` e `ProductTour` como está. Na rota `/`, o Header chama o `resetTour` do Dashboard.
-
-### 6. Adicionar `data-tour` em ~25 páginas
-Cada página recebe 3-6 atributos `data-tour` nos elementos-chave. Padrão por página:
-- `data-tour="page-header"` — título/descrição
-- `data-tour="page-filters"` — filtros avançados
-- `data-tour="page-search"` — barra de busca
-- `data-tour="page-new-btn"` — botão de criar (Nova Medição, Novo Boletim, etc.)
-- `data-tour="page-list"` — lista/tabela/grid principal
-- `data-tour="page-export"` — botões de exportação
-- `data-tour="page-actions"` — ações de aprovação/rejeição
-
-### Fluxo
-1. Dashboard: primeiro login → WelcomeModal + tour (como hoje)
-2. Qualquer outra página: usuário clica "?" → `MainLayout` detecta rota, busca steps, inicia `ProductTour`
-3. Se a página não tem steps definidos, o botão "?" não faz nada (ou mostra toast "Tour não disponível")
-
-## Estimativa
-- 3 arquivos novos (`pageTourSteps.ts`, `usePageTour.ts`, `PageTourWrapper.tsx`)
-- 1 modificado (`MainLayout.tsx`)
-- ~25 páginas: adição de atributos `data-tour` (mudanças pequenas, 3-6 linhas por página)
-- Dashboard: sem alterações
-
+```
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts + FileImport)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access() + get_*_ids SECURITY DEFINER)
+    → Edge Functions (manage-user [getClaims], purge-expired-logs [403 unauthorized], insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
+    → Trigger handle_new_user (auto-assign roles)
+```

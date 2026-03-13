@@ -111,21 +111,21 @@ const Materiais = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Controle de Materiais</h1>
             <p className="text-muted-foreground mt-1">Gestão de estoque e materiais</p>
           </div>
           <div className="flex gap-2">
             <FileImportButton targetType="materiais" />
-            <Button onClick={() => setShowModal(true)}>
+            <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
               <Plus className="w-4 h-4 mr-2" />
               Adicionar Material
             </Button>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4" data-tour="page-search">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input 
@@ -137,7 +137,7 @@ const Materiais = () => {
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4" data-tour="page-list">
           {filteredMateriais.map((material) => (
             <Card key={material.id}>
               <CardContent className="p-6">

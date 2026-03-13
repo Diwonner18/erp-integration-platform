@@ -159,28 +159,28 @@ const MateriaisEquipamentos = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-primary">Materiais e Equipamentos</h1>
             <p className="text-muted-foreground mt-1">Controle unificado de recursos</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="page-stats">
           <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total Materiais</p><p className="text-2xl font-bold text-foreground">{materiais.length}</p></CardContent></Card>
           <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total Equipamentos</p><p className="text-2xl font-bold text-foreground">{equipamentos.length}</p></CardContent></Card>
           <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Valor em Estoque</p><p className="text-2xl font-bold text-foreground">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(materiais.reduce((s, m) => s + (Number(m.valor_unitario) || 0) * (Number(m.quantidade) || 0), 0) + equipamentos.reduce((s, e) => s + (Number(e.valor_unitario) || 0) * (Number(e.quantidade) || 0), 0))}</p></CardContent></Card>
           <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Itens Pendentes</p><p className="text-2xl font-bold text-foreground">{materiais.filter(m => m.status === 'pendente').length + equipamentos.filter(e => e.status === 'disponivel').length}</p></CardContent></Card>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4" data-tour="page-search">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input placeholder="Buscar..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
 
-        <Tabs defaultValue="materiais" className="space-y-4">
+        <Tabs defaultValue="materiais" className="space-y-4" data-tour="page-tabs">
           <TabsList>
             <TabsTrigger value="materiais" className="flex items-center gap-2">
               <Package className="w-4 h-4" />

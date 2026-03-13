@@ -34,7 +34,7 @@ const CentralAlertas = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Central de Alertas</h1>
             <p className="text-slate-600 mt-1">Avisos automáticos e notificações do sistema</p>
@@ -45,7 +45,7 @@ const CentralAlertas = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" data-tour="page-stats">
           <Card className="border-red-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">

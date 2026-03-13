@@ -19,7 +19,7 @@ const ObrasEmAndamento = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold font-title text-foreground">Obras em Andamento</h1>
           <p className="text-muted-foreground mt-1">Acompanhamento de obras ativas</p>
         </div>
@@ -36,7 +36,7 @@ const ObrasEmAndamento = () => {
             <p className="font-medium">Nenhuma obra em andamento</p>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-6" data-tour="page-list">
             {obrasEmAndamento.map((obra) => (
               <Card key={obra.id}>
                 <CardHeader>

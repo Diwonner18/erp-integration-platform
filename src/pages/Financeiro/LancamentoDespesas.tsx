@@ -47,11 +47,11 @@ const LancamentoDespesas = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-primary">Lançamento de Despesas</h1><p className="text-muted-foreground mt-1">Registrar despesas operacionais</p></div>
           <div className="flex gap-2">
             <FileImportButton targetType="despesas" />
-            <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }}><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
+            <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ const LancamentoDespesas = () => {
         ) : despesas.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground"><DollarSign className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>Nenhuma despesa registrada</p></div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-tour="page-list">
             {despesas.map((despesa) => (
               <Card key={despesa.id}><CardContent className="p-6">
                 <div className="flex items-center justify-between">

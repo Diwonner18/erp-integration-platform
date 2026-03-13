@@ -95,12 +95,12 @@ const HorasExtrasPage = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-tour="page-header">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Controle de Horas Extras</h1>
             <p className="text-muted-foreground mt-1">Registrar e acompanhar horas extras</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap" data-tour="page-export">
             <FileImportButton targetType="horas_extras" />
             <Button variant="outline" size="sm" onClick={() => {
               const columns = [
@@ -130,11 +130,11 @@ const HorasExtrasPage = () => {
               exportToExcel({ title: 'Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
-            <Button onClick={() => setShowAddModal(true)}><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+            <Button onClick={() => setShowAddModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
           </div>
         </div>
 
-        <AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} />
+        <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>
 
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">

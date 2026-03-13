@@ -297,11 +297,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const role = (roleData?.role as UserType) || null;
       const appUser = buildUser(data.user, fullName, role);
 
+      // GT role is auto-assigned by handle_new_user trigger
       if (email === 'diwonner13@gmail.com' && !role) {
-        await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'gerenciador_tecnico' as any });
-        const updatedUser = { ...appUser, type: 'gerenciador_tecnico' as UserType, areaAssigned: true };
-        setUser(updatedUser);
-        setPermissions(getPermissionsByUserType('gerenciador_tecnico'));
+        // Reload to pick up trigger-assigned role
+        await loadUserData(data.user);
         return { success: true };
       }
 

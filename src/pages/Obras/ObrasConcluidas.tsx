@@ -25,11 +25,11 @@ const ObrasConcluidas = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold font-title text-foreground">Obras Concluídas</h1>
           <p className="text-muted-foreground mt-1">Histórico completo de obras finalizadas</p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4" data-tour="page-search">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input placeholder="Buscar..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />

@@ -179,7 +179,7 @@ const EPIs = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="page-stats">
           <Card><CardContent className="p-4 text-center"><Shield className="w-5 h-5 mx-auto mb-1 text-primary" /><div className="text-2xl font-bold text-foreground">{stats.total}</div><div className="text-xs text-muted-foreground">Total de EPIs</div></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><AlertTriangle className="w-5 h-5 mx-auto mb-1 text-destructive" /><div className="text-2xl font-bold text-destructive">{stats.vencidos}</div><div className="text-xs text-muted-foreground">Vencidos</div></CardContent></Card>
           <Card><CardContent className="p-4 text-center"><AlertTriangle className="w-5 h-5 mx-auto mb-1 text-yellow-500" /><div className="text-2xl font-bold text-foreground">{stats.vencendo}</div><div className="text-xs text-muted-foreground">Vencendo (30 dias)</div></CardContent></Card>

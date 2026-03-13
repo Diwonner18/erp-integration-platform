@@ -61,7 +61,7 @@ const SolicitarAgendamento = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
+        <div data-tour="page-header">
           <h1 className="text-3xl font-bold text-slate-900">Solicitar Agendamento</h1>
           <p className="text-slate-600 mt-1">Programe uma nova obra ou manutenção</p>
         </div>

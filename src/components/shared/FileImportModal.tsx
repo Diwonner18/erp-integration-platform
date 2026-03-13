@@ -86,6 +86,10 @@ const FileImportModal: React.FC<FileImportModalProps> = ({ open, onOpenChange, d
   };
 
   const handleFileSelect = async (file: File) => {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({ title: 'Arquivo muito grande', description: `O tamanho máximo é ${MAX_FILE_SIZE_MB}MB.`, variant: 'destructive' });
+      return;
+    }
     setParsing(true);
     try {
       const result = await parseFile(file);

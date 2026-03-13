@@ -46,7 +46,7 @@ const MinhasPropostas = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div><h1 className="text-3xl font-bold text-foreground">Minhas Propostas</h1><p className="text-muted-foreground mt-1">Revisar e aceitar propostas</p></div>
+        <div data-tour="page-header"><h1 className="text-3xl font-bold text-foreground">Minhas Propostas</h1><p className="text-muted-foreground mt-1">Revisar e aceitar propostas</p></div>
 
         {isLoading ? (
           <div className="grid gap-6">{[1,2].map(i => <Skeleton key={i} className="h-48 w-full" />)}</div>

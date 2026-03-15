@@ -240,8 +240,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const fullName = profile?.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email || '';
       const role = (roleData?.role as UserType) || null;
+      const isDemo = (profile as any)?.is_demo ?? false;
 
-      const appUser = buildUser(supabaseUser, fullName, role);
+      const appUser = buildUser(supabaseUser, fullName, role, isDemo);
       setUser(appUser);
       if (role) {
         setPermissions(getPermissionsByUserType(role));

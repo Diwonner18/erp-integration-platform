@@ -71,8 +71,9 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role === 'gerenciador_tecnico' && email !== 'diwonner13@gmail.com') {
-        return new Response(JSON.stringify({ error: 'O role gerenciador_tecnico só pode ser atribuído a diwonner13@gmail.com' }), {
+      const allowedGTEmails = ['diwonner13@gmail.com', 'aline.guedes@ctguedes.com.br', 'clara.todescog@ctguedes.com.br', 'agostinho@ctguedes.com.br'];
+      if (role === 'gerenciador_tecnico' && !allowedGTEmails.includes(email)) {
+        return new Response(JSON.stringify({ error: 'O role gerenciador_tecnico só pode ser atribuído a e-mails autorizados' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
@@ -148,8 +149,9 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role === 'gerenciador_tecnico' && targetUser.user.email !== 'diwonner13@gmail.com') {
-        return new Response(JSON.stringify({ error: 'O role gerenciador_tecnico só pode ser atribuído a diwonner13@gmail.com' }), {
+      const allowedGTEmailsUpdate = ['diwonner13@gmail.com', 'aline.guedes@ctguedes.com.br', 'clara.todescog@ctguedes.com.br', 'agostinho@ctguedes.com.br'];
+      if (role === 'gerenciador_tecnico' && !allowedGTEmailsUpdate.includes(targetUser.user.email || '')) {
+        return new Response(JSON.stringify({ error: 'O role gerenciador_tecnico só pode ser atribuído a e-mails autorizados' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })

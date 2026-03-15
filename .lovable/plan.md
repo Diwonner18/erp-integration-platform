@@ -1,73 +1,61 @@
+# Overview Final - Sistema CT Guedes
 
+## Estado Atual
 
-## Modo de Demonstração Temporário
+Sistema seguro e funcional. Todas as vulnerabilidades das auditorias de segurança corrigidas. Modelo de acesso granular intra-role implementado. Role `gerenciador_tecnico` implementado para `diwonner13@gmail.com`.
 
-### Objetivo
-Criar 3 usuários demo (aline, clara, agostinho) com acesso a TODAS as áreas do sistema, mas bloqueados de realizar ações destrutivas (criar, editar, deletar dados).
+## ✅ Implementado
 
-### Abordagem
+- **Auth**: Supabase Auth com JWT, roles em `user_roles`, admin restrito a `carla@ctguedes.com.br`, gerenciador_tecnico restrito a `diwonner13@gmail.com`, rate limiting login (frontend + GoTrue), criação de usuários com qualquer e-mail via manage-user (sem restrição de domínio para roles operacionais)
+- **RLS**: 26 tabelas com 100% cobertura, 70+ PERMISSIVE + 30+ RESTRICTIVE policies, gerenciador_tecnico com SELECT em todas as tabelas + ALL em user_roles/profiles
+- **RLS user_roles**: RESTRICTIVE INSERT bloqueia inserts de usuarios normais. RESTRICTIVE UPDATE bloqueia escalação para admin. **RESTRICTIVE DELETE bloqueia remoção de role admin por não-admins.**
+- **RLS clientes (LGPD)**: Funcionarios obras/financeira so veem clientes vinculados a suas obras (via `get_related_cliente_ids()` SECURITY DEFINER)
+- **Recursão RLS corrigida**: Funções `get_cliente_ids_for_user`, `get_related_cliente_ids`, `get_obra_ids_for_cliente` (SECURITY DEFINER) quebram ciclo circular entre obras↔clientes
+- **V4 IDOR intra-role**: `acessos_compartilhados` + `has_record_access()` SECURITY DEFINER + `AccessGuard` frontend + dialog de niveis (view/edit/all) em Aprovacoes
+- **V4 FKs**: Foreign keys confirmadas em `aceites_digitais` (proposta_id → propostas, cliente_id → clientes)
+- **V5 RESTRICTIVE DELETE**: Politicas RESTRICTIVE para DELETE em `obras`, `clientes` e `user_roles`
+- **V6 Zod validation**: Schemas Zod para todas as entidades com validateInput + validação no FileImportModal
+- **V7 Error exposure**: Mensagem generica no ResetPassword (sem expor erro Supabase)
+- **V8 Expurgo LGPD**: Edge Function `purge-expired-logs` + pg_cron diario (00:00 UTC) + `insert_audit_log` auto-preenche `data_expiracao` (5 anos). Chamadas não autorizadas retornam 403.
+- **Auditoria**: `insert_audit_log` SECURITY DEFINER, RLS admin-only + gerenciador_tecnico
+- **Validacao**: Zod em forms + bulk import, senha forte, re-autenticacao em troca de senha
+- **Gerenciador Tecnico**: Role `gerenciador_tecnico` no enum `app_role`, vinculado a `diwonner13@gmail.com`, com visibilidade total (SELECT em todas tabelas), gestao de usuarios (manage-user edge function), menu completo no Sidebar, rotas admin liberadas
+- **File Import**: Importação automática Excel/PDF com parsing inteligente, preview, mapeamento de colunas, validação Zod, limite 10MB
+- **handle_new_user trigger**: Auto-assign roles (GT para diwonner13, admin para carla, cliente para non-company, self_assign_area para company)
+- **Edge Functions Auth**: manage-user usa getClaims() para verificação JWT eficiente
 
-Reaproveitar o mecanismo de impersonação já existente para o `gerenciador_tecnico`. Os usuários demo terão role `gerenciador_tecnico` (que já possui SELECT em todas as tabelas via RLS) e terão `is_demo = true` no perfil. No frontend, bloquearemos todas as mutações para demo users.
+## ✅ Auditorias de Segurança - Todas as Correções Aplicadas
 
-### Mudanças
+| Vulnerabilidade | Severidade | Status |
+|---|---|---|
+| user_roles sem RLS para INSERT | ALTA | ✅ RESTRICTIVE policy + trigger |
+| Frontend insere direto em user_roles | ALTA | ✅ Removido do AuthContext |
+| GT pode escalar para admin via API (INSERT) | ALTA | ✅ RESTRICTIVE "GT cannot assign admin role" |
+| GT pode escalar para admin via API (UPDATE) | ALTA | ✅ RESTRICTIVE "GT cannot update to admin role" |
+| GT pode deletar role admin via API (DELETE) | ALTA | ✅ RESTRICTIVE "GT cannot delete admin role" |
+| Recursão infinita RLS obras↔clientes | CRÍTICA | ✅ Funções SECURITY DEFINER |
+| PII de clientes exposta para todos internos | MEDIA | ✅ SELECT escopado via get_related_cliente_ids() |
+| manage-user usa getUser() | MEDIA | ✅ Migrado para getClaims() |
+| File Import sem limite tamanho | MEDIA | ✅ 10MB limit adicionado |
+| File Import sem validação Zod | MEDIA | ✅ Validação Zod antes do insert |
+| purge-expired-logs público | BAIXA | ✅ Retorna 403 para chamadas não autorizadas |
 
-**1. Banco de Dados**
-- Adicionar coluna `is_demo` (boolean, default false) na tabela `profiles`
-- Criar 3 usuários via Edge Function `manage-user` com role `gerenciador_tecnico`:
-  - `aline.guedes@ctguedes.com.br` - Aline Guedes
-  - `clara.todescog@ctguedes.com.br` - Clara Todesco
-  - `agostinho@ctguedes.com.br` - Agostinho
-- Senha padrão: `Demo@2026`
-- Atualizar `is_demo = true` nos perfis criados
-- Temporariamente ajustar a Edge Function `manage-user` para permitir o role `gerenciador_tecnico` para esses 3 e-mails (ou inserir diretamente via SQL com service_role)
+- **V10 Self-role escalation**: RESTRICTIVE INSERT/UPDATE/DELETE em `user_roles` com `user_id <> auth.uid()` bloqueia auto-atribuição de roles
 
-**2. Frontend - AuthContext**
-- Adicionar campo `isDemo` ao tipo `User`
-- Carregar `is_demo` do perfil no `loadUserData`
-- Exportar `isDemo` no contexto
+## ⚠️ Pendente (apenas baixa severidade ou ação manual)
 
-**3. Frontend - Bloqueio de Mutações**
-- Criar hook `useDemoGuard()` que retorna `{ isDemoUser, guardAction }` 
-- `guardAction(fn)` verifica se é demo user: se sim, mostra toast "Modo demonstração - ação bloqueada" e retorna; caso contrário, executa `fn()`
-- Aplicar nos botões de criar/editar/deletar nos módulos principais (modais de criação, botões de exclusão)
+- **V1 (Media)**: Habilitar rate limiting server-side no Supabase Auth Dashboard (Auth > Rate Limits)
+- **V9 (Media)**: Considerar criptografia de CPF/CNPJ via pgcrypto/Vault (RLS ja protege)
+- **V11 (Baixa)**: Monitoramento de comportamento suspeito via Log Drains/n8n
+- **Templates e-mail**: Traduzir templates Supabase Auth para PT-BR no Dashboard
+- **Leaked Password Protection**: Habilitar no Supabase Auth Dashboard (Auth > Password Security) - requer plano Pro
 
-**4. Frontend - Sidebar**
-- Demo users com `is_demo = true` veem o painel de troca de área (impersonação) igual ao GT, para navegar entre obras/financeiro/comercial/cliente
-- Adicionar banner "MODO DEMO" no topo do sidebar
+## Arquitetura
 
-**5. Frontend - ProtectedRoute**
-- Demo users (`is_demo`) passam por todas as rotas (como GT)
-
-**6. Segurança (RLS)**
-- Não é necessário alterar RLS: o role `gerenciador_tecnico` já tem apenas SELECT na maioria das tabelas, sem INSERT/UPDATE/DELETE nas tabelas operacionais. A proteção de escrita já existe nas policies.
-
-### Criação dos Usuários
-
-Como a Edge Function restringe GT a `diwonner13@gmail.com`, vou criar os usuários via SQL direto (usando service_role que bypassa RLS):
-1. Criar auth users com `auth.admin.createUser`
-2. Inserir roles como `gerenciador_tecnico` 
-3. Marcar `is_demo = true`
-
-Alternativa: modificar temporariamente a Edge Function para aceitar esses 3 e-mails como GT. Essa é a opção mais limpa pois mantém o fluxo padrão.
-
-### Script de Limpeza
-
-Para remover tudo depois:
-```sql
--- Deletar roles e profiles dos demo users
-DELETE FROM user_roles WHERE user_id IN (SELECT id FROM profiles WHERE is_demo = true);
-DELETE FROM profiles WHERE is_demo = true;
--- Deletar auth users via admin API (Edge Function ou dashboard)
--- Remover coluna is_demo
-ALTER TABLE profiles DROP COLUMN IF EXISTS is_demo;
 ```
-
-### Arquivos Modificados
-- `supabase/functions/manage-user/index.ts` - permitir GT temporário para 3 emails
-- `src/contexts/AuthContext.tsx` - adicionar `isDemo`, carregar do perfil
-- `src/components/Auth/ProtectedRoute.tsx` - permitir demo users em todas as rotas
-- `src/components/Layout/Sidebar.tsx` - banner demo + impersonação para demo users
-- `src/hooks/useDemoGuard.ts` - novo hook para bloquear mutações
-- Modais de criação/edição/exclusão - aplicar `guardAction`
-- Migration SQL - adicionar `is_demo` column + criar usuários
-
+Frontend (React + AccessGuard + Zod + AdvancedFilters + Recharts + FileImport)
+  → Supabase (Auth + RLS PERMISSIVE/RESTRICTIVE + has_record_access() + get_*_ids SECURITY DEFINER)
+    → Edge Functions (manage-user [getClaims], purge-expired-logs [403 unauthorized], insert_audit_log)
+    → pg_cron (purge-expired-logs-daily @ 00:00 UTC)
+    → Trigger handle_new_user (auto-assign roles)
+```

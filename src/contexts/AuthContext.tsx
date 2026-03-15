@@ -10,6 +10,7 @@ export interface User {
   email: string;
   type: UserType;
   areaAssigned?: boolean;
+  isDemo?: boolean;
 }
 
 export interface UserPermissions {
@@ -188,13 +189,15 @@ export const getPermissionsByUserType = (userType: UserType): UserPermissions =>
 const buildUser = (
   supabaseUser: SupabaseUser,
   fullName: string,
-  role: UserType | null
+  role: UserType | null,
+  isDemo: boolean = false
 ): User => ({
   id: supabaseUser.id,
   name: fullName,
   email: supabaseUser.email || '',
   type: role || 'cliente',
   areaAssigned: role !== null,
+  isDemo,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -208,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Impersonation functions
   const startImpersonation = (role: UserType) => {
-    if (user?.type !== 'gerenciador_tecnico') return;
+    if (user?.type !== 'gerenciador_tecnico' && !user?.isDemo) return;
     setImpersonatedRole(role);
     setPermissions(getPermissionsByUserType(role));
   };
@@ -225,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, is_demo')
         .eq('id', supabaseUser.id)
         .single();
 
@@ -237,8 +240,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const fullName = profile?.full_name || supabaseUser.user_metadata?.full_name || supabaseUser.email || '';
       const role = (roleData?.role as UserType) || null;
+      const isDemo = (profile as any)?.is_demo ?? false;
 
-      const appUser = buildUser(supabaseUser, fullName, role);
+      const appUser = buildUser(supabaseUser, fullName, role, isDemo);
       setUser(appUser);
       if (role) {
         setPermissions(getPermissionsByUserType(role));

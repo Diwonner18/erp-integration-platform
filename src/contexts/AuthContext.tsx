@@ -211,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Impersonation functions
   const startImpersonation = (role: UserType) => {
-    if (user?.type !== 'gerenciador_tecnico') return;
+    if (user?.type !== 'gerenciador_tecnico' && !user?.isDemo) return;
     setImpersonatedRole(role);
     setPermissions(getPermissionsByUserType(role));
   };

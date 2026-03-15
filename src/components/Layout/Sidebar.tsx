@@ -126,6 +126,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   if (!user) return null;
 
+  const isDemo = user.isDemo ?? false;
+
   const handleLogout = () => {
     logout();
     toast.success('Logout realizado com sucesso!');

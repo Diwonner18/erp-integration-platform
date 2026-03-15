@@ -267,6 +267,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const sidebarContent = (
     <>
+      {isDemo && (
+        <div className="bg-amber-500 text-white text-center py-1.5 text-xs font-body font-bold uppercase tracking-wider">
+          🔒 Modo Demonstração
+        </div>
+      )}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <img src={logotipo} alt="CT Guedes" className="h-10 brightness-0 invert" />

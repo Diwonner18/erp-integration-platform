@@ -29,10 +29,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  // gerenciador_tecnico always has access regardless of impersonation
+  // gerenciador_tecnico and demo users always have access regardless of impersonation
   const realType = user.type;
   const checkType = effectiveType || realType;
-  if (realType === 'gerenciador_tecnico') {
+  if (realType === 'gerenciador_tecnico' || user.isDemo) {
     return <>{children}</>;
   }
   if (allowedUserTypes && !allowedUserTypes.includes(checkType)) {

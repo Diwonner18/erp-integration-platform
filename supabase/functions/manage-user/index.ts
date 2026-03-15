@@ -64,8 +64,9 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role === 'admin' && email !== 'carla@ctguedes.com.br') {
-        return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a carla@ctguedes.com.br' }), {
+      const allowedAdminEmails = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br'];
+      if (role === 'admin' && !allowedAdminEmails.includes(email)) {
+        return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a e-mails autorizados' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
@@ -128,7 +129,8 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (targetUser.user.email === 'carla@ctguedes.com.br' && !isAdmin) {
+      const protectedAdminEmails = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br'];
+      if (protectedAdminEmails.includes(targetUser.user.email || '') && !isAdmin) {
         return new Response(JSON.stringify({ error: 'Apenas o admin principal pode alterar o próprio role.' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -142,8 +144,9 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role === 'admin' && targetUser.user.email !== 'carla@ctguedes.com.br') {
-        return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a carla@ctguedes.com.br' }), {
+      const allowedAdminEmailsUpdate = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br'];
+      if (role === 'admin' && !allowedAdminEmailsUpdate.includes(targetUser.user.email || '')) {
+        return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a e-mails autorizados' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })

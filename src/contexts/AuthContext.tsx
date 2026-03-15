@@ -10,6 +10,7 @@ export interface User {
   email: string;
   type: UserType;
   areaAssigned?: boolean;
+  isDemo?: boolean;
 }
 
 export interface UserPermissions {

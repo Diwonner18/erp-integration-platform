@@ -144,8 +144,9 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (role === 'admin' && targetUser.user.email !== 'carla@ctguedes.com.br') {
-        return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a carla@ctguedes.com.br' }), {
+      const allowedAdminEmailsUpdate = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br'];
+      if (role === 'admin' && !allowedAdminEmailsUpdate.includes(targetUser.user.email || '')) {
+        return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a e-mails autorizados' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })

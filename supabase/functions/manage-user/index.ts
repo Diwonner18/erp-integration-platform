@@ -129,7 +129,8 @@ Deno.serve(async (req) => {
         })
       }
 
-      if (targetUser.user.email === 'carla@ctguedes.com.br' && !isAdmin) {
+      const protectedAdminEmails = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br'];
+      if (protectedAdminEmails.includes(targetUser.user.email || '') && !isAdmin) {
         return new Response(JSON.stringify({ error: 'Apenas o admin principal pode alterar o próprio role.' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

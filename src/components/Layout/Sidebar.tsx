@@ -224,9 +224,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     ? getUserTypeColor(impersonatedRole)
     : getUserTypeColor(user.type);
 
-  // Render the agent section for gerenciador_tecnico
+  // Render the agent section for gerenciador_tecnico and demo users
   const renderAgentSection = () => {
-    if (user.type !== 'gerenciador_tecnico') return null;
+    if (user.type !== 'gerenciador_tecnico' && !isDemo) return null;
 
     if (impersonatedRole) {
       // Show "back" button

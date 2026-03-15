@@ -189,13 +189,15 @@ export const getPermissionsByUserType = (userType: UserType): UserPermissions =>
 const buildUser = (
   supabaseUser: SupabaseUser,
   fullName: string,
-  role: UserType | null
+  role: UserType | null,
+  isDemo: boolean = false
 ): User => ({
   id: supabaseUser.id,
   name: fullName,
   email: supabaseUser.email || '',
   type: role || 'cliente',
   areaAssigned: role !== null,
+  isDemo,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

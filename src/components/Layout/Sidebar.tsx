@@ -150,7 +150,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
 
   // Determine which menu to show
-  const isGerenciadorBase = user.type === 'gerenciador_tecnico' && !impersonatedRole;
+  const isGerenciadorBase = (user.type === 'gerenciador_tecnico' || isDemo) && !impersonatedRole;
   
   const getMenuItems = () => {
     if (isGerenciadorBase) {

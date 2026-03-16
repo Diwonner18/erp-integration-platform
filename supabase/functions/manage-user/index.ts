@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         })
       }
 
-      const allowedAdminEmails = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br'];
+      const allowedAdminEmails = ['carla.todesco@ctguedes.com.br', 'adm@ctguedes.com.br', 'patricia.ariki@ctguedes.com.br'];
       if (role === 'admin' && !allowedAdminEmails.includes(email)) {
         return new Response(JSON.stringify({ error: 'O role admin só pode ser atribuído a e-mails autorizados' }), {
           status: 400,

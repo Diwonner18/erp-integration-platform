@@ -99,26 +99,38 @@ const Relatorios = () => {
 
   const obrasList = useMemo(() => [...new Set(obras.map(o => o.nome))], [obras]);
 
+  const exportColumns = [
+    { header: 'Obra', key: 'nome' },
+    { header: 'Cliente', key: 'cliente' },
+    { header: 'Status', key: 'statusLabel' },
+    { header: 'Início', key: 'dataLabel' },
+    { header: 'Valor Contrato', key: 'valor', format: formatCurrencyExport },
+  ];
+
+  const exportData = filteredObras.map(o => ({
+    nome: o.nome,
+    cliente: o.cliente,
+    statusLabel: STATUS_LABELS[o.status] || o.status,
+    dataLabel: o.data ? format(o.data, 'dd/MM/yyyy') : '-',
+    valor: o.valor,
+  }));
+
   const handleExportPDF = () => {
-    exportToPDF({
-      title: 'Relatório Geral - Dashboard',
-      filename: `relatorio-geral-${format(new Date(), 'yyyy-MM-dd')}`,
-      columns: [
-        { header: 'Obra', key: 'nome' },
-        { header: 'Cliente', key: 'cliente' },
-        { header: 'Status', key: 'statusLabel' },
-        { header: 'Início', key: 'dataLabel' },
-        { header: 'Valor Contrato', key: 'valor', format: formatCurrencyExport },
-      ],
-      data: filteredObras.map(o => ({
-        nome: o.nome,
-        cliente: o.cliente,
-        statusLabel: STATUS_LABELS[o.status] || o.status,
-        dataLabel: o.data ? format(o.data, 'dd/MM/yyyy') : '-',
-        valor: o.valor,
-      })),
-    });
+    if (filteredObras.length === 0) {
+      toast.warning('Nenhum dado para exportar. Ajuste os filtros.');
+      return;
+    }
+    exportToPDF({ title: 'Relatório Geral - Dashboard', filename: `relatorio-geral-${format(new Date(), 'yyyy-MM-dd')}`, columns: exportColumns, data: exportData });
     toast.success('PDF exportado com sucesso!');
+  };
+
+  const handleExportExcel = () => {
+    if (filteredObras.length === 0) {
+      toast.warning('Nenhum dado para exportar. Ajuste os filtros.');
+      return;
+    }
+    exportToExcel({ title: 'Relatório Geral - Dashboard', filename: `relatorio-geral-${format(new Date(), 'yyyy-MM-dd')}`, columns: exportColumns, data: exportData });
+    toast.success('Excel exportado com sucesso!');
   };
 
   const isLoading = loadingObras || loadingDespesas;

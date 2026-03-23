@@ -381,7 +381,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   };
 
   const renderFlatNav = () => {
-    const items = getFlatItems().filter(i => i.show);
+    const items = getFlatItems().filter(i => {
+      if (!i.show) return false;
+      const modulo = PATH_TO_MODULE[i.path];
+      if (modulo && !hasModuleAccess(modulo)) return false;
+      return true;
+    });
     return (
       <nav className="mt-4">
         {items.map(renderNavLink)}

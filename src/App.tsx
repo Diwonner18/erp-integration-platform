@@ -119,7 +119,7 @@ const App = () => (
 
             {/* Shared routes */}
             <Route path="/programacao" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">
                 <Programacao />
               </ProtectedRoute>
             } />
@@ -131,7 +131,7 @@ const App = () => (
 
             {/* Commercial routes */}
             <Route path="/propostas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="propostas">
                 <Propostas />
               </ProtectedRoute>
             } />
@@ -158,7 +158,7 @@ const App = () => (
 
             {/* Operations routes */}
             <Route path="/medicoes" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']} modulo="medicoes">
                 <Medicoes />
               </ProtectedRoute>
             } />
@@ -173,7 +173,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/horas-extras" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']} modulo="horas_extras">
                 <HorasExtras />
               </ProtectedRoute>
             } />
@@ -254,21 +254,21 @@ const App = () => (
 
             {/* Materiais e Equipamentos - Nova rota unificada */}
             <Route path="/materiais-equipamentos" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="materiais">
                 <MateriaisEquipamentos />
               </ProtectedRoute>
             } />
 
             {/* Colaboradores */}
             <Route path="/colaboradores" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="colaboradores">
                 <ColaboradoresPage />
               </ProtectedRoute>
             } />
 
             {/* EPIs */}
             <Route path="/epis" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="epis">
                 <EPIs />
               </ProtectedRoute>
             } />

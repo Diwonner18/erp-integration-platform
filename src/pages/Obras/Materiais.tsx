@@ -12,9 +12,11 @@ import EditMaterialModal from '@/components/Obras/EditMaterialModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { useMateriais, useDeleteMaterial, useUpdateMaterial } from '@/hooks/useSupabaseData';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Materiais = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('materiais');
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -118,10 +120,12 @@ const Materiais = () => {
           </div>
           <div className="flex gap-2">
             <FileImportButton targetType="materiais" />
-            <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Material
-            </Button>
+            {perms.incluir_editar && (
+              <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Material
+              </Button>
+            )}
           </div>
         </div>
 
@@ -154,27 +158,31 @@ const Materiais = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3">
                     <Badge variant={getStatusBadge(material.status)}>
                       {getStatusLabel(material.status)}
                     </Badge>
                     
                     <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditarMaterial(material)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleExcluirMaterial(material)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {perms.incluir_editar && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditarMaterial(material)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {perms.excluir && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleExcluirMaterial(material)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

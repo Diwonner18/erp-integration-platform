@@ -14,9 +14,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useMedicoes, useUpdateMedicao, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport, formatPercentExport } from '@/lib/exportUtils';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Medicoes = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('medicoes');
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({
@@ -162,10 +164,12 @@ const Medicoes = () => {
               });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
-            <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Medição
-            </Button>
+            {perms.incluir_editar && (
+              <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Medição
+              </Button>
+            )}
           </div>
         </div>
 

@@ -16,9 +16,11 @@ import { useHorasExtras, useCreateHorasExtras, useUpdateHorasExtras, useObras } 
 import { useColaboradores } from '@/hooks/useColaboradoresData';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const HorasExtrasPage = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('horas_extras');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRegistro, setSelectedRegistro] = useState<any>(null);
@@ -134,7 +136,7 @@ const HorasExtrasPage = () => {
               exportToExcel({ title: 'Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
-            <Button onClick={() => setShowAddModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+            {perms.incluir_editar && <Button onClick={() => setShowAddModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>}
           </div>
         </div>
 

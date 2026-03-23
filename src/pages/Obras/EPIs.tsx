@@ -16,6 +16,7 @@ import { Shield, Plus, FileText, Filter, Pencil, Trash2, AlertTriangle, CheckCir
 import { useEPIs, useObras, useCreateEPI, useUpdateEPI, useDeleteEPI } from '@/hooks/useSupabaseData';
 import { useColaboradores } from '@/hooks/useColaboradoresData';
 import FileImportButton from '@/components/shared/FileImportButton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const tiposEPI = [
   'Capacete de Segurança',
@@ -41,6 +42,7 @@ const getValidityStatus = (validade: string | null) => {
 
 const EPIs = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('epis');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -173,10 +175,12 @@ const EPIs = () => {
           </div>
           <div className="flex gap-2">
             <FileImportButton targetType="epis" />
-            <Button onClick={handleNovoRegistro} data-tour="page-new-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Registrar EPI
-            </Button>
+            {perms.incluir_editar && (
+              <Button onClick={handleNovoRegistro} data-tour="page-new-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Registrar EPI
+              </Button>
+            )}
           </div>
         </div>
 
@@ -264,8 +268,8 @@ const EPIs = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => handleEdit(registro)}><Pencil className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="icon" onClick={() => setDeleteId(registro.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                {perms.incluir_editar && <Button variant="ghost" size="icon" onClick={() => handleEdit(registro)}><Pencil className="w-4 h-4" /></Button>}
+                                {perms.excluir && <Button variant="ghost" size="icon" onClick={() => setDeleteId(registro.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>}
                               </div>
                             </TableCell>
                           </TableRow>

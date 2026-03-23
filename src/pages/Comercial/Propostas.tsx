@@ -13,9 +13,11 @@ import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters'
 import { useToast } from '@/hooks/use-toast';
 import { usePropostas, useUpdateProposta, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Propostas = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('propostas');
   const [showNovaPropostaModal, setShowNovaPropostaModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -99,7 +101,7 @@ const Propostas = () => {
             <h1 className="text-3xl font-bold font-title text-foreground">Propostas</h1>
             <p className="text-muted-foreground mt-1">Gerenciar propostas e contratos</p>
           </div>
-          <Button onClick={() => setShowNovaPropostaModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Proposta</Button>
+          {perms.incluir_editar && <Button onClick={() => setShowNovaPropostaModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Proposta</Button>}
         </div>
 
         <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>
@@ -145,7 +147,7 @@ const Propostas = () => {
                       </Badge>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowDetailModal(true); }}><Eye className="w-4 h-4" /></Button>
-                        <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                        {perms.incluir_editar && <Button variant="outline" size="sm" onClick={() => { setSelectedProposta(proposta); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>}
                         {canChangeStatus(proposta.status) && (
                           <>
                             <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={() => { setSelectedProposta(proposta); setActionType('rejeitar'); setShowConfirmModal(true); }}>

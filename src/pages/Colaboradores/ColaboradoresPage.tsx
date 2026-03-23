@@ -10,8 +10,10 @@ import { useColaboradores, useCreateColaborador, useDeleteColaborador } from '@/
 import ColaboradorDetailModal from './ColaboradorDetailModal';
 import NovoColaboradorModal from './NovoColaboradorModal';
 import { toast } from 'sonner';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ColaboradoresPage = () => {
+  const perms = useUserModulePermissions('colaboradores');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -56,10 +58,12 @@ const ColaboradoresPage = () => {
             <h1 className="text-2xl font-bold text-foreground">Colaboradores</h1>
             <p className="text-muted-foreground">Cadastro e gestão de colaboradores</p>
           </div>
-          <Button onClick={() => setShowNew(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Colaborador
-          </Button>
+          {perms.incluir_editar && (
+            <Button onClick={() => setShowNew(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Colaborador
+            </Button>
+          )}
         </div>
 
         <div className="flex gap-4">
@@ -115,9 +119,11 @@ const ColaboradoresPage = () => {
                         <Button variant="ghost" size="sm" onClick={() => setSelectedId(c.id)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        {perms.excluir && (
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -1,66 +1,98 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Shield, Users, Settings, Save, Check } from 'lucide-react';
+import { Shield, Save, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAllPermissoesPerfil, useUpsertPermissoesPerfil, PermissaoPerfil } from '@/hooks/usePermissoesPerfil';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
+const PERFIS = [
+  { key: 'obras', label: 'Obras' },
+  { key: 'financeira', label: 'Financeiro' },
+  { key: 'comercial', label: 'Comercial' },
+  { key: 'cliente', label: 'Cliente' },
+];
+
+const MODULO_LABELS: Record<string, string> = {
+  propostas: 'Propostas',
+  medicoes: 'Medições',
+  colaboradores: 'Colaboradores',
+  epis: 'EPIs',
+  horas_extras: 'Horas Extras',
+  materiais: 'Materiais',
+  equipamentos: 'Equipamentos',
+  programacoes: 'Programações',
+  despesas: 'Despesas',
+  boletins: 'Boletins de Medição',
+  relatorios_diarios: 'Relatório Diário (RDO)',
+  alteracoes_escopo: 'Alterações de Escopo',
+};
+
+const ACOES = [
+  { key: 'acesso_modulo' as const, label: 'Acesso' },
+  { key: 'pesquisar' as const, label: 'Pesquisar' },
+  { key: 'incluir_editar' as const, label: 'Incluir/Editar' },
+  { key: 'excluir' as const, label: 'Excluir' },
+];
 
 const Permissoes = () => {
   const { toast } = useToast();
+  const { data: allPermissions, isLoading } = useAllPermissoesPerfil();
+  const upsertMutation = useUpsertPermissoesPerfil();
+  const [localPermissions, setLocalPermissions] = useState<PermissaoPerfil[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
-  const [permissions, setPermissions] = useState([
-    {
-      title: 'Equipe de Obras',
-      icon: Settings,
-      permissions: [] as { name: string; enabled: boolean }[]
-    },
-    {
-      title: 'Equipe Financeira',
-      icon: Shield,
-      permissions: [] as { name: string; enabled: boolean }[]
-    },
-    {
-      title: 'Equipe Comercial',
-      icon: Users,
-      permissions: [] as { name: string; enabled: boolean }[]
-    }
-  ]);
+  const [activePerfil, setActivePerfil] = useState('obras');
 
-  // Auto-save após 1 segundo de inatividade
   useEffect(() => {
-    if (hasChanges) {
-      const saveTimer = setTimeout(() => {
-        handleAutoSave();
-      }, 1000);
-
-      return () => clearTimeout(saveTimer);
+    if (allPermissions) {
+      setLocalPermissions(allPermissions);
     }
-  }, [permissions, hasChanges]);
+  }, [allPermissions]);
 
-  const handlePermissionChange = (groupIndex: number, permIndex: number, enabled: boolean) => {
-    setPermissions(prev => {
-      const newPermissions = [...prev];
-      newPermissions[groupIndex].permissions[permIndex].enabled = enabled;
-      return newPermissions;
-    });
+  // Auto-save after 1.5s of inactivity
+  useEffect(() => {
+    if (!hasChanges) return;
+    const timer = setTimeout(() => handleSave(), 1500);
+    return () => clearTimeout(timer);
+  }, [localPermissions, hasChanges]);
+
+  const handleToggle = useCallback((perfil: string, modulo: string, acao: keyof PermissaoPerfil) => {
+    setLocalPermissions(prev =>
+      prev.map(p => {
+        if (p.perfil === perfil && p.modulo === modulo) {
+          return { ...p, [acao]: !p[acao] };
+        }
+        return p;
+      })
+    );
     setHasChanges(true);
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await upsertMutation.mutateAsync(localPermissions);
+      setHasChanges(false);
+      toast({ title: 'Permissões salvas', description: 'Alterações persistidas com sucesso.' });
+    } catch {
+      toast({ title: 'Erro ao salvar', variant: 'destructive' });
+    }
   };
 
-  const handleAutoSave = () => {
-    // Simula auto-save em background
-    setHasChanges(false);
-    toast({
-      title: 'Permissões salvas automaticamente',
-      description: 'Suas alterações foram salvas',
-    });
-    
-  };
+  const perfilPermissions = localPermissions.filter(p => p.perfil === activePerfil);
 
-  const handleManualSave = () => {
-    handleAutoSave();
-  };
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -68,60 +100,83 @@ const Permissoes = () => {
         <div className="flex items-center justify-between">
           <div data-tour="page-header">
             <h1 className="text-3xl font-bold text-primary">Permissões do Sistema</h1>
-            <p className="text-muted-foreground mt-1">Configure permissões por tipo de usuário</p>
+            <p className="text-muted-foreground mt-1">Configure permissões por perfil de usuário</p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             {hasChanges && (
-              <div className="flex items-center text-sm text-orange-600 mr-2">
-                <span>Salvando automaticamente...</span>
-              </div>
+              <Badge variant="outline" className="text-orange-600 border-orange-300">
+                Alterações pendentes
+              </Badge>
             )}
-            <Button 
-              onClick={handleManualSave} 
-              disabled={!hasChanges}
-              className="transition-all duration-150 hover:scale-105"
+            <Button
+              onClick={handleSave}
+              disabled={!hasChanges || upsertMutation.isPending}
               data-tour="page-actions"
             >
-              <Save className="w-4 h-4 mr-2" />
+              {upsertMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
               {hasChanges ? 'Salvar Agora' : 'Salvo'}
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-6" data-tour="page-list">
-          {permissions.map((group, index) => (
-            <Card key={index} className="transition-all duration-150 hover:shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <group.icon className="w-5 h-5 mr-2" />
-                  {group.title}
-                </CardTitle>
-                <CardDescription>
-                  Configure as permissões específicas para este grupo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {group.permissions.map((permission, permIndex) => (
-                    <div key={permIndex} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors duration-150">
-                      <span className="text-sm font-medium">{permission.name}</span>
-                      <div className="flex items-center space-x-2">
-                        {permission.enabled && (
-                          <Check className="w-4 h-4 text-green-600" />
-                        )}
-                        <Switch 
-                          checked={permission.enabled}
-                          onCheckedChange={(checked) => handlePermissionChange(index, permIndex, checked)}
-                          className="transition-all duration-150"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+        <Tabs value={activePerfil} onValueChange={setActivePerfil}>
+          <TabsList className="grid w-full grid-cols-4">
+            {PERFIS.map(p => (
+              <TabsTrigger key={p.key} value={p.key}>
+                <Shield className="w-4 h-4 mr-2" />
+                {p.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {PERFIS.map(perfil => (
+            <TabsContent key={perfil.key} value={perfil.key}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Permissões — {perfil.label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[250px]">Módulo</TableHead>
+                        {ACOES.map(a => (
+                          <TableHead key={a.key} className="text-center w-[130px]">
+                            {a.label}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {perfilPermissions.map(perm => (
+                        <TableRow key={perm.id}>
+                          <TableCell className="font-medium">
+                            {MODULO_LABELS[perm.modulo] || perm.modulo}
+                          </TableCell>
+                          {ACOES.map(acao => (
+                            <TableCell key={acao.key} className="text-center">
+                              <Checkbox
+                                checked={!!perm[acao.key]}
+                                onCheckedChange={() => handleToggle(perfil.key, perm.modulo, acao.key)}
+                              />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
           ))}
-        </div>
+        </Tabs>
       </div>
     </MainLayout>
   );

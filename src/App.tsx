@@ -61,6 +61,9 @@ import MeusPagamentos from "./pages/Cliente/MeusPagamentos";
 // Shared pages
 import Relatorios from "./pages/Shared/Relatorios";
 
+// Colaboradores
+import ColaboradoresPage from "./pages/Colaboradores/ColaboradoresPage";
+
 const queryClient = new QueryClient();
 
 const gt = 'gerenciador_tecnico' as const;

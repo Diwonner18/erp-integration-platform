@@ -119,7 +119,7 @@ const App = () => (
 
             {/* Shared routes */}
             <Route path="/programacao" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">
                 <Programacao />
               </ProtectedRoute>
             } />

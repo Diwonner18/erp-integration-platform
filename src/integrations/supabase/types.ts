@@ -628,6 +628,7 @@ export type Database = {
           descricao: string | null
           id: string
           itens: Json | null
+          metragem: number | null
           numero: string | null
           obra_id: string
           observacoes: string | null
@@ -649,6 +650,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           itens?: Json | null
+          metragem?: number | null
           numero?: string | null
           obra_id: string
           observacoes?: string | null
@@ -670,6 +672,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           itens?: Json | null
+          metragem?: number | null
           numero?: string | null
           obra_id?: string
           observacoes?: string | null

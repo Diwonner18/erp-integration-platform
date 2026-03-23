@@ -1,0 +1,1 @@
+ALTER TABLE public.medicoes ADD COLUMN IF NOT EXISTS metragem numeric DEFAULT 0;

@@ -182,8 +182,12 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
             </div>
           )}
 
-          {/* Percentual e Valor */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Metragem, Percentual e Valor */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Metragem (m²)</Label>
+              <Input type="number" step="0.01" {...register('metragem', { valueAsNumber: true })} min="0" placeholder="0.00" />
+            </div>
             <div className="space-y-2">
               <Label>Percentual Executado (%)</Label>
               <Input type="number" {...register('percentual', { valueAsNumber: true })} min="0" max="100" />

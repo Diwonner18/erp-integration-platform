@@ -35,6 +35,7 @@ const RelatorioDiarioObra = () => {
   const [activeTab, setActiveTab] = useState(incluir_editar ? 'registro' : 'visualizar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAddColaborador, setShowAddColaborador] = useState(false);
+  const [filtroNaoConforme, setFiltroNaoConforme] = useState(false);
   
   const { data: obrasData = [], isLoading: loadingObras } = useObras();
   const { data: relatorios = [], isLoading: loadingRelatorios } = useRelatoriosDiarios();

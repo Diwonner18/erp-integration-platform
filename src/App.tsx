@@ -168,7 +168,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/materiais" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="materiais">
                 <Materiais />
               </ProtectedRoute>
             } />

@@ -58,6 +58,7 @@ const EPIs = () => {
 
   const { data: epis = [], isLoading: loadingEPIs } = useEPIs();
   const { data: obrasData = [], isLoading: loadingObras } = useObras();
+  const { data: colaboradores = [] } = useColaboradores();
   const createEPI = useCreateEPI();
   const updateEPI = useUpdateEPI();
   const deleteEPI = useDeleteEPI();

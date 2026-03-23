@@ -72,7 +72,9 @@ const HorasExtrasPage = () => {
         motivo: formData.motivo,
         data: new Date().toISOString().split('T')[0],
         valor_hora: parseFloat(formData.valor_hora) || 30,
-      });
+        categoria: formData.categoria,
+        tipo_hora_extra: formData.tipo_hora_extra,
+      } as any);
       toast({ title: 'Horas registradas', description: 'Registro criado com sucesso.' });
       setShowAddModal(false);
     } catch {

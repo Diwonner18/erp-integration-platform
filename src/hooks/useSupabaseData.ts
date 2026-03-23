@@ -6,6 +6,7 @@ import {
   materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
   epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
   relatorioDiarioInsertSchema, horasExtrasInsertSchema, alteracaoEscopoInsertSchema,
+  valorUnitarioInsertSchema, modeloContratoInsertSchema,
   validateInput,
 } from '@/lib/validationSchemas';
 
@@ -634,6 +635,7 @@ export const useCreateValorUnitario = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (valor: TablesInsert<'valores_unitarios'>) => {
+      validateInput(valorUnitarioInsertSchema, valor);
       const { data, error } = await supabase.from('valores_unitarios').insert(valor).select().single();
       if (error) throw error;
       return data;
@@ -658,6 +660,7 @@ export const useCreateModeloContrato = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (modelo: TablesInsert<'modelos_contrato'>) => {
+      validateInput(modeloContratoInsertSchema, modelo);
       const { data, error } = await supabase.from('modelos_contrato').insert(modelo).select().single();
       if (error) throw error;
       return data;

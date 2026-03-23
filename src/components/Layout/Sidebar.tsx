@@ -361,7 +361,12 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     return (
       <nav className="mt-2 pb-4">
         {sections.map((section, idx) => {
-          const visibleItems = section.items.filter(i => i.show);
+          const visibleItems = section.items.filter(i => {
+            if (!i.show) return false;
+            const modulo = PATH_TO_MODULE[i.path];
+            if (modulo && !hasModuleAccess(modulo)) return false;
+            return true;
+          });
           if (visibleItems.length === 0) return null;
           return (
             <div key={section.section} className={idx > 0 ? 'mt-2' : ''}>

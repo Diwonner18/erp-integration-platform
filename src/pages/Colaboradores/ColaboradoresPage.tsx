@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ColaboradoresPage = () => {
+  const perms = useUserModulePermissions('colaboradores');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [selectedId, setSelectedId] = useState<string | null>(null);

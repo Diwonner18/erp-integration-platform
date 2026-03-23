@@ -11,8 +11,10 @@ import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters'
 import { useToast } from '@/hooks/use-toast';
 import { useAlteracoesEscopo, useUpdateAlteracaoEscopo, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const AlteracoesEscopo = () => {
+  const { incluir_editar } = useUserModulePermissions('alteracoes_escopo');
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);

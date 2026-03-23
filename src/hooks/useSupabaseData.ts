@@ -660,8 +660,8 @@ export const useCreateModeloContrato = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (modelo: TablesInsert<'modelos_contrato'>) => {
-      const validated = validateInput(modeloContratoInsertSchema, modelo);
-      const { data, error } = await supabase.from('modelos_contrato').insert(validated).select().single();
+      validateInput(modeloContratoInsertSchema, modelo);
+      const { data, error } = await supabase.from('modelos_contrato').insert(modelo).select().single();
       if (error) throw error;
       return data;
     },

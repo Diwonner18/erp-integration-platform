@@ -31,7 +31,8 @@ interface Colaborador {
 
 const RelatorioDiarioObra = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('registro');
+  const { incluir_editar } = useUserModulePermissions('relatorios_diarios');
+  const [activeTab, setActiveTab] = useState(incluir_editar ? 'registro' : 'visualizar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAddColaborador, setShowAddColaborador] = useState(false);
   

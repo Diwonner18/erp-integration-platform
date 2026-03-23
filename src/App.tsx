@@ -64,6 +64,7 @@ import Relatorios from "./pages/Shared/Relatorios";
 // Colaboradores
 import ColaboradoresPage from "./pages/Colaboradores/ColaboradoresPage";
 
+// Routes rebuild trigger v2
 const queryClient = new QueryClient();
 
 const gt = 'gerenciador_tecnico' as const;

@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMedicoes, useUpdateMedicao, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport, formatPercentExport } from '@/lib/exportUtils';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Medicoes = () => {
   const { toast } = useToast();

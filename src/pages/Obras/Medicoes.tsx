@@ -18,6 +18,7 @@ import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Medicoes = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('medicoes');
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({

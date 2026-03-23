@@ -198,6 +198,47 @@ export type Database = {
         }
         Relationships: []
       }
+      banco_horas: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          created_by: string | null
+          data: string
+          horas: number
+          id: string
+          motivo: string | null
+          tipo: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          created_by?: string | null
+          data: string
+          horas?: number
+          id?: string
+          motivo?: string | null
+          tipo?: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          created_by?: string | null
+          data?: string
+          horas?: number
+          id?: string
+          motivo?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banco_horas_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boletins_medicao: {
         Row: {
           created_at: string
@@ -294,6 +335,170 @@ export type Database = {
           razao_social?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      colaborador_alocacoes: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          funcao: string | null
+          id: string
+          obra_id: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          funcao?: string | null
+          id?: string
+          obra_id: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          funcao?: string | null
+          id?: string
+          obra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_alocacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_alocacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colaborador_beneficios: {
+        Row: {
+          ativo: boolean | null
+          colaborador_id: string
+          created_at: string
+          id: string
+          tipo: string
+          valor: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          colaborador_id: string
+          created_at?: string
+          id?: string
+          tipo?: string
+          valor?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          colaborador_id?: string
+          created_at?: string
+          id?: string
+          tipo?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_beneficios_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colaboradores: {
+        Row: {
+          bairro: string | null
+          cargo: string | null
+          celular: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
+          cpf: string | null
+          created_at: string
+          created_by: string | null
+          data_admissao: string | null
+          data_nascimento: string | null
+          email: string | null
+          funcao: string | null
+          id: string
+          logradouro: string | null
+          nome: string
+          numero: string | null
+          pis_pasep: string | null
+          rg: string | null
+          salario_base: number | null
+          status: string
+          telefone: string | null
+          tipo_contrato: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          cargo?: string | null
+          celular?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          cpf?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_admissao?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: string
+          logradouro?: string | null
+          nome: string
+          numero?: string | null
+          pis_pasep?: string | null
+          rg?: string | null
+          salario_base?: number | null
+          status?: string
+          telefone?: string | null
+          tipo_contrato?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          cargo?: string | null
+          celular?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
+          cpf?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_admissao?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: string
+          logradouro?: string | null
+          nome?: string
+          numero?: string | null
+          pis_pasep?: string | null
+          rg?: string | null
+          salario_base?: number | null
+          status?: string
+          telefone?: string | null
+          tipo_contrato?: string | null
+          uf?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -440,6 +645,50 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faltas_licencas: {
+        Row: {
+          colaborador_id: string
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          observacoes: string | null
+          remunerada: boolean | null
+          tipo: string
+        }
+        Insert: {
+          colaborador_id: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          id?: string
+          observacoes?: string | null
+          remunerada?: boolean | null
+          tipo?: string
+        }
+        Update: {
+          colaborador_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          observacoes?: string | null
+          remunerada?: boolean | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faltas_licencas_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
             referencedColumns: ["id"]
           },
         ]

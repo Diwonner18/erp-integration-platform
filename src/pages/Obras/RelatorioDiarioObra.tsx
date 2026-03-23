@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useObras, useRelatoriosDiarios, useCreateRelatorioDiario } from '@/hooks/useSupabaseData';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 interface Colaborador {
   id: string;

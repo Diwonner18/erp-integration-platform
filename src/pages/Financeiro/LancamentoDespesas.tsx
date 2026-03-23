@@ -13,8 +13,10 @@ import FileImportButton from '@/components/shared/FileImportButton';
 import { useToast } from '@/hooks/use-toast';
 import { useDespesas, useCreateDespesa, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const LancamentoDespesas = () => {
+  const { incluir_editar } = useUserModulePermissions('despesas');
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' });

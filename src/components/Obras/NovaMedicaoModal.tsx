@@ -23,6 +23,7 @@ const medicaoSchema = z.object({
   data_medicao: z.string().optional(),
   percentual: z.number().min(0).max(100, 'Percentual deve estar entre 0 e 100'),
   valor_bruto: z.number().min(0, 'Valor deve ser positivo'),
+  metragem: z.number().min(0).optional(),
   taxa_igpm: z.number().min(0).optional(),
   observacoes: z.string().optional(),
   descricao: z.string().optional(),

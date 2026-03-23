@@ -205,6 +205,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { user, hasPermission, logout, impersonatedRole, effectiveType, startImpersonation, stopImpersonation } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { hasModuleAccess } = useAllUserPermissions();
 
   if (!user) return null;
 

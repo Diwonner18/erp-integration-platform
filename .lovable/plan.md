@@ -1,55 +1,74 @@
 
 
-# Etapa 3: Permissoes por Perfil de Usuario
+# Etapa 4: Enforcement Real das Permissoes via `permissoes_perfil`
 
-Reescrever completamente a pagina de Permissoes conforme pedido da Carla Todesco: organizar por **perfil de usuario** (nao por departamento), com controle granular de acoes por modulo.
+Integrar a tabela `permissoes_perfil` (ja criada e populada) com o frontend para que as configuracoes feitas pelo admin na pagina de Permissoes realmente controlem o que cada perfil pode ver e fazer.
 
 ---
 
-## 1. Banco de Dados (1 migration)
+## Arquitetura
 
-### Tabela `permissoes_perfil`
 ```text
-id, perfil (text: 'obras', 'financeira', 'comercial', 'cliente'),
-modulo (text: 'propostas', 'medicoes', 'colaboradores', 'epis', 'horas_extras', 'materiais', 'despesas', 'boletins', etc),
-pesquisar (boolean default true),
-incluir_editar (boolean default false),
-excluir (boolean default false),
-acesso_modulo (boolean default true),
-created_at, updated_at
+permissoes_perfil (DB)
+        |
+  useUserModulePermissions(modulo) -- hook que busca permissoes do perfil do user logado
+        |
+  Sidebar.tsx         -- esconde itens de menu se acesso_modulo = false
+  Pages (EPIs, etc.)  -- esconde botoes Novo/Editar/Excluir conforme pesquisar/incluir_editar/excluir
 ```
 
-RLS: apenas admin e GT podem ler/escrever.
+---
 
-Seed inicial com permissoes padrao para cada perfil x modulo.
+## 1. Novo hook: `useUserModulePermissions`
+
+Em `src/hooks/usePermissoesPerfil.ts`, adicionar:
+
+- `useUserModulePermissions(modulo: string)` -- retorna `{ acesso_modulo, pesquisar, incluir_editar, excluir, isLoading }` para o perfil do usuario logado (usa `effectiveType` do AuthContext)
+- `useAllUserPermissions()` -- retorna todas as permissoes do perfil do usuario (para o Sidebar filtrar modulos)
+
+Admin e GT sempre retornam tudo `true` (bypass).
 
 ---
 
-## 2. Frontend (`src/pages/Admin/Permissoes.tsx`) - Reescrita total
+## 2. Sidebar: filtrar por `acesso_modulo`
 
-Layout inspirado no Obra Prima (imagens que as clientes enviaram):
+Atualizar `Sidebar.tsx` para consumir `useAllUserPermissions()` e esconder itens de menu cujo modulo tenha `acesso_modulo = false`.
 
-- **Tabs ou cards** por perfil: Obras, Financeiro, Comercial, Cliente
-- Para cada perfil, uma **tabela/grid** com:
-  - Linhas = modulos do sistema (Propostas, Medicoes, Colaboradores, EPIs, Horas Extras, Materiais, Despesas, Boletins, etc)
-  - Colunas = acoes: Pesquisar | Incluir/Editar | Excluir | Acesso ao Modulo
-  - Cada celula = checkbox/switch
-- Botao Salvar que persiste no Supabase
-- Auto-save apos alteracoes
-
----
-
-## 3. Hooks
-
-- `usePermissoesPerfil(perfil)` - busca permissoes de um perfil
-- `useAllPermissoesPerfil()` - busca todas
-- `useUpsertPermissoesPerfil()` - upsert (insert on conflict update)
+Mapeamento modulo -> path:
+- `propostas` -> `/propostas`
+- `medicoes` -> `/medicoes`
+- `colaboradores` -> `/colaboradores`
+- `epis` -> `/epis`
+- `horas_extras` -> `/horas-extras`
+- `materiais` -> `/materiais-equipamentos`
+- `programacoes` -> `/programacao`
+- `despesas` -> `/despesas`
+- `boletins` -> `/boletins`
+- etc.
 
 ---
 
-## 4. Integracao com AccessGuard (futuro)
+## 3. Paginas operacionais: esconder botoes
 
-A tabela fica pronta para ser consumida pelo `AccessGuard.tsx` e pelo `ProtectedRoute.tsx` para enforcement real. Nesta etapa apenas criamos a UI de configuracao + persistencia.
+Nas paginas principais (EPIs, HorasExtras, Materiais, Medicoes, Colaboradores, etc.):
+- Usar `useUserModulePermissions('epis')` (por exemplo)
+- Se `incluir_editar = false`, esconder botao "Novo" e desabilitar edicao
+- Se `excluir = false`, esconder botao de exclusao
+- Se `pesquisar = false`, esconder campo de busca (raro, mas previsto)
+
+Paginas a atualizar (6 principais):
+- `EPIs.tsx`
+- `HorasExtras.tsx`
+- `Materiais.tsx` / `MateriaisEquipamentos.tsx`
+- `Medicoes.tsx`
+- `ColaboradoresPage.tsx`
+- `Propostas.tsx`
+
+---
+
+## 4. ProtectedRoute: bloquear acesso direto por URL
+
+Atualizar `ProtectedRoute.tsx` para, alem de checar `allowedUserTypes`, tambem verificar `acesso_modulo` na tabela `permissoes_perfil`. Se o admin desativou o acesso ao modulo para aquele perfil, redirecionar para pagina de acesso negado.
 
 ---
 
@@ -57,8 +76,10 @@ A tabela fica pronta para ser consumida pelo `AccessGuard.tsx` e pelo `Protected
 
 | Tipo | Arquivo |
 |---|---|
-| Migration | 1 SQL (tabela + seed + RLS) |
-| Reescrita | `src/pages/Admin/Permissoes.tsx` |
-| Novo hook | Em `useSupabaseData.ts` ou arquivo dedicado |
-| Update | `src/integrations/supabase/types.ts` |
+| Alteracao | `src/hooks/usePermissoesPerfil.ts` (novos hooks) |
+| Alteracao | `src/components/Layout/Sidebar.tsx` (filtro por acesso_modulo) |
+| Alteracao | `src/components/Auth/ProtectedRoute.tsx` (check modulo) |
+| Alteracao | 6 paginas operacionais (botoes condicionais) |
+
+Nenhuma migration necessaria -- a tabela e os dados ja existem.
 

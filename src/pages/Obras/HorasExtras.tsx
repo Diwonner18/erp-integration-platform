@@ -167,7 +167,13 @@ const HorasExtrasPage = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">{registro.funcionario}</h3>
-                        <p className="text-sm text-muted-foreground">{registro.obras?.nome || '-'} - {registro.horas}h</p>
+                        <p className="text-sm text-muted-foreground">
+                          {registro.obras?.nome || '-'} - {registro.horas}h
+                          {(registro as any).categoria && <span className="ml-2">Cat. {(registro as any).categoria}</span>}
+                          {(registro as any).tipo_hora_extra && (registro as any).tipo_hora_extra !== 'normal' && (
+                            <span className="ml-2 capitalize">({(registro as any).tipo_hora_extra})</span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">Data: {new Date(registro.data).toLocaleDateString('pt-BR')} | Valor/h: {formatCurrency(registro.valor_hora)}</p>
                       </div>
                     </div>

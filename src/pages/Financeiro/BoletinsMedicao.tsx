@@ -9,8 +9,10 @@ import NovoBoletimModal from '@/components/Financeiro/NovoBoletimModal';
 import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useBoletins, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const BoletinsMedicao = () => {
+  const { incluir_editar } = useUserModulePermissions('boletins');
   const [showNovoBoletimModal, setShowNovoBoletimModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({

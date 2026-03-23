@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useHorasExtras, useCreateHorasExtras, useUpdateHorasExtras, useObras } from '@/hooks/useSupabaseData';
+import { useColaboradores } from '@/hooks/useColaboradoresData';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -21,7 +22,7 @@ const HorasExtrasPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRegistro, setSelectedRegistro] = useState<any>(null);
-  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '', valor_hora: '30' });
+  const [formData, setFormData] = useState({ funcionario: '', horas: '', obra_id: '', motivo: '', valor_hora: '30', categoria: 'A', tipo_hora_extra: 'normal' });
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({
     obra: '',
@@ -32,6 +33,7 @@ const HorasExtrasPage = () => {
 
   const { data: registros = [], isLoading } = useHorasExtras();
   const { data: obrasData = [] } = useObras();
+  const { data: colaboradores = [] } = useColaboradores();
   const createHE = useCreateHorasExtras();
   const updateHE = useUpdateHorasExtras();
 
@@ -70,7 +72,9 @@ const HorasExtrasPage = () => {
         motivo: formData.motivo,
         data: new Date().toISOString().split('T')[0],
         valor_hora: parseFloat(formData.valor_hora) || 30,
-      });
+        categoria: formData.categoria,
+        tipo_hora_extra: formData.tipo_hora_extra,
+      } as any);
       toast({ title: 'Horas registradas', description: 'Registro criado com sucesso.' });
       setShowAddModal(false);
     } catch {
@@ -163,7 +167,13 @@ const HorasExtrasPage = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground">{registro.funcionario}</h3>
-                        <p className="text-sm text-muted-foreground">{registro.obras?.nome || '-'} - {registro.horas}h</p>
+                        <p className="text-sm text-muted-foreground">
+                          {registro.obras?.nome || '-'} - {registro.horas}h
+                          {(registro as any).categoria && <span className="ml-2">Cat. {(registro as any).categoria}</span>}
+                          {(registro as any).tipo_hora_extra && (registro as any).tipo_hora_extra !== 'normal' && (
+                            <span className="ml-2 capitalize">({(registro as any).tipo_hora_extra})</span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">Data: {new Date(registro.data).toLocaleDateString('pt-BR')} | Valor/h: {formatCurrency(registro.valor_hora)}</p>
                       </div>
                     </div>
@@ -186,7 +196,36 @@ const HorasExtrasPage = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Horas Extras</DialogTitle></DialogHeader>
             <form onSubmit={handleSave} className="space-y-4">
-              <div><Label>Funcionário</Label><Input value={formData.funcionario} onChange={(e) => setFormData({...formData, funcionario: e.target.value})} required /></div>
+              <div><Label>Funcionário</Label>
+                <Select value={formData.funcionario} onValueChange={(v) => setFormData({...formData, funcionario: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                  <SelectContent>{(colaboradores as any[]).map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Categoria</Label>
+                  <Select value={formData.categoria} onValueChange={(v) => setFormData({...formData, categoria: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">A</SelectItem>
+                      <SelectItem value="B">B</SelectItem>
+                      <SelectItem value="C">C</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Tipo</Label>
+                  <Select value={formData.tipo_hora_extra} onValueChange={(v) => setFormData({...formData, tipo_hora_extra: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="virada">Virada</SelectItem>
+                      <SelectItem value="dobra">Dobra</SelectItem>
+                      <SelectItem value="diaria">Diária</SelectItem>
+                      <SelectItem value="continuacao">Continuação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div><Label>Horas</Label><Input type="number" value={formData.horas} onChange={(e) => setFormData({...formData, horas: e.target.value})} required /></div>
               <div><Label>Obra</Label>
                 <Select value={formData.obra_id} onValueChange={(v) => setFormData({...formData, obra_id: v})}>

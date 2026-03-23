@@ -552,6 +552,7 @@ export type Database = {
       epis: {
         Row: {
           certificado_aprovacao: string | null
+          colaborador_id: string | null
           created_at: string
           created_by: string | null
           data_entrega: string | null
@@ -564,6 +565,7 @@ export type Database = {
         }
         Insert: {
           certificado_aprovacao?: string | null
+          colaborador_id?: string | null
           created_at?: string
           created_by?: string | null
           data_entrega?: string | null
@@ -576,6 +578,7 @@ export type Database = {
         }
         Update: {
           certificado_aprovacao?: string | null
+          colaborador_id?: string | null
           created_at?: string
           created_by?: string | null
           data_entrega?: string | null
@@ -587,6 +590,13 @@ export type Database = {
           validade?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "epis_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "epis_obra_id_fkey"
             columns: ["obra_id"]
@@ -695,6 +705,7 @@ export type Database = {
       }
       horas_extras: {
         Row: {
+          categoria: string | null
           created_at: string
           created_by: string | null
           data: string
@@ -704,9 +715,11 @@ export type Database = {
           motivo: string | null
           obra_id: string
           status: string | null
+          tipo_hora_extra: string | null
           valor_hora: number | null
         }
         Insert: {
+          categoria?: string | null
           created_at?: string
           created_by?: string | null
           data: string
@@ -716,9 +729,11 @@ export type Database = {
           motivo?: string | null
           obra_id: string
           status?: string | null
+          tipo_hora_extra?: string | null
           valor_hora?: number | null
         }
         Update: {
+          categoria?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
@@ -728,6 +743,7 @@ export type Database = {
           motivo?: string | null
           obra_id?: string
           status?: string | null
+          tipo_hora_extra?: string | null
           valor_hora?: number | null
         }
         Relationships: [

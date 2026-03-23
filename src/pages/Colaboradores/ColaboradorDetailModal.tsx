@@ -319,6 +319,23 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
 
           {/* ===== BANCO DE HORAS / FALTAS ===== */}
           <TabsContent value="banco-horas" className="space-y-6 mt-4">
+            {/* Alerta 3ª falta injustificada */}
+            {(() => {
+              const faltasInjustificadas = (faltasLicencas || []).filter(f => f.tipo === 'falta_injustificada').length;
+              if (faltasInjustificadas >= 3) {
+                return (
+                  <div className="p-4 rounded-lg border border-destructive bg-destructive/10">
+                    <p className="text-sm font-bold text-destructive">⚠️ Atenção: {faltasInjustificadas} faltas injustificadas</p>
+                    <p className="text-xs text-destructive/80 mt-1">
+                      A partir da 3ª falta sem justificativa, este colaborador não recebe mais dispensa remunerada. 
+                      Horas extras devem ser convertidas em banco de horas (a compensar).
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm font-medium text-muted-foreground">Saldo Banco de Horas</p>
               <p className={`text-2xl font-bold ${saldoBancoHoras >= 0 ? 'text-green-600' : 'text-destructive'}`}>

@@ -14,6 +14,7 @@ import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Plus, FileText, Filter, Pencil, Trash2, AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { useEPIs, useObras, useCreateEPI, useUpdateEPI, useDeleteEPI } from '@/hooks/useSupabaseData';
+import { useColaboradores } from '@/hooks/useColaboradoresData';
 import FileImportButton from '@/components/shared/FileImportButton';
 
 const tiposEPI = [
@@ -57,6 +58,7 @@ const EPIs = () => {
 
   const { data: epis = [], isLoading: loadingEPIs } = useEPIs();
   const { data: obrasData = [], isLoading: loadingObras } = useObras();
+  const { data: colaboradores = [] } = useColaboradores();
   const createEPI = useCreateEPI();
   const updateEPI = useUpdateEPI();
   const deleteEPI = useDeleteEPI();
@@ -330,7 +332,14 @@ const EPIs = () => {
                 </div>
                 <div>
                   <Label>Colaborador *</Label>
-                  <Input value={formData.colaborador} onChange={(e) => setFormData({ ...formData, colaborador: e.target.value })} placeholder="Nome do colaborador" />
+                  <Select value={formData.colaborador} onValueChange={(v) => setFormData({ ...formData, colaborador: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                    <SelectContent>
+                      {colaboradores.map((c: any) => (
+                        <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Obra *</Label>

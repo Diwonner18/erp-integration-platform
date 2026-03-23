@@ -173,9 +173,9 @@ export const useRetencaoPagamentos = (retencaoId: string | undefined) => {
     queryKey: ['retencao_pagamentos', retencaoId],
     enabled: !!retencaoId,
     queryFn: async () => {
-      const { data, error } = await supabase.from('retencao_pagamentos' as any).select('*').eq('retencao_id', retencaoId!).order('data_pagamento', { ascending: false });
+      const { data, error } = await supabase.from('retencao_pagamentos').select('*').eq('retencao_id', retencaoId!).order('data_pagamento', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 };

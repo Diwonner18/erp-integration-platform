@@ -58,10 +58,12 @@ const ColaboradoresPage = () => {
             <h1 className="text-2xl font-bold text-foreground">Colaboradores</h1>
             <p className="text-muted-foreground">Cadastro e gestão de colaboradores</p>
           </div>
-          <Button onClick={() => setShowNew(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Colaborador
-          </Button>
+          {perms.incluir_editar && (
+            <Button onClick={() => setShowNew(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Colaborador
+            </Button>
+          )}
         </div>
 
         <div className="flex gap-4">

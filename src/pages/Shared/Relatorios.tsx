@@ -143,10 +143,16 @@ const Relatorios = () => {
             <h1 className="text-3xl font-bold text-foreground">Relatórios Gerais</h1>
             <p className="text-muted-foreground mt-1">Visão completa de todos os indicadores</p>
           </div>
-          <Button onClick={handleExportPDF} disabled={filteredObras.length === 0} data-tour="page-export">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar Dashboard
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExportPDF} disabled={filteredObras.length === 0} data-tour="page-export">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
+            <Button variant="outline" onClick={handleExportExcel} disabled={filteredObras.length === 0}>
+              <TableIcon className="w-4 h-4 mr-2" />
+              Exportar XLS
+            </Button>
+          </div>
         </div>
 
         <Card data-tour="page-filters">

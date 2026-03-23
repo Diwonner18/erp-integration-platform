@@ -279,28 +279,51 @@ const RelatorioDiarioObra = () => {
           </TabsContent>
 
           <TabsContent value="visualizar" className="space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Button
+                variant={filtroNaoConforme ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFiltroNaoConforme(!filtroNaoConforme)}
+              >
+                {filtroNaoConforme ? 'Mostrando Não Conformes' : 'Filtrar Não Conformidades'}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {relatorios.filter(r => r.ocorrencias).length} com ocorrências
+              </span>
+            </div>
             <div className="space-y-4">
-              {relatorios.map(relatorio => (
-                <Card key={relatorio.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-4">
-                          <h3 className="font-semibold text-lg">{(relatorio as any).obras?.nome || 'Obra'}</h3>
-                          <Badge variant="outline">{new Date(relatorio.data).toLocaleDateString('pt-BR')}</Badge>
+              {(filtroNaoConforme ? relatorios.filter(r => r.ocorrencias) : relatorios).map(relatorio => {
+                const hasOcorrencias = !!relatorio.ocorrencias;
+                return (
+                  <Card key={relatorio.id} className={cn(hasOcorrencias && 'border-destructive/50 bg-destructive/5')}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-semibold text-lg">{(relatorio as any).obras?.nome || 'Obra'}</h3>
+                            <Badge variant="outline">{new Date(relatorio.data).toLocaleDateString('pt-BR')}</Badge>
+                            {hasOcorrencias ? (
+                              <Badge variant="destructive">Não Conforme</Badge>
+                            ) : (
+                              <Badge className="bg-green-600 hover:bg-green-700 text-white">Conforme</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>Mão de obra: {relatorio.mao_de_obra_presente}</span>
+                            <span>Clima: {relatorio.clima || '—'}</span>
+                          </div>
+                          {relatorio.atividades && (
+                            <p className="text-sm text-muted-foreground">{relatorio.atividades}</p>
+                          )}
+                          {hasOcorrencias && (
+                            <p className="text-sm text-destructive font-medium">Ocorrências: {relatorio.ocorrencias}</p>
+                          )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>Mão de obra: {relatorio.mao_de_obra_presente}</span>
-                          <span>Clima: {relatorio.clima || '—'}</span>
-                        </div>
-                        {relatorio.atividades && (
-                          <p className="text-sm text-muted-foreground">{relatorio.atividades}</p>
-                        )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>

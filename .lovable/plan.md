@@ -1,74 +1,67 @@
 
 
-# Etapa 4: Enforcement Real das Permissoes via `permissoes_perfil`
+# Extensao do Enforcement de Permissoes para Todos os Perfis
 
-Integrar a tabela `permissoes_perfil` (ja criada e populada) com o frontend para que as configuracoes feitas pelo admin na pagina de Permissoes realmente controlem o que cada perfil pode ver e fazer.
+## Problema
 
----
+O enforcement atual so cobre 6 paginas (EPIs, Horas Extras, Materiais, Medicoes, Colaboradores, Propostas). As paginas do Financeiro e Comercial nao tem:
+- Prop `modulo` no ProtectedRoute (bloqueio por URL)
+- Hook `useUserModulePermissions` (controle de botoes)
+- Modulos correspondentes no seed da tabela `permissoes_perfil`
 
-## Arquitetura
+## O que falta
 
-```text
-permissoes_perfil (DB)
-        |
-  useUserModulePermissions(modulo) -- hook que busca permissoes do perfil do user logado
-        |
-  Sidebar.tsx         -- esconde itens de menu se acesso_modulo = false
-  Pages (EPIs, etc.)  -- esconde botoes Novo/Editar/Excluir conforme pesquisar/incluir_editar/excluir
-```
+### 1. Migration: Adicionar modulos faltantes ao seed
 
----
+Inserir na `permissoes_perfil` os modulos que faltam para cada perfil:
 
-## 1. Novo hook: `useUserModulePermissions`
+Modulos novos: `valores_unitarios`, `aceites`, `modelos_contrato`, `relatorios_comerciais`, `financeiro`, `retencoes`, `fechamento_mensal`, `exportar_dados`, `relatorios_financeiros`, `relatorios_obra`, `relatorios_diarios` (para obras)
 
-Em `src/hooks/usePermissoesPerfil.ts`, adicionar:
+Seed com permissoes padrao coerentes (ex: comercial tem acesso total a valores_unitarios/aceites/modelos_contrato, financeira tem acesso total a boletins/retencoes/fechamento, etc).
 
-- `useUserModulePermissions(modulo: string)` -- retorna `{ acesso_modulo, pesquisar, incluir_editar, excluir, isLoading }` para o perfil do usuario logado (usa `effectiveType` do AuthContext)
-- `useAllUserPermissions()` -- retorna todas as permissoes do perfil do usuario (para o Sidebar filtrar modulos)
+### 2. App.tsx: Adicionar `modulo` nas rotas faltantes
 
-Admin e GT sempre retornam tudo `true` (bypass).
+Rotas que precisam do prop `modulo` no ProtectedRoute:
+- `/valores-unitarios` -> `modulo="valores_unitarios"`
+- `/aceites` -> `modulo="aceites"`
+- `/modelos-contrato` -> `modulo="modelos_contrato"`
+- `/relatorios-comerciais` -> `modulo="relatorios_comerciais"`
+- `/boletins-medicao` -> `modulo="boletins"`
+- `/financeiro` -> `modulo="financeiro"`
+- `/relatorios-financeiros` -> `modulo="relatorios_financeiros"`
+- `/exportar-dados` -> `modulo="exportar_dados"`
+- `/retencoes` -> `modulo="retencoes"`
+- `/fechamento-mensal` -> `modulo="fechamento_mensal"`
+- `/lancamento-despesas` -> `modulo="despesas"`
+- `/alteracoes-escopo` -> `modulo="alteracoes_escopo"`
+- `/relatorio-diario-obra` -> `modulo="relatorios_diarios"`
+- `/relatorios-obra` -> `modulo="relatorios_obra"`
 
----
+### 3. Paginas Financeiro: Adicionar `useUserModulePermissions`
 
-## 2. Sidebar: filtrar por `acesso_modulo`
+Paginas a atualizar (esconder botoes Novo/Editar/Excluir conforme permissoes):
+- `BoletinsMedicao.tsx` -> `useUserModulePermissions('boletins')`
+- `LancamentoDespesas.tsx` -> `useUserModulePermissions('despesas')`
+- `ControleRetencoes.tsx` -> `useUserModulePermissions('retencoes')`
+- `FechamentoMensal.tsx` -> `useUserModulePermissions('fechamento_mensal')`
 
-Atualizar `Sidebar.tsx` para consumir `useAllUserPermissions()` e esconder itens de menu cujo modulo tenha `acesso_modulo = false`.
+### 4. Paginas Comercial: Adicionar `useUserModulePermissions`
 
-Mapeamento modulo -> path:
-- `propostas` -> `/propostas`
-- `medicoes` -> `/medicoes`
-- `colaboradores` -> `/colaboradores`
-- `epis` -> `/epis`
-- `horas_extras` -> `/horas-extras`
-- `materiais` -> `/materiais-equipamentos`
-- `programacoes` -> `/programacao`
-- `despesas` -> `/despesas`
-- `boletins` -> `/boletins`
-- etc.
+- `ValoresUnitarios.tsx` -> `useUserModulePermissions('valores_unitarios')`
+- `ModelosContrato.tsx` -> `useUserModulePermissions('modelos_contrato')`
 
----
+### 5. Paginas Obras faltantes: Adicionar `useUserModulePermissions`
 
-## 3. Paginas operacionais: esconder botoes
+- `AlteracoesEscopo.tsx` -> `useUserModulePermissions('alteracoes_escopo')`
+- `RelatorioDiarioObra.tsx` -> `useUserModulePermissions('relatorios_diarios')`
 
-Nas paginas principais (EPIs, HorasExtras, Materiais, Medicoes, Colaboradores, etc.):
-- Usar `useUserModulePermissions('epis')` (por exemplo)
-- Se `incluir_editar = false`, esconder botao "Novo" e desabilitar edicao
-- Se `excluir = false`, esconder botao de exclusao
-- Se `pesquisar = false`, esconder campo de busca (raro, mas previsto)
+### 6. Atualizar `MODULO_LABELS` na pagina Permissoes
 
-Paginas a atualizar (6 principais):
-- `EPIs.tsx`
-- `HorasExtras.tsx`
-- `Materiais.tsx` / `MateriaisEquipamentos.tsx`
-- `Medicoes.tsx`
-- `ColaboradoresPage.tsx`
-- `Propostas.tsx`
+Adicionar os novos modulos ao mapa de labels para que aparecam na UI de configuracao do admin.
 
----
+### 7. Atualizar `PATH_TO_MODULE` no Sidebar
 
-## 4. ProtectedRoute: bloquear acesso direto por URL
-
-Atualizar `ProtectedRoute.tsx` para, alem de checar `allowedUserTypes`, tambem verificar `acesso_modulo` na tabela `permissoes_perfil`. Se o admin desativou o acesso ao modulo para aquele perfil, redirecionar para pagina de acesso negado.
+Verificar que todos os novos modulos estao no mapeamento (a maioria ja esta, confirmar os faltantes).
 
 ---
 
@@ -76,10 +69,16 @@ Atualizar `ProtectedRoute.tsx` para, alem de checar `allowedUserTypes`, tambem v
 
 | Tipo | Arquivo |
 |---|---|
-| Alteracao | `src/hooks/usePermissoesPerfil.ts` (novos hooks) |
-| Alteracao | `src/components/Layout/Sidebar.tsx` (filtro por acesso_modulo) |
-| Alteracao | `src/components/Auth/ProtectedRoute.tsx` (check modulo) |
-| Alteracao | 6 paginas operacionais (botoes condicionais) |
-
-Nenhuma migration necessaria -- a tabela e os dados ja existem.
+| Migration | 1 SQL (insert novos modulos no seed) |
+| Alteracao | `src/App.tsx` (adicionar `modulo` em ~14 rotas) |
+| Alteracao | `src/pages/Financeiro/BoletinsMedicao.tsx` |
+| Alteracao | `src/pages/Financeiro/LancamentoDespesas.tsx` |
+| Alteracao | `src/pages/Financeiro/ControleRetencoes.tsx` |
+| Alteracao | `src/pages/Financeiro/FechamentoMensal.tsx` |
+| Alteracao | `src/pages/Comercial/ValoresUnitarios.tsx` |
+| Alteracao | `src/pages/Comercial/ModelosContrato.tsx` |
+| Alteracao | `src/pages/Obras/AlteracoesEscopo.tsx` |
+| Alteracao | `src/pages/Obras/RelatorioDiarioObra.tsx` |
+| Alteracao | `src/pages/Admin/Permissoes.tsx` (MODULO_LABELS) |
+| Alteracao | `src/components/Layout/Sidebar.tsx` (PATH_TO_MODULE) |
 

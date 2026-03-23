@@ -8,7 +8,6 @@ import { usePageTour } from '@/hooks/usePageTour';
 import ProductTour from '@/components/Tour/ProductTour';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRealtimeNotificacoes } from '@/hooks/useRealtimeNotificacoes';
 
 interface MainLayoutProps {
   children: React.ReactNode;

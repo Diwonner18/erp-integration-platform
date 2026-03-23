@@ -16,6 +16,7 @@ import { Shield, Plus, FileText, Filter, Pencil, Trash2, AlertTriangle, CheckCir
 import { useEPIs, useObras, useCreateEPI, useUpdateEPI, useDeleteEPI } from '@/hooks/useSupabaseData';
 import { useColaboradores } from '@/hooks/useColaboradoresData';
 import FileImportButton from '@/components/shared/FileImportButton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const tiposEPI = [
   'Capacete de Segurança',

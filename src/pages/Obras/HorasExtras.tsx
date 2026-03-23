@@ -20,6 +20,7 @@ import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const HorasExtrasPage = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('horas_extras');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedRegistro, setSelectedRegistro] = useState<any>(null);

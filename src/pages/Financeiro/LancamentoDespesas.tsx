@@ -13,8 +13,10 @@ import FileImportButton from '@/components/shared/FileImportButton';
 import { useToast } from '@/hooks/use-toast';
 import { useDespesas, useCreateDespesa, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const LancamentoDespesas = () => {
+  const { incluir_editar } = useUserModulePermissions('despesas');
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' });
@@ -49,10 +51,12 @@ const LancamentoDespesas = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-primary">Lançamento de Despesas</h1><p className="text-muted-foreground mt-1">Registrar despesas operacionais</p></div>
-          <div className="flex gap-2">
-            <FileImportButton targetType="despesas" />
-            <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
-          </div>
+          {incluir_editar && (
+            <div className="flex gap-2">
+              <FileImportButton targetType="despesas" />
+              <Button onClick={() => { setFormData({ descricao: '', valor: '', categoria: '', obra_id: '', data: '' }); setShowModal(true); }} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Despesa</Button>
+            </div>
+          )}
         </div>
 
         {isLoading ? (

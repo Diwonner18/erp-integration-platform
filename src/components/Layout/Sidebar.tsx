@@ -46,7 +46,7 @@ const PATH_TO_MODULE: Record<string, string> = {
   '/lancamento-despesas': 'despesas',
   '/boletins-medicao': 'boletins',
   '/alteracoes-escopo': 'alteracoes_escopo',
-  '/relatorio-diario-obra': 'relatorio_diario',
+  '/relatorio-diario-obra': 'relatorios_diarios',
   '/relatorios-obra': 'relatorios_obra',
   '/valores-unitarios': 'valores_unitarios',
   '/aceites': 'aceites',

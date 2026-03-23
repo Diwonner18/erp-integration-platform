@@ -136,22 +136,22 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/valores-unitarios" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="valores_unitarios">
                 <ValoresUnitarios />
               </ProtectedRoute>
             } />
             <Route path="/aceites" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="aceites">
                 <AceitesDigitais />
               </ProtectedRoute>
             } />
             <Route path="/modelos-contrato" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="modelos_contrato">
                 <ModelosContrato />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-comerciais" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="relatorios_comerciais">
                 <RelatoriosComerciais />
               </ProtectedRoute>
             } />
@@ -163,7 +163,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/alteracoes-escopo" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="alteracoes_escopo">
                 <AlteracoesEscopo />
               </ProtectedRoute>
             } />
@@ -178,7 +178,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/relatorios-obra" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="relatorios_obra">
                 <RelatoriosObra />
               </ProtectedRoute>
             } />
@@ -212,27 +212,27 @@ const App = () => (
 
             {/* Financial routes */}
             <Route path="/boletins-medicao" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="boletins">
                 <BoletinsMedicao />
               </ProtectedRoute>
             } />
             <Route path="/financeiro" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="financeiro">
                 <ControleFinanceiro />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-financeiros" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="relatorios_financeiros">
                 <RelatoriosFinanceiros />
               </ProtectedRoute>
             } />
             <Route path="/exportar-dados" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="exportar_dados">
                 <ExportarDados />
               </ProtectedRoute>
             } />
             <Route path="/retencoes" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="retencoes">
                 <ControleRetencoes />
               </ProtectedRoute>
             } />
@@ -242,12 +242,12 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/fechamento-mensal" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="fechamento_mensal">
                 <FechamentoMensal />
               </ProtectedRoute>
             } />
             <Route path="/lancamento-despesas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira', 'obras']} modulo="despesas">
                 <LancamentoDespesas />
               </ProtectedRoute>
             } />
@@ -275,7 +275,7 @@ const App = () => (
 
             {/* Relatório Diário de Obra */}
             <Route path="/relatorio-diario-obra" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="relatorios_diarios">
                 <RelatorioDiarioObra />
               </ProtectedRoute>
             } />

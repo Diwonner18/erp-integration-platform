@@ -8,8 +8,10 @@ import { FileText, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useModelosContrato, useCreateModeloContrato, useUpdateModeloContrato } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ModelosContrato = () => {
+  const { incluir_editar } = useUserModulePermissions('modelos_contrato');
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -56,7 +58,7 @@ const ModelosContrato = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-foreground">Modelos de Contrato</h1><p className="text-muted-foreground mt-1">Gerenciar templates</p></div>
-          <Button data-tour="page-new-btn" onClick={() => { setFormData({ titulo: '', tipo: '', conteudo: '' }); setSelectedModelo(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Modelo</Button>
+          {incluir_editar && <Button data-tour="page-new-btn" onClick={() => { setFormData({ titulo: '', tipo: '', conteudo: '' }); setSelectedModelo(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Modelo</Button>}
         </div>
 
         {isLoading ? (
@@ -76,7 +78,7 @@ const ModelosContrato = () => {
                       <p className="text-xs text-muted-foreground">Atualizado: {new Date(modelo.updated_at).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => { setSelectedModelo(modelo); setFormData({ titulo: modelo.titulo, tipo: modelo.tipo || '', conteudo: modelo.conteudo || '' }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                  {incluir_editar && <Button variant="outline" size="sm" onClick={() => { setSelectedModelo(modelo); setFormData({ titulo: modelo.titulo, tipo: modelo.tipo || '', conteudo: modelo.conteudo || '' }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>}
                 </div>
               </CardContent></Card>
             ))}

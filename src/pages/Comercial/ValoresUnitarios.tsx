@@ -8,8 +8,10 @@ import { Package, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useValoresUnitarios, useCreateValorUnitario, useUpdateValorUnitario } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ValoresUnitarios = () => {
+  const { incluir_editar } = useUserModulePermissions('valores_unitarios');
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -54,7 +56,7 @@ const ValoresUnitarios = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between" data-tour="page-header">
           <div><h1 className="text-3xl font-bold text-foreground">Valores Unitários</h1><p className="text-muted-foreground mt-1">Gerenciar preços por serviço</p></div>
-          <Button data-tour="page-new-btn" onClick={() => { setFormData({ servico: '', unidade: '', valor: '' }); setSelectedItem(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Valor</Button>
+          {incluir_editar && <Button data-tour="page-new-btn" onClick={() => { setFormData({ servico: '', unidade: '', valor: '' }); setSelectedItem(null); setShowAddModal(true); }}><Plus className="w-4 h-4 mr-2" />Novo Valor</Button>}
         </div>
 
         {isLoading ? (
@@ -75,7 +77,7 @@ const ValoresUnitarios = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <span className="font-semibold text-primary">{formatCurrency(item.valor)}</span>
-                    <Button variant="outline" size="sm" onClick={() => { setSelectedItem(item); setFormData({ servico: item.servico, unidade: item.unidade || '', valor: String(item.valor) }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                    {incluir_editar && <Button variant="outline" size="sm" onClick={() => { setSelectedItem(item); setFormData({ servico: item.servico, unidade: item.unidade || '', valor: String(item.valor) }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>}
                   </div>
                 </div>
               </CardContent></Card>

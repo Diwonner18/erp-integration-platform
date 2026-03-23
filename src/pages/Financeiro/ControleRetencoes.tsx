@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Wallet, Clock } from 'lucide-react';
 import { useRetencoes } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ControleRetencoes = () => {
+  const { incluir_editar } = useUserModulePermissions('retencoes');
   const navigate = useNavigate();
   const { data: retencoes = [], isLoading } = useRetencoes();
 

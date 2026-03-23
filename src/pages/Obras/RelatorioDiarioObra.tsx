@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useObras, useRelatoriosDiarios, useCreateRelatorioDiario } from '@/hooks/useSupabaseData';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 interface Colaborador {
   id: string;
@@ -30,7 +31,8 @@ interface Colaborador {
 
 const RelatorioDiarioObra = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('registro');
+  const { incluir_editar } = useUserModulePermissions('relatorios_diarios');
+  const [activeTab, setActiveTab] = useState(incluir_editar ? 'registro' : 'visualizar');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAddColaborador, setShowAddColaborador] = useState(false);
   
@@ -127,7 +129,7 @@ const RelatorioDiarioObra = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" data-tour="page-tabs">
           <TabsList>
-            <TabsTrigger value="registro">Novo Registro</TabsTrigger>
+            {incluir_editar && <TabsTrigger value="registro">Novo Registro</TabsTrigger>}
             <TabsTrigger value="visualizar">Visualizar Relatórios ({relatorios.length})</TabsTrigger>
           </TabsList>
 

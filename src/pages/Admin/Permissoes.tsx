@@ -30,6 +30,16 @@ const MODULO_LABELS: Record<string, string> = {
   boletins: 'Boletins de Medição',
   relatorios_diarios: 'Relatório Diário (RDO)',
   alteracoes_escopo: 'Alterações de Escopo',
+  valores_unitarios: 'Valores Unitários',
+  aceites: 'Aceites Digitais',
+  modelos_contrato: 'Modelos de Contrato',
+  relatorios_comerciais: 'Relatórios Comerciais',
+  financeiro: 'Controle Financeiro',
+  retencoes: 'Retenções',
+  fechamento_mensal: 'Fechamento Mensal',
+  exportar_dados: 'Exportar Dados',
+  relatorios_financeiros: 'Relatórios Financeiros',
+  relatorios_obra: 'Relatórios de Obra',
 };
 
 const ACOES = [

@@ -11,8 +11,10 @@ import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters'
 import { useToast } from '@/hooks/use-toast';
 import { useAlteracoesEscopo, useUpdateAlteracaoEscopo, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const AlteracoesEscopo = () => {
+  const { incluir_editar } = useUserModulePermissions('alteracoes_escopo');
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -85,7 +87,7 @@ const AlteracoesEscopo = () => {
             <h1 className="text-3xl font-bold text-foreground">Alterações de Escopo</h1>
             <p className="text-muted-foreground mt-1">Sugestões e aprovações de mudanças</p>
           </div>
-          <Button onClick={() => setShowModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Sugestão</Button>
+          {incluir_editar && <Button onClick={() => setShowModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Sugestão</Button>}
         </div>
 
         <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>

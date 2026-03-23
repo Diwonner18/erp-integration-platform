@@ -261,7 +261,7 @@ const App = () => (
 
             {/* Colaboradores */}
             <Route path="/colaboradores" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="colaboradores">
                 <ColaboradoresPage />
               </ProtectedRoute>
             } />

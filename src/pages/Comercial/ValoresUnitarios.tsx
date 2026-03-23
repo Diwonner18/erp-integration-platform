@@ -8,8 +8,10 @@ import { Package, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useValoresUnitarios, useCreateValorUnitario, useUpdateValorUnitario } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ValoresUnitarios = () => {
+  const { incluir_editar } = useUserModulePermissions('valores_unitarios');
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);

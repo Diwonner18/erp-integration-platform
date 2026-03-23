@@ -635,8 +635,8 @@ export const useCreateValorUnitario = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (valor: TablesInsert<'valores_unitarios'>) => {
-      const validated = validateInput(valorUnitarioInsertSchema, valor);
-      const { data, error } = await supabase.from('valores_unitarios').insert(validated).select().single();
+      validateInput(valorUnitarioInsertSchema, valor);
+      const { data, error } = await supabase.from('valores_unitarios').insert(valor).select().single();
       if (error) throw error;
       return data;
     },

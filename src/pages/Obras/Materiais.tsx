@@ -16,6 +16,7 @@ import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Materiais = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('materiais');
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);

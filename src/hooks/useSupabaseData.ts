@@ -161,9 +161,9 @@ export const useRetencaoFollowups = (retencaoId: string | undefined) => {
     queryKey: ['retencao_followups', retencaoId],
     enabled: !!retencaoId,
     queryFn: async () => {
-      const { data, error } = await supabase.from('retencao_followups' as any).select('*').eq('retencao_id', retencaoId!).order('data', { ascending: false });
+      const { data, error } = await supabase.from('retencao_followups').select('*').eq('retencao_id', retencaoId!).order('data', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 };

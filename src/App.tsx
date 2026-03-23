@@ -254,7 +254,7 @@ const App = () => (
 
             {/* Materiais e Equipamentos - Nova rota unificada */}
             <Route path="/materiais-equipamentos" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="materiais">
                 <MateriaisEquipamentos />
               </ProtectedRoute>
             } />

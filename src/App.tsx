@@ -212,27 +212,27 @@ const App = () => (
 
             {/* Financial routes */}
             <Route path="/boletins-medicao" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="boletins">
                 <BoletinsMedicao />
               </ProtectedRoute>
             } />
             <Route path="/financeiro" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="financeiro">
                 <ControleFinanceiro />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-financeiros" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="relatorios_financeiros">
                 <RelatoriosFinanceiros />
               </ProtectedRoute>
             } />
             <Route path="/exportar-dados" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="exportar_dados">
                 <ExportarDados />
               </ProtectedRoute>
             } />
             <Route path="/retencoes" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="retencoes">
                 <ControleRetencoes />
               </ProtectedRoute>
             } />

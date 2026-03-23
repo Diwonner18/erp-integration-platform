@@ -23,6 +23,7 @@ const medicaoSchema = z.object({
   data_medicao: z.string().optional(),
   percentual: z.number().min(0).max(100, 'Percentual deve estar entre 0 e 100'),
   valor_bruto: z.number().min(0, 'Valor deve ser positivo'),
+  metragem: z.number().min(0).optional(),
   taxa_igpm: z.number().min(0).optional(),
   observacoes: z.string().optional(),
   descricao: z.string().optional(),
@@ -47,7 +48,7 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
     register, handleSubmit, setValue, watch, reset, formState: { errors }
   } = useForm<MedicaoFormData>({
     resolver: zodResolver(medicaoSchema),
-    defaultValues: { percentual: 0, valor_bruto: 0, taxa_igpm: 0 }
+    defaultValues: { percentual: 0, valor_bruto: 0, metragem: 0, taxa_igpm: 0 }
   });
 
   const valorBruto = watch('valor_bruto') || 0;
@@ -97,6 +98,7 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
         valor: valorFinal,
         taxa_igpm: data.taxa_igpm || 0,
         correcao_igpm: correcaoIgpm,
+        metragem: data.metragem || 0,
         observacoes: data.observacoes || null,
         descricao: data.descricao || null,
         programacoes_ids: selectedProgramacoes.length > 0 ? selectedProgramacoes : null,
@@ -180,8 +182,12 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
             </div>
           )}
 
-          {/* Percentual e Valor */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Metragem, Percentual e Valor */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Metragem (m²)</Label>
+              <Input type="number" step="0.01" {...register('metragem', { valueAsNumber: true })} min="0" placeholder="0.00" />
+            </div>
             <div className="space-y-2">
               <Label>Percentual Executado (%)</Label>
               <Input type="number" {...register('percentual', { valueAsNumber: true })} min="0" max="100" />

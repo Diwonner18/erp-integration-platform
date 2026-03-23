@@ -205,6 +205,7 @@ const Medicoes = () => {
                         <h3 className="font-semibold text-foreground">{medicao.obras?.nome || 'Obra'}</h3>
                         <p className="text-sm text-muted-foreground">
                           {medicao.numero || 'S/N'} - {medicao.percentual || 0}% executado
+                          {(medicao as any).metragem > 0 && ` | ${(medicao as any).metragem} m²`}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Valor: {formatCurrency(medicao.valor)} | Data: {medicao.data_medicao ? new Date(medicao.data_medicao).toLocaleDateString('pt-BR') : '-'}

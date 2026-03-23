@@ -27,7 +27,8 @@ import {
   DollarSign,
   Briefcase,
   UserCheck,
-  Ruler
+  Ruler,
+  UserCog
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,7 @@ const getAdminSections = (hasPermission: (p: string) => boolean): MenuSection[] 
       { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
       { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
       { icon: BarChart3, label: 'Relatórios de Obra', path: '/relatorios-obra', show: true },
+      { icon: UserCog, label: 'Colaboradores', path: '/colaboradores', show: true },
     ],
   },
   {
@@ -131,6 +133,7 @@ const getFlatMenuByRole = (role: UserType, hasPermission: (p: string) => boolean
       { icon: Clock, label: 'Horas Extras', path: '/horas-extras', show: true },
       { icon: Clipboard, label: 'Relatório Diário de Obra', path: '/relatorio-diario-obra', show: true },
       { icon: BarChart3, label: 'Relatórios de Obra', path: '/relatorios-obra', show: true },
+      { icon: UserCog, label: 'Colaboradores', path: '/colaboradores', show: true },
     ];
   }
 

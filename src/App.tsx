@@ -61,6 +61,9 @@ import MeusPagamentos from "./pages/Cliente/MeusPagamentos";
 // Shared pages
 import Relatorios from "./pages/Shared/Relatorios";
 
+// Colaboradores
+import ColaboradoresPage from "./pages/Colaboradores/ColaboradoresPage";
+
 const queryClient = new QueryClient();
 
 const gt = 'gerenciador_tecnico' as const;
@@ -252,6 +255,13 @@ const App = () => (
             <Route path="/materiais-equipamentos" element={
               <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
                 <MateriaisEquipamentos />
+              </ProtectedRoute>
+            } />
+
+            {/* Colaboradores */}
+            <Route path="/colaboradores" element={
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+                <ColaboradoresPage />
               </ProtectedRoute>
             } />
 

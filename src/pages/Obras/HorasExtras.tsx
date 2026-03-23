@@ -33,6 +33,7 @@ const HorasExtrasPage = () => {
 
   const { data: registros = [], isLoading } = useHorasExtras();
   const { data: obrasData = [] } = useObras();
+  const { data: colaboradores = [] } = useColaboradores();
   const createHE = useCreateHorasExtras();
   const updateHE = useUpdateHorasExtras();
 

@@ -161,9 +161,9 @@ export const useRetencaoFollowups = (retencaoId: string | undefined) => {
     queryKey: ['retencao_followups', retencaoId],
     enabled: !!retencaoId,
     queryFn: async () => {
-      const { data, error } = await supabase.from('retencao_followups' as any).select('*').eq('retencao_id', retencaoId!).order('data', { ascending: false });
+      const { data, error } = await supabase.from('retencao_followups').select('*').eq('retencao_id', retencaoId!).order('data', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 };
@@ -173,9 +173,9 @@ export const useRetencaoPagamentos = (retencaoId: string | undefined) => {
     queryKey: ['retencao_pagamentos', retencaoId],
     enabled: !!retencaoId,
     queryFn: async () => {
-      const { data, error } = await supabase.from('retencao_pagamentos' as any).select('*').eq('retencao_id', retencaoId!).order('data_pagamento', { ascending: false });
+      const { data, error } = await supabase.from('retencao_pagamentos').select('*').eq('retencao_id', retencaoId!).order('data_pagamento', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 };
@@ -184,7 +184,7 @@ export const useUpdateRetencao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, observacoes }: { id: string; observacoes: string }) => {
-      const { data, error } = await supabase.from('retencoes').update({ observacoes } as any).eq('id', id).select().single();
+      const { data, error } = await supabase.from('retencoes').update({ observacoes }).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
@@ -196,7 +196,7 @@ export const useCreateRetencaoFollowup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (followup: { retencao_id: string; data: string; horario: string; tipo_contato: string; observacoes?: string }) => {
-      const { data, error } = await supabase.from('retencao_followups' as any).insert(followup).select().single();
+      const { data, error } = await supabase.from('retencao_followups').insert(followup).select().single();
       if (error) throw error;
       return data;
     },
@@ -208,7 +208,7 @@ export const useCreateRetencaoPagamento = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (pagamento: { retencao_id: string; tipo: string; valor: number; data_pagamento: string; descricao?: string }) => {
-      const { data, error } = await supabase.from('retencao_pagamentos' as any).insert(pagamento).select().single();
+      const { data, error } = await supabase.from('retencao_pagamentos').insert(pagamento).select().single();
       if (error) throw error;
       return data;
     },
@@ -752,7 +752,7 @@ export const useCreateAceiteDigital = () => {
       }).select().single();
       if (error) throw error;
       // Also update proposta status to aprovada
-      await supabase.from('propostas').update({ status: 'aprovada' as any }).eq('id', params.proposta_id);
+      await supabase.from('propostas').update({ status: 'aprovada' }).eq('id', params.proposta_id);
       return data;
     },
     onSuccess: () => {
@@ -813,12 +813,12 @@ export const useAcessosCompartilhados = (tabela?: string, registroId?: string) =
   return useQuery({
     queryKey: ['acessos_compartilhados', tabela, registroId],
     queryFn: async () => {
-      let query = supabase.from('acessos_compartilhados' as any).select('*');
+      let query = supabase.from('acessos_compartilhados').select('*');
       if (tabela) query = query.eq('tabela', tabela);
       if (registroId) query = query.eq('registro_id', registroId);
       const { data, error } = await query;
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 };
@@ -830,7 +830,7 @@ export const useCheckRecordAccess = (tabela: string, registroId: string, nivel: 
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
-      const { data, error } = await supabase.rpc('has_record_access' as any, {
+      const { data, error } = await supabase.rpc('has_record_access', {
         _user_id: user.id,
         _tabela: tabela,
         _registro_id: registroId,
@@ -854,7 +854,7 @@ export const useSolicitarAcesso = () => {
         referencia_tabela: params.tabela,
         solicitante_id: user.id,
         comentario: params.comentario || null,
-        status: 'pendente' as any,
+        status: 'pendente',
       }).select().single();
       if (error) throw error;
       return data;
@@ -877,7 +877,7 @@ export const useInsertAcessoCompartilhado = () => {
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
-      const { data, error } = await supabase.from('acessos_compartilhados' as any).insert({
+      const { data, error } = await supabase.from('acessos_compartilhados').insert({
         user_id: params.user_id,
         tabela: params.tabela,
         registro_id: params.registro_id,

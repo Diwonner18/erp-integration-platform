@@ -131,7 +131,7 @@ const App = () => (
 
             {/* Commercial routes */}
             <Route path="/propostas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="propostas">
                 <Propostas />
               </ProtectedRoute>
             } />

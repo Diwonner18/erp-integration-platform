@@ -163,7 +163,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/alteracoes-escopo" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="alteracoes_escopo">
                 <AlteracoesEscopo />
               </ProtectedRoute>
             } />

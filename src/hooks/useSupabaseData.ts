@@ -854,7 +854,7 @@ export const useSolicitarAcesso = () => {
         referencia_tabela: params.tabela,
         solicitante_id: user.id,
         comentario: params.comentario || null,
-        status: 'pendente' as any,
+        status: 'pendente',
       }).select().single();
       if (error) throw error;
       return data;

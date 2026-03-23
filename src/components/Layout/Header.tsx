@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import NotificationPanel from './NotificationPanel';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useRealtimeNotificacoes } from '@/hooks/useRealtimeNotificacoes';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;

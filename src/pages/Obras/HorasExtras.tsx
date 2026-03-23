@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters';
 import { useHorasExtras, useCreateHorasExtras, useUpdateHorasExtras, useObras } from '@/hooks/useSupabaseData';
+import { useColaboradores } from '@/hooks/useColaboradoresData';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 

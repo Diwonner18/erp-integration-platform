@@ -10,6 +10,7 @@ import { useColaboradores, useCreateColaborador, useDeleteColaborador } from '@/
 import ColaboradorDetailModal from './ColaboradorDetailModal';
 import NovoColaboradorModal from './NovoColaboradorModal';
 import { toast } from 'sonner';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ColaboradoresPage = () => {
   const [search, setSearch] = useState('');

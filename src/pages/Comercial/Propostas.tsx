@@ -101,7 +101,7 @@ const Propostas = () => {
             <h1 className="text-3xl font-bold font-title text-foreground">Propostas</h1>
             <p className="text-muted-foreground mt-1">Gerenciar propostas e contratos</p>
           </div>
-          <Button onClick={() => setShowNovaPropostaModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Proposta</Button>
+          {perms.incluir_editar && <Button onClick={() => setShowNovaPropostaModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Nova Proposta</Button>}
         </div>
 
         <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>

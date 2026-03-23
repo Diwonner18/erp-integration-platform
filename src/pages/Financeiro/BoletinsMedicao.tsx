@@ -68,7 +68,7 @@ const BoletinsMedicao = () => {
             <h1 className="text-3xl font-bold font-title text-foreground">Boletins de Medição</h1>
             <p className="text-muted-foreground mt-1">Emitir boletins para faturamento</p>
           </div>
-          <Button onClick={() => setShowNovoBoletimModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Novo Boletim</Button>
+          {incluir_editar && <Button onClick={() => setShowNovoBoletimModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Novo Boletim</Button>}
         </div>
 
         <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>

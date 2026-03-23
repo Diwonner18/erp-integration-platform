@@ -77,7 +77,7 @@ const ValoresUnitarios = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <span className="font-semibold text-primary">{formatCurrency(item.valor)}</span>
-                    <Button variant="outline" size="sm" onClick={() => { setSelectedItem(item); setFormData({ servico: item.servico, unidade: item.unidade || '', valor: String(item.valor) }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                    {incluir_editar && <Button variant="outline" size="sm" onClick={() => { setSelectedItem(item); setFormData({ servico: item.servico, unidade: item.unidade || '', valor: String(item.valor) }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>}
                   </div>
                 </div>
               </CardContent></Card>

@@ -78,7 +78,7 @@ const ModelosContrato = () => {
                       <p className="text-xs text-muted-foreground">Atualizado: {new Date(modelo.updated_at).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => { setSelectedModelo(modelo); setFormData({ titulo: modelo.titulo, tipo: modelo.tipo || '', conteudo: modelo.conteudo || '' }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>
+                  {incluir_editar && <Button variant="outline" size="sm" onClick={() => { setSelectedModelo(modelo); setFormData({ titulo: modelo.titulo, tipo: modelo.tipo || '', conteudo: modelo.conteudo || '' }); setShowEditModal(true); }}><Edit className="w-4 h-4" /></Button>}
                 </div>
               </CardContent></Card>
             ))}

@@ -129,7 +129,7 @@ const RelatorioDiarioObra = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" data-tour="page-tabs">
           <TabsList>
-            <TabsTrigger value="registro">Novo Registro</TabsTrigger>
+            {incluir_editar && <TabsTrigger value="registro">Novo Registro</TabsTrigger>}
             <TabsTrigger value="visualizar">Visualizar Relatórios ({relatorios.length})</TabsTrigger>
           </TabsList>
 

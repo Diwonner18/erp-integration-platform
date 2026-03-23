@@ -268,7 +268,7 @@ const App = () => (
 
             {/* EPIs */}
             <Route path="/epis" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="epis">
                 <EPIs />
               </ProtectedRoute>
             } />

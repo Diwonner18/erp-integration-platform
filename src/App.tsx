@@ -136,22 +136,22 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/valores-unitarios" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="valores_unitarios">
                 <ValoresUnitarios />
               </ProtectedRoute>
             } />
             <Route path="/aceites" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="aceites">
                 <AceitesDigitais />
               </ProtectedRoute>
             } />
             <Route path="/modelos-contrato" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="modelos_contrato">
                 <ModelosContrato />
               </ProtectedRoute>
             } />
             <Route path="/relatorios-comerciais" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'comercial']} modulo="relatorios_comerciais">
                 <RelatoriosComerciais />
               </ProtectedRoute>
             } />

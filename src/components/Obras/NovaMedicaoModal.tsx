@@ -48,7 +48,7 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
     register, handleSubmit, setValue, watch, reset, formState: { errors }
   } = useForm<MedicaoFormData>({
     resolver: zodResolver(medicaoSchema),
-    defaultValues: { percentual: 0, valor_bruto: 0, taxa_igpm: 0 }
+    defaultValues: { percentual: 0, valor_bruto: 0, metragem: 0, taxa_igpm: 0 }
   });
 
   const valorBruto = watch('valor_bruto') || 0;

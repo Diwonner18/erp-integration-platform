@@ -242,12 +242,12 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/fechamento-mensal" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira']} modulo="fechamento_mensal">
                 <FechamentoMensal />
               </ProtectedRoute>
             } />
             <Route path="/lancamento-despesas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira', 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'financeira', 'obras']} modulo="despesas">
                 <LancamentoDespesas />
               </ProtectedRoute>
             } />

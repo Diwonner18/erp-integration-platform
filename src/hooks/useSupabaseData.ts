@@ -184,7 +184,7 @@ export const useUpdateRetencao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, observacoes }: { id: string; observacoes: string }) => {
-      const { data, error } = await supabase.from('retencoes').update({ observacoes } as any).eq('id', id).select().single();
+      const { data, error } = await supabase.from('retencoes').update({ observacoes }).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },

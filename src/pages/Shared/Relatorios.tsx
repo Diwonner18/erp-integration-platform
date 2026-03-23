@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { BarChart3, Download, Users, DollarSign, Calendar, TrendingUp, Filter, CalendarIcon } from 'lucide-react';
 import { useObras } from '@/hooks/useSupabaseData';
 import { useDespesas } from '@/hooks/useSupabaseData';
-import { exportToPDF, formatCurrencyExport } from '@/lib/exportUtils';
+import { exportToPDF, exportToExcel, formatCurrencyExport } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<string, string> = {

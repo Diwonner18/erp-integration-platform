@@ -752,7 +752,7 @@ export const useCreateAceiteDigital = () => {
       }).select().single();
       if (error) throw error;
       // Also update proposta status to aprovada
-      await supabase.from('propostas').update({ status: 'aprovada' as any }).eq('id', params.proposta_id);
+      await supabase.from('propostas').update({ status: 'aprovada' }).eq('id', params.proposta_id);
       return data;
     },
     onSuccess: () => {

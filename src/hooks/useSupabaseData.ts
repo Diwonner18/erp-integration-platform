@@ -877,7 +877,7 @@ export const useInsertAcessoCompartilhado = () => {
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
-      const { data, error } = await supabase.from('acessos_compartilhados' as any).insert({
+      const { data, error } = await supabase.from('acessos_compartilhados').insert({
         user_id: params.user_id,
         tabela: params.tabela,
         registro_id: params.registro_id,

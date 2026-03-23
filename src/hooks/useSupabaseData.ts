@@ -208,7 +208,7 @@ export const useCreateRetencaoPagamento = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (pagamento: { retencao_id: string; tipo: string; valor: number; data_pagamento: string; descricao?: string }) => {
-      const { data, error } = await supabase.from('retencao_pagamentos' as any).insert(pagamento).select().single();
+      const { data, error } = await supabase.from('retencao_pagamentos').insert(pagamento).select().single();
       if (error) throw error;
       return data;
     },

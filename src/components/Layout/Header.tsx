@@ -84,6 +84,11 @@ const Header = ({ onToggleSidebar, onStartTour }: HeaderProps) => {
               className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-full relative transition-colors"
             >
               <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-destructive-foreground bg-destructive rounded-full">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
             
             {!isMobile && (

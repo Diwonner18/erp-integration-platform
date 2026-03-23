@@ -173,7 +173,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/horas-extras" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras', 'financeira']} modulo="horas_extras">
                 <HorasExtras />
               </ProtectedRoute>
             } />

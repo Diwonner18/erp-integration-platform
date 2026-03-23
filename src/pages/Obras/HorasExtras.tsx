@@ -190,7 +190,36 @@ const HorasExtrasPage = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Horas Extras</DialogTitle></DialogHeader>
             <form onSubmit={handleSave} className="space-y-4">
-              <div><Label>Funcionário</Label><Input value={formData.funcionario} onChange={(e) => setFormData({...formData, funcionario: e.target.value})} required /></div>
+              <div><Label>Funcionário</Label>
+                <Select value={formData.funcionario} onValueChange={(v) => setFormData({...formData, funcionario: v})}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                  <SelectContent>{(colaboradores as any[]).map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Categoria</Label>
+                  <Select value={formData.categoria} onValueChange={(v) => setFormData({...formData, categoria: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">A</SelectItem>
+                      <SelectItem value="B">B</SelectItem>
+                      <SelectItem value="C">C</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Tipo</Label>
+                  <Select value={formData.tipo_hora_extra} onValueChange={(v) => setFormData({...formData, tipo_hora_extra: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="virada">Virada</SelectItem>
+                      <SelectItem value="dobra">Dobra</SelectItem>
+                      <SelectItem value="diaria">Diária</SelectItem>
+                      <SelectItem value="continuacao">Continuação</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div><Label>Horas</Label><Input type="number" value={formData.horas} onChange={(e) => setFormData({...formData, horas: e.target.value})} required /></div>
               <div><Label>Obra</Label>
                 <Select value={formData.obra_id} onValueChange={(v) => setFormData({...formData, obra_id: v})}>

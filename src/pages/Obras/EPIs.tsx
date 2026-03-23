@@ -332,7 +332,14 @@ const EPIs = () => {
                 </div>
                 <div>
                   <Label>Colaborador *</Label>
-                  <Input value={formData.colaborador} onChange={(e) => setFormData({ ...formData, colaborador: e.target.value })} placeholder="Nome do colaborador" />
+                  <Select value={formData.colaborador} onValueChange={(v) => setFormData({ ...formData, colaborador: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o colaborador" /></SelectTrigger>
+                    <SelectContent>
+                      {colaboradores.map((c: any) => (
+                        <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Obra *</Label>

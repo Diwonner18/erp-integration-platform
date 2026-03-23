@@ -119,9 +119,11 @@ const ColaboradoresPage = () => {
                         <Button variant="ghost" size="sm" onClick={() => setSelectedId(c.id)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                        {perms.excluir && (
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

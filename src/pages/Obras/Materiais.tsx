@@ -158,27 +158,31 @@ const Materiais = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3">
                     <Badge variant={getStatusBadge(material.status)}>
                       {getStatusLabel(material.status)}
                     </Badge>
                     
                     <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditarMaterial(material)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleExcluirMaterial(material)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {perms.incluir_editar && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditarMaterial(material)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {perms.excluir && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleExcluirMaterial(material)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

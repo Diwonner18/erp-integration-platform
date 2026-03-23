@@ -268,8 +268,8 @@ const EPIs = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => handleEdit(registro)}><Pencil className="w-4 h-4" /></Button>
-                                <Button variant="ghost" size="icon" onClick={() => setDeleteId(registro.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                                {perms.incluir_editar && <Button variant="ghost" size="icon" onClick={() => handleEdit(registro)}><Pencil className="w-4 h-4" /></Button>}
+                                {perms.excluir && <Button variant="ghost" size="icon" onClick={() => setDeleteId(registro.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>}
                               </div>
                             </TableCell>
                           </TableRow>

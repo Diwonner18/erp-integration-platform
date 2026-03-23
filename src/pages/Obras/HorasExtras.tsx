@@ -136,7 +136,7 @@ const HorasExtrasPage = () => {
               exportToExcel({ title: 'Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
-            <Button onClick={() => setShowAddModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>
+            {perms.incluir_editar && <Button onClick={() => setShowAddModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>}
           </div>
         </div>
 

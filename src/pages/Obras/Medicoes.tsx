@@ -164,10 +164,12 @@ const Medicoes = () => {
               });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
-            <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Medição
-            </Button>
+            {perms.incluir_editar && (
+              <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Medição
+              </Button>
+            )}
           </div>
         </div>
 

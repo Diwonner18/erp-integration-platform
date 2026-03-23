@@ -258,6 +258,13 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            {/* Colaboradores */}
+            <Route path="/colaboradores" element={
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+                <ColaboradoresPage />
+              </ProtectedRoute>
+            } />
+
             {/* EPIs */}
             <Route path="/epis" element={
               <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>

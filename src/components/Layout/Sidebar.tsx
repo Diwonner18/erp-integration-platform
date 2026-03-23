@@ -32,6 +32,32 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
+import { useAllUserPermissions } from '@/hooks/usePermissoesPerfil';
+
+// Map paths to module names in permissoes_perfil
+const PATH_TO_MODULE: Record<string, string> = {
+  '/propostas': 'propostas',
+  '/medicoes': 'medicoes',
+  '/colaboradores': 'colaboradores',
+  '/epis': 'epis',
+  '/horas-extras': 'horas_extras',
+  '/materiais-equipamentos': 'materiais',
+  '/programacao': 'programacoes',
+  '/lancamento-despesas': 'despesas',
+  '/boletins-medicao': 'boletins',
+  '/alteracoes-escopo': 'alteracoes_escopo',
+  '/relatorio-diario-obra': 'relatorio_diario',
+  '/relatorios-obra': 'relatorios_obra',
+  '/valores-unitarios': 'valores_unitarios',
+  '/aceites': 'aceites',
+  '/modelos-contrato': 'modelos_contrato',
+  '/relatorios-comerciais': 'relatorios_comerciais',
+  '/financeiro': 'financeiro',
+  '/retencoes': 'retencoes',
+  '/fechamento-mensal': 'fechamento_mensal',
+  '/exportar-dados': 'exportar_dados',
+  '/relatorios-financeiros': 'relatorios_financeiros',
+};
 
 interface SidebarProps {
   isOpen?: boolean;

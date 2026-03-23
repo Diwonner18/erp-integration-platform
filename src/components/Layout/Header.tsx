@@ -19,6 +19,7 @@ const Header = ({ onToggleSidebar, onStartTour }: HeaderProps) => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const isMobile = useIsMobile();
+  const { unreadCount } = useRealtimeNotificacoes();
 
   const handleLogout = () => {
     logout();

@@ -196,7 +196,7 @@ export const useCreateRetencaoFollowup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (followup: { retencao_id: string; data: string; horario: string; tipo_contato: string; observacoes?: string }) => {
-      const { data, error } = await supabase.from('retencao_followups' as any).insert(followup).select().single();
+      const { data, error } = await supabase.from('retencao_followups').insert(followup).select().single();
       if (error) throw error;
       return data;
     },

@@ -1660,6 +1660,7 @@ export type Database = {
         }
         Returns: string
       }
+      is_demo_user: { Args: { _uid: string }; Returns: boolean }
       self_assign_area: {
         Args: { _area: Database["public"]["Enums"]["app_role"] }
         Returns: undefined

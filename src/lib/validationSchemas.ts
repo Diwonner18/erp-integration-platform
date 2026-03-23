@@ -147,6 +147,22 @@ export const alteracaoEscopoInsertSchema = z.object({
   status: z.enum(['pendente', 'em_analise', 'aprovada', 'rejeitada']).optional(),
 });
 
+export const valorUnitarioInsertSchema = z.object({
+  servico: nonEmptyString,
+  valor: positiveNumber,
+  unidade: optionalString,
+  descricao: optionalString,
+  cliente_id: uuidSchema.optional().nullable(),
+  ativo: z.boolean().optional().nullable(),
+});
+
+export const modeloContratoInsertSchema = z.object({
+  titulo: nonEmptyString,
+  conteudo: optionalString,
+  tipo: optionalString,
+  ativo: z.boolean().optional().nullable(),
+});
+
 // ==================== HELPER ====================
 
 export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {

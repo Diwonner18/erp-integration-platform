@@ -175,10 +175,12 @@ const EPIs = () => {
           </div>
           <div className="flex gap-2">
             <FileImportButton targetType="epis" />
-            <Button onClick={handleNovoRegistro} data-tour="page-new-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Registrar EPI
-            </Button>
+            {perms.incluir_editar && (
+              <Button onClick={handleNovoRegistro} data-tour="page-new-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Registrar EPI
+              </Button>
+            )}
           </div>
         </div>
 

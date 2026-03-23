@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { BarChart3, Download, Users, DollarSign, Calendar, TrendingUp, Filter, CalendarIcon } from 'lucide-react';
+import { BarChart3, Download, Users, DollarSign, Calendar, TrendingUp, Filter, CalendarIcon, FileSpreadsheet } from 'lucide-react';
 import { useObras } from '@/hooks/useSupabaseData';
 import { useDespesas } from '@/hooks/useSupabaseData';
 import { exportToPDF, exportToExcel, formatCurrencyExport } from '@/lib/exportUtils';

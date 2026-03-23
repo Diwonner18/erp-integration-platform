@@ -13,6 +13,7 @@ import { AdvancedFilters, FilterValues } from '@/components/ui/advanced-filters'
 import { useToast } from '@/hooks/use-toast';
 import { usePropostas, useUpdateProposta, useObras } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Propostas = () => {
   const { toast } = useToast();

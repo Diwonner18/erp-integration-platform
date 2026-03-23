@@ -98,6 +98,7 @@ const NovaMedicaoModal = ({ isOpen, onClose }: NovaMedicaoModalProps) => {
         valor: valorFinal,
         taxa_igpm: data.taxa_igpm || 0,
         correcao_igpm: correcaoIgpm,
+        metragem: data.metragem || 0,
         observacoes: data.observacoes || null,
         descricao: data.descricao || null,
         programacoes_ids: selectedProgramacoes.length > 0 ? selectedProgramacoes : null,

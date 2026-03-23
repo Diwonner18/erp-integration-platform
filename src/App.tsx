@@ -185,27 +185,27 @@ const App = () => (
 
             {/* New Operations detail routes */}
             <Route path="/obras-concluidas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">
                 <ObrasConcluidas />
               </ProtectedRoute>
             } />
             <Route path="/obras-em-andamento" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">
                 <ObrasEmAndamento />
               </ProtectedRoute>
             } />
             <Route path="/obras-agendadas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">
                 <ObrasAgendadas />
               </ProtectedRoute>
             } />
             <Route path="/equipe-ativa" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="colaboradores">
                 <EquipeAtiva />
               </ProtectedRoute>
             } />
             <Route path="/central-alertas" element={
-              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']}>
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">
                 <CentralAlertas />
               </ProtectedRoute>
             } />

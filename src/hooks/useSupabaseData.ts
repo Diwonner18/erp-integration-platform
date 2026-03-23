@@ -813,12 +813,12 @@ export const useAcessosCompartilhados = (tabela?: string, registroId?: string) =
   return useQuery({
     queryKey: ['acessos_compartilhados', tabela, registroId],
     queryFn: async () => {
-      let query = supabase.from('acessos_compartilhados' as any).select('*');
+      let query = supabase.from('acessos_compartilhados').select('*');
       if (tabela) query = query.eq('tabela', tabela);
       if (registroId) query = query.eq('registro_id', registroId);
       const { data, error } = await query;
       if (error) throw error;
-      return data as any[];
+      return data;
     },
   });
 };

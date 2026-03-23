@@ -1,56 +1,102 @@
 
 
-# Etapa 1: Sidebar agrupada + Campo m² na Medição
+# Etapa 2: Modulo de Colaboradores
 
-## 1. Sidebar com agrupamento visual (Sidebar.tsx)
+Criar o modulo completo de Colaboradores com tabelas no banco, hooks de dados e pagina com abas conforme referencia do Obra Prima.
 
-Reorganizar o menu do admin em seções visuais com labels separadores, conforme pedido pelas clientes ("caixinhas" para cada módulo):
+---
 
+## 1. Banco de Dados (1 migration com todas as tabelas)
+
+### Tabela `colaboradores`
 ```text
-ADMINISTRAÇÃO
-  Dashboard | Usuários | Permissões | Aprovações | Automação | Relatórios Gerais
-
-COMERCIAL
-  Propostas | Valores Unitários | Aceites | Modelos Contrato | Relatórios Comerciais
-
-OBRAS
-  Programação | Medições | Alterações de Escopo | Materiais e Equip. | EPIs | Horas Extras | RDO | Relatórios Obra
-
-FINANCEIRO
-  Controle Financeiro | Boletins | Despesas | Retenções | Fechamento | Exportar | Relatórios Financeiros
+id, nome, cpf, rg, data_nascimento, telefone, celular, email,
+cep, logradouro, numero, bairro, complemento, uf, cidade,
+data_admissao, cargo, funcao, tipo_contrato (text), salario_base (numeric),
+pis_pasep, status (ativo/afastado/desligado),
+created_by, created_at, updated_at
 ```
 
-**Implementação:**
-- Refatorar `getMenuItemsByRole` para retornar arrays agrupados com `{ section: string, items: [...] }`
-- Para o role `admin`, mostrar **TODAS** as seções (Administração + Comercial + Obras + Financeiro) com separadores visuais
-- Para o `gerenciador_tecnico` sem impersonação, mostrar o mesmo layout completo
-- Cada seção renderizada com um label uppercase cinza e um separador sutil
-- Manter o comportamento existente para roles individuais (obras, financeira, comercial, cliente)
+### Tabela `colaborador_beneficios`
+```text
+id, colaborador_id (FK), tipo (vr/vt/mobilidade/outro), valor, ativo, created_at
+```
 
-**Arquivo:** `src/components/Layout/Sidebar.tsx`
+### Tabela `colaborador_alocacoes`
+```text
+id, colaborador_id (FK), obra_id (FK), data_inicio, data_fim, funcao, created_at
+```
+
+### Tabela `banco_horas`
+```text
+id, colaborador_id (FK), tipo (credito/debito), horas (numeric), motivo, data, created_by, created_at
+```
+
+### Tabela `faltas_licencas`
+```text
+id, colaborador_id (FK), tipo (falta_justificada/falta_injustificada/licenca/afastamento),
+data_inicio, data_fim, remunerada (boolean), observacoes, created_by, created_at
+```
+
+RLS: admin/GT full access, obras manage, financeira view.
 
 ---
 
-## 2. Campo metragem (m²) na Medição
+## 2. Hooks de Dados (useSupabaseData.ts)
 
-**Migration SQL:** Adicionar coluna `metragem` na tabela `medicoes`:
-```sql
-ALTER TABLE public.medicoes ADD COLUMN IF NOT EXISTS metragem numeric DEFAULT 0;
-```
-
-**Frontend:**
-- `src/components/Obras/NovaMedicaoModal.tsx`: Adicionar campo "Metragem (m²)" no formulário, campo numérico com step 0.01
-- Atualizar o schema Zod para incluir `metragem: z.number().min(0).optional()`
-- `src/pages/Obras/Medicoes.tsx`: Exibir metragem na listagem/detalhe quando preenchida
-
-**Hooks:** Atualizar `useCreateMedicao` em `useSupabaseData.ts` para incluir `metragem` no insert
+Adicionar hooks:
+- `useColaboradores()` - listagem com filtro por status
+- `useCreateColaborador()` - insert com validacao Zod
+- `useUpdateColaborador()` - update
+- `useDeleteColaborador()` - delete
+- `useColaboradorBeneficios(colaboradorId)` - beneficios do colaborador
+- `useCreateBeneficio()` / `useDeleteBeneficio()`
+- `useColaboradorAlocacoes(colaboradorId)` - historico de alocacao
+- `useCreateAlocacao()` / `useDeleteAlocacao()`
+- `useBancoHoras(colaboradorId)` - movimentacoes banco de horas
+- `useCreateBancoHoras()`
+- `useFaltasLicencas(colaboradorId)` - faltas e licencas
+- `useCreateFaltaLicenca()`
 
 ---
 
-## Arquivos modificados
-- `src/components/Layout/Sidebar.tsx` (refatoração seções visuais)
-- `src/components/Obras/NovaMedicaoModal.tsx` (campo m²)
-- `src/pages/Obras/Medicoes.tsx` (exibir m²)
-- `src/hooks/useSupabaseData.ts` (incluir metragem no mutation)
-- 1 migration SQL (coluna metragem)
+## 3. Pagina de Colaboradores
+
+### Listagem (`src/pages/Colaboradores/ColaboradoresPage.tsx`)
+- Tabela com colunas: Nome, CPF, Cargo, Status, Acoes
+- Busca por nome/CPF
+- Filtro por status (ativo/afastado/desligado)
+- Botao "Novo Colaborador"
+
+### Modal de Detalhe (`src/pages/Colaboradores/ColaboradorDetailModal.tsx`)
+Com abas:
+- **Dados**: Nome, CPF, RG, Dt. Nascimento, Telefone, Celular, Email, Endereco completo
+- **Contratacao**: Data admissao, cargo, funcao, tipo contrato, salario base, PIS/PASEP
+- **Beneficios**: Lista de beneficios (VR, VT, Mobilidade), adicionar/remover
+- **EPI**: EPIs entregues (busca da tabela `epis` filtrado por colaborador)
+- **Historico de Alocacao**: Obras onde trabalhou, datas, funcao (para CNO)
+- **Banco de Horas / Faltas**: Saldo, movimentacoes, faltas e licencas
+
+---
+
+## 4. Integracao
+
+- Rota `/colaboradores` no `App.tsx`
+- Item "Colaboradores" na secao OBRAS do Sidebar
+- Schema Zod em `validationSchemas.ts`
+
+---
+
+## Arquivos
+
+| Tipo | Arquivo |
+|---|---|
+| Migration | 1 SQL (5 tabelas + RLS) |
+| Novo | `src/pages/Colaboradores/ColaboradoresPage.tsx` |
+| Novo | `src/pages/Colaboradores/ColaboradorDetailModal.tsx` |
+| Alteracao | `src/hooks/useSupabaseData.ts` |
+| Alteracao | `src/lib/validationSchemas.ts` |
+| Alteracao | `src/App.tsx` (rota) |
+| Alteracao | `src/components/Layout/Sidebar.tsx` (item menu) |
+| Alteracao | `src/integrations/supabase/types.ts` (auto-atualizado apos migration) |
 

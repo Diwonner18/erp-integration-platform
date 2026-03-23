@@ -1151,6 +1151,42 @@ export type Database = {
           },
         ]
       }
+      permissoes_perfil: {
+        Row: {
+          acesso_modulo: boolean
+          created_at: string
+          excluir: boolean
+          id: string
+          incluir_editar: boolean
+          modulo: string
+          perfil: string
+          pesquisar: boolean
+          updated_at: string
+        }
+        Insert: {
+          acesso_modulo?: boolean
+          created_at?: string
+          excluir?: boolean
+          id?: string
+          incluir_editar?: boolean
+          modulo: string
+          perfil: string
+          pesquisar?: boolean
+          updated_at?: string
+        }
+        Update: {
+          acesso_modulo?: boolean
+          created_at?: string
+          excluir?: boolean
+          id?: string
+          incluir_editar?: boolean
+          modulo?: string
+          perfil?: string
+          pesquisar?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

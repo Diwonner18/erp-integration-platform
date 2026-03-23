@@ -149,7 +149,7 @@ const Relatorios = () => {
               Exportar PDF
             </Button>
             <Button variant="outline" onClick={handleExportExcel} disabled={filteredObras.length === 0}>
-              <TableIcon className="w-4 h-4 mr-2" />
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
               Exportar XLS
             </Button>
           </div>

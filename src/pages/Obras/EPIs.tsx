@@ -42,6 +42,7 @@ const getValidityStatus = (validade: string | null) => {
 
 const EPIs = () => {
   const { toast } = useToast();
+  const perms = useUserModulePermissions('epis');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);

@@ -8,8 +8,10 @@ import { FileText, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useModelosContrato, useCreateModeloContrato, useUpdateModeloContrato } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const ModelosContrato = () => {
+  const { incluir_editar } = useUserModulePermissions('modelos_contrato');
   const { toast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);

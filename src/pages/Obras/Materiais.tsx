@@ -12,6 +12,7 @@ import EditMaterialModal from '@/components/Obras/EditMaterialModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { useMateriais, useDeleteMaterial, useUpdateMaterial } from '@/hooks/useSupabaseData';
+import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Materiais = () => {
   const { toast } = useToast();

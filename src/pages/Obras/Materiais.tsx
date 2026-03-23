@@ -120,10 +120,12 @@ const Materiais = () => {
           </div>
           <div className="flex gap-2">
             <FileImportButton targetType="materiais" />
-            <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Material
-            </Button>
+            {perms.incluir_editar && (
+              <Button onClick={() => setShowModal(true)} data-tour="page-new-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Material
+              </Button>
+            )}
           </div>
         </div>
 

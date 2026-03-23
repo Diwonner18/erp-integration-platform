@@ -11,10 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { BarChart3, Download, Users, DollarSign, Calendar, TrendingUp, Filter, CalendarIcon } from 'lucide-react';
+import { BarChart3, Download, Users, DollarSign, Calendar, TrendingUp, Filter, CalendarIcon, FileSpreadsheet } from 'lucide-react';
 import { useObras } from '@/hooks/useSupabaseData';
 import { useDespesas } from '@/hooks/useSupabaseData';
-import { exportToPDF, formatCurrencyExport } from '@/lib/exportUtils';
+import { exportToPDF, exportToExcel, formatCurrencyExport } from '@/lib/exportUtils';
 import { toast } from 'sonner';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -99,26 +99,38 @@ const Relatorios = () => {
 
   const obrasList = useMemo(() => [...new Set(obras.map(o => o.nome))], [obras]);
 
+  const exportColumns = [
+    { header: 'Obra', key: 'nome' },
+    { header: 'Cliente', key: 'cliente' },
+    { header: 'Status', key: 'statusLabel' },
+    { header: 'Início', key: 'dataLabel' },
+    { header: 'Valor Contrato', key: 'valor', format: formatCurrencyExport },
+  ];
+
+  const exportData = filteredObras.map(o => ({
+    nome: o.nome,
+    cliente: o.cliente,
+    statusLabel: STATUS_LABELS[o.status] || o.status,
+    dataLabel: o.data ? format(o.data, 'dd/MM/yyyy') : '-',
+    valor: o.valor,
+  }));
+
   const handleExportPDF = () => {
-    exportToPDF({
-      title: 'Relatório Geral - Dashboard',
-      filename: `relatorio-geral-${format(new Date(), 'yyyy-MM-dd')}`,
-      columns: [
-        { header: 'Obra', key: 'nome' },
-        { header: 'Cliente', key: 'cliente' },
-        { header: 'Status', key: 'statusLabel' },
-        { header: 'Início', key: 'dataLabel' },
-        { header: 'Valor Contrato', key: 'valor', format: formatCurrencyExport },
-      ],
-      data: filteredObras.map(o => ({
-        nome: o.nome,
-        cliente: o.cliente,
-        statusLabel: STATUS_LABELS[o.status] || o.status,
-        dataLabel: o.data ? format(o.data, 'dd/MM/yyyy') : '-',
-        valor: o.valor,
-      })),
-    });
+    if (filteredObras.length === 0) {
+      toast.warning('Nenhum dado para exportar. Ajuste os filtros.');
+      return;
+    }
+    exportToPDF({ title: 'Relatório Geral - Dashboard', filename: `relatorio-geral-${format(new Date(), 'yyyy-MM-dd')}`, columns: exportColumns, data: exportData });
     toast.success('PDF exportado com sucesso!');
+  };
+
+  const handleExportExcel = () => {
+    if (filteredObras.length === 0) {
+      toast.warning('Nenhum dado para exportar. Ajuste os filtros.');
+      return;
+    }
+    exportToExcel({ title: 'Relatório Geral - Dashboard', filename: `relatorio-geral-${format(new Date(), 'yyyy-MM-dd')}`, columns: exportColumns, data: exportData });
+    toast.success('Excel exportado com sucesso!');
   };
 
   const isLoading = loadingObras || loadingDespesas;
@@ -131,10 +143,16 @@ const Relatorios = () => {
             <h1 className="text-3xl font-bold text-foreground">Relatórios Gerais</h1>
             <p className="text-muted-foreground mt-1">Visão completa de todos os indicadores</p>
           </div>
-          <Button onClick={handleExportPDF} disabled={filteredObras.length === 0} data-tour="page-export">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar Dashboard
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExportPDF} disabled={filteredObras.length === 0} data-tour="page-export">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar PDF
+            </Button>
+            <Button variant="outline" onClick={handleExportExcel} disabled={filteredObras.length === 0}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Exportar XLS
+            </Button>
+          </div>
         </div>
 
         <Card data-tour="page-filters">

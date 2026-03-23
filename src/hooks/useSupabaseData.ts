@@ -6,6 +6,7 @@ import {
   materialInsertSchema, equipamentoInsertSchema, programacaoInsertSchema,
   epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
   relatorioDiarioInsertSchema, horasExtrasInsertSchema, alteracaoEscopoInsertSchema,
+  valorUnitarioInsertSchema, modeloContratoInsertSchema,
   validateInput,
 } from '@/lib/validationSchemas';
 

@@ -10,16 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateAlteracaoEscopo, useObras } from '@/hooks/useSupabaseData';
 
 const sugestaoSchema = z.object({
-  obra: z.string().min(1, 'Selecione uma obra'),
-  tipo: z.enum(['adicao', 'remocao', 'modificacao']),
-  titulo: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
-  descricao: z.string().min(20, 'Descrição deve ter pelo menos 20 caracteres'),
+  obra_id: z.string().min(1, 'Selecione uma obra'),
+  descricao: z.string().min(5, 'Descrição deve ter pelo menos 5 caracteres'),
   justificativa: z.string().min(10, 'Justificativa é obrigatória'),
   impactoValor: z.number().optional(),
   impactoPrazo: z.number().optional(),
-  prioridade: z.enum(['baixa', 'media', 'alta', 'critica']),
 });
 
 type SugestaoFormData = z.infer<typeof sugestaoSchema>;
@@ -31,9 +29,8 @@ interface SugestaoEscopoModalProps {
 
 const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const obras: string[] = [];
+  const createAlteracao = useCreateAlteracaoEscopo();
+  const { data: obras = [] } = useObras();
 
   const {
     register,
@@ -43,33 +40,31 @@ const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
     formState: { errors }
   } = useForm<SugestaoFormData>({
     resolver: zodResolver(sugestaoSchema),
-    defaultValues: {
-      prioridade: 'media',
-    }
   });
 
   const onSubmit = async (data: SugestaoFormData) => {
-    setIsLoading(true);
-    
     try {
-      // Simular chamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await createAlteracao.mutateAsync({
+        obra_id: data.obra_id,
+        descricao: data.descricao,
+        justificativa: data.justificativa || null,
+        impacto_valor: data.impactoValor || 0,
+        impacto_prazo: data.impactoPrazo || 0,
+      });
       
       toast({
         title: 'Sugestão enviada',
-        description: `Sua sugestão "${data.titulo}" foi enviada para análise`,
+        description: 'Sua sugestão foi enviada para análise',
       });
       
       reset();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro',
-        description: 'Ocorreu um erro ao enviar a sugestão',
+        description: error.message || 'Ocorreu um erro ao enviar a sugestão',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -82,75 +77,26 @@ const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="obra">Obra</Label>
-            <Select onValueChange={(value) => setValue('obra', value)}>
+            <Label>Obra</Label>
+            <Select onValueChange={(value) => setValue('obra_id', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a obra" />
               </SelectTrigger>
               <SelectContent>
                 {obras.map((obra) => (
-                  <SelectItem key={obra} value={obra}>
-                    {obra}
+                  <SelectItem key={obra.id} value={obra.id}>
+                    {obra.nome}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.obra && (
-              <p className="text-sm text-red-600">{errors.obra.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo de Alteração</Label>
-              <Select onValueChange={(value) => setValue('tipo', value as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="adicao">Adição</SelectItem>
-                  <SelectItem value="remocao">Remoção</SelectItem>
-                  <SelectItem value="modificacao">Modificação</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.tipo && (
-                <p className="text-sm text-red-600">{errors.tipo.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="prioridade">Prioridade</Label>
-              <Select onValueChange={(value) => setValue('prioridade', value as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="critica">Crítica</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.prioridade && (
-                <p className="text-sm text-red-600">{errors.prioridade.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="titulo">Título da Sugestão</Label>
-            <Input
-              id="titulo"
-              {...register('titulo')}
-              placeholder="Ex: Adicionar tomadas extras na sala"
-            />
-            {errors.titulo && (
-              <p className="text-sm text-red-600">{errors.titulo.message}</p>
+            {errors.obra_id && (
+              <p className="text-sm text-destructive">{errors.obra_id.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="descricao">Descrição Detalhada</Label>
+            <Label htmlFor="descricao">Descrição da Alteração</Label>
             <Textarea
               id="descricao"
               {...register('descricao')}
@@ -158,7 +104,7 @@ const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
               rows={4}
             />
             {errors.descricao && (
-              <p className="text-sm text-red-600">{errors.descricao.message}</p>
+              <p className="text-sm text-destructive">{errors.descricao.message}</p>
             )}
           </div>
 
@@ -171,7 +117,7 @@ const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
               rows={3}
             />
             {errors.justificativa && (
-              <p className="text-sm text-red-600">{errors.justificativa.message}</p>
+              <p className="text-sm text-destructive">{errors.justificativa.message}</p>
             )}
           </div>
 
@@ -202,8 +148,8 @@ const SugestaoEscopoModal = ({ isOpen, onClose }: SugestaoEscopoModalProps) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Enviando...' : 'Enviar Sugestão'}
+            <Button type="submit" disabled={createAlteracao.isPending}>
+              {createAlteracao.isPending ? 'Enviando...' : 'Enviar Sugestão'}
             </Button>
           </DialogFooter>
         </form>

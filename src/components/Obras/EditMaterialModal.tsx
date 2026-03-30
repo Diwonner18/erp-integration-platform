@@ -4,32 +4,23 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useCheckRecordAccess } from '@/hooks/useSupabaseData';
+import { useToast } from '@/hooks/use-toast';
+import { useUpdateMaterial, useCheckRecordAccess } from '@/hooks/useSupabaseData';
 import AccessGuard from '@/components/shared/AccessGuard';
-
-interface Material {
-  id: number;
-  nome: string;
-  categoria: string;
-  quantidade: number;
-  unidade: string;
-  valorUnitario: string;
-  estoque: string;
-  created_by?: string;
-}
 
 interface EditMaterialModalProps {
   open: boolean;
   onClose: () => void;
-  material: Material | null;
-  onSave: (material: Material) => void;
+  material: any | null;
+  onSave?: (material: any) => void;
 }
 
 const EditMaterialModal = ({ open, onClose, material, onSave }: EditMaterialModalProps) => {
+  const { toast } = useToast();
+  const updateMaterial = useUpdateMaterial();
   const [formData, setFormData] = useState({
-    nome: '', categoria: '', quantidade: '', unidade: '', valorUnitario: '', estoque: ''
+    nome: '', quantidade: '', unidade: '', valorUnitario: '', fornecedor: '', status: ''
   });
-  const [loading, setLoading] = useState(false);
 
   const materialId = material?.id?.toString() || '';
   const { data: hasEditAccess, isLoading: checkingAccess } = useCheckRecordAccess('materiais', materialId, 'edit');
@@ -38,11 +29,11 @@ const EditMaterialModal = ({ open, onClose, material, onSave }: EditMaterialModa
     if (material) {
       setFormData({
         nome: material.nome || '',
-        categoria: material.categoria || '',
-        quantidade: material.quantidade ? material.quantidade.toString() : '',
+        quantidade: material.quantidade ? String(material.quantidade) : '',
         unidade: material.unidade || '',
-        valorUnitario: material.valorUnitario ? material.valorUnitario.replace('R$ ', '') : '',
-        estoque: material.estoque || ''
+        valorUnitario: material.valor_unitario ? String(material.valor_unitario) : '',
+        fornecedor: material.fornecedor || '',
+        status: material.status || 'pendente',
       });
     }
   }, [material]);
@@ -50,17 +41,36 @@ const EditMaterialModal = ({ open, onClose, material, onSave }: EditMaterialModa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!material) return;
-    setLoading(true);
-    const updatedMaterial = {
-      ...material,
-      nome: formData.nome, categoria: formData.categoria,
-      quantidade: parseInt(formData.quantidade), unidade: formData.unidade,
-      valorUnitario: `R$ ${formData.valorUnitario}`, estoque: formData.estoque
-    };
-    await new Promise(resolve => setTimeout(resolve, 500));
-    onSave(updatedMaterial);
-    setLoading(false);
-    onClose();
+
+    try {
+      const qty = parseFloat(formData.quantidade) || 0;
+      const unitVal = parseFloat(formData.valorUnitario) || 0;
+
+      await updateMaterial.mutateAsync({
+        id: material.id,
+        nome: formData.nome,
+        quantidade: qty,
+        unidade: formData.unidade,
+        valor_unitario: unitVal,
+        valor_total: qty * unitVal,
+        fornecedor: formData.fornecedor || null,
+        status: formData.status,
+      });
+
+      toast({
+        title: 'Material atualizado',
+        description: `${formData.nome} foi atualizado com sucesso`,
+      });
+
+      onSave?.(material);
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao atualizar',
+        description: error.message || 'Não foi possível atualizar o material.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -81,19 +91,6 @@ const EditMaterialModal = ({ open, onClose, material, onSave }: EditMaterialModa
               <Label>Nome do Material</Label>
               <Input value={formData.nome} onChange={(e) => setFormData({...formData, nome: e.target.value})} placeholder="Nome do material" required />
             </div>
-            <div>
-              <Label>Categoria</Label>
-              <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
-                <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fios e Cabos">Fios e Cabos</SelectItem>
-                  <SelectItem value="Disjuntores">Disjuntores</SelectItem>
-                  <SelectItem value="Tomadas e Interruptores">Tomadas e Interruptores</SelectItem>
-                  <SelectItem value="Eletrodutos">Eletrodutos</SelectItem>
-                  <SelectItem value="Ferramentas">Ferramentas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Quantidade</Label>
@@ -113,23 +110,27 @@ const EditMaterialModal = ({ open, onClose, material, onSave }: EditMaterialModa
               </div>
             </div>
             <div>
-              <Label>Valor Unitário</Label>
-              <Input value={formData.valorUnitario} onChange={(e) => setFormData({...formData, valorUnitario: e.target.value})} placeholder="0,00" required />
+              <Label>Valor Unitário (R$)</Label>
+              <Input type="number" step="0.01" value={formData.valorUnitario} onChange={(e) => setFormData({...formData, valorUnitario: e.target.value})} placeholder="0,00" required />
             </div>
             <div>
-              <Label>Status do Estoque</Label>
-              <Select value={formData.estoque} onValueChange={(value) => setFormData({...formData, estoque: value})}>
+              <Label>Fornecedor</Label>
+              <Input value={formData.fornecedor} onChange={(e) => setFormData({...formData, fornecedor: e.target.value})} placeholder="Fornecedor" />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
                 <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="adequado">Adequado</SelectItem>
-                  <SelectItem value="baixo">Baixo</SelectItem>
-                  <SelectItem value="critico">Crítico</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="entregue">Entregue</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
-              <Button type="submit" disabled={loading}>{loading ? 'Salvando...' : 'Salvar'}</Button>
+              <Button type="button" variant="outline" onClick={onClose} disabled={updateMaterial.isPending}>Cancelar</Button>
+              <Button type="submit" disabled={updateMaterial.isPending}>{updateMaterial.isPending ? 'Salvando...' : 'Salvar'}</Button>
             </div>
           </form>
         </AccessGuard>

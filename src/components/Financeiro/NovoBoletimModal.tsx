@@ -4,8 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateBoletim, useObras } from '@/hooks/useSupabaseData';
 
 interface NovoBoletimModalProps {
   open: boolean;
@@ -14,41 +16,50 @@ interface NovoBoletimModalProps {
 
 const NovoBoletimModal = ({ open, onClose }: NovoBoletimModalProps) => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const createBoletim = useCreateBoletim();
+  const { data: obras = [] } = useObras();
   const [formData, setFormData] = useState({
-    cliente: '',
-    periodo: '',
+    numero: '',
+    obra_id: '',
     valor: '',
-    numero: ''
+    data_emissao: '',
+    observacoes: '',
   });
+
+  const resetForm = () => {
+    setFormData({ numero: '', obra_id: '', valor: '', data_emissao: '', observacoes: '' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
+    if (!formData.obra_id) {
+      toast({ title: "Erro", description: "Selecione uma obra.", variant: "destructive" });
+      return;
+    }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await createBoletim.mutateAsync({
+        numero: formData.numero || null,
+        obra_id: formData.obra_id,
+        valor: formData.valor ? parseFloat(formData.valor) : null,
+        data_emissao: formData.data_emissao || null,
+        observacoes: formData.observacoes || null,
+      });
       
       toast({
         title: "Boletim criado",
         description: "Novo boletim de medição foi criado com sucesso.",
       });
       
+      resetForm();
       onClose();
-      setFormData({
-        cliente: '',
-        periodo: '',
-        valor: '',
-        numero: ''
-      });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Erro",
-        description: "Não foi possível criar o boletim.",
+        description: error.message || "Não foi possível criar o boletim.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -67,29 +78,32 @@ const NovoBoletimModal = ({ open, onClose }: NovoBoletimModalProps) => {
               value={formData.numero}
               onChange={(e) => setFormData({...formData, numero: e.target.value})}
               placeholder="BM-005"
-              required
             />
+          </div>
+
+          <div>
+            <Label>Obra</Label>
+            <Select value={formData.obra_id} onValueChange={(value) => setFormData({...formData, obra_id: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a obra" />
+              </SelectTrigger>
+              <SelectContent>
+                {obras.map((obra) => (
+                  <SelectItem key={obra.id} value={obra.id}>
+                    {obra.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
-            <Label htmlFor="cliente">Cliente</Label>
+            <Label htmlFor="data_emissao">Data de Emissão</Label>
             <Input
-              id="cliente"
-              value={formData.cliente}
-              onChange={(e) => setFormData({...formData, cliente: e.target.value})}
-              placeholder="Nome do cliente"
-              required
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="periodo">Período</Label>
-            <Input
-              id="periodo"
-              value={formData.periodo}
-              onChange={(e) => setFormData({...formData, periodo: e.target.value})}
-              placeholder="Jan/2024"
-              required
+              id="data_emissao"
+              type="date"
+              value={formData.data_emissao}
+              onChange={(e) => setFormData({...formData, data_emissao: e.target.value})}
             />
           </div>
           
@@ -98,10 +112,21 @@ const NovoBoletimModal = ({ open, onClose }: NovoBoletimModalProps) => {
             <Input
               id="valor"
               type="number"
+              step="0.01"
               value={formData.valor}
               onChange={(e) => setFormData({...formData, valor: e.target.value})}
               placeholder="0,00"
-              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="observacoes">Observações</Label>
+            <Textarea
+              id="observacoes"
+              value={formData.observacoes}
+              onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+              placeholder="Observações..."
+              rows={2}
             />
           </div>
           
@@ -109,8 +134,8 @@ const NovoBoletimModal = ({ open, onClose }: NovoBoletimModalProps) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Salvando...' : 'Criar Boletim'}
+            <Button type="submit" disabled={createBoletim.isPending}>
+              {createBoletim.isPending ? 'Salvando...' : 'Criar Boletim'}
             </Button>
           </div>
         </form>

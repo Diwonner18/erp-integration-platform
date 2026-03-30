@@ -113,7 +113,7 @@ const ColaboradoresPage = () => {
                 filtered.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.nome}</TableCell>
-                    <TableCell>{c.cpf || '—'}</TableCell>
+                    {canSeeSensitive && <TableCell>{c.cpf || '—'}</TableCell>}
                     <TableCell>{c.cargo || '—'}</TableCell>
                     <TableCell>{c.funcao || '—'}</TableCell>
                     <TableCell>{getStatusBadge(c.status)}</TableCell>

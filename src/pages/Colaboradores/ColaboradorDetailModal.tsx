@@ -141,8 +141,7 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
                 ['cargo', 'Cargo', 'text'],
                 ['funcao', 'Função', 'text'],
                 ['tipo_contrato', 'Tipo de Contrato', 'text'],
-                ['salario_base', 'Salário Base', 'number'],
-                ['pis_pasep', 'PIS/PASEP', 'text'],
+                ...(canSeeSensitive ? [['salario_base', 'Salário Base', 'number'], ['pis_pasep', 'PIS/PASEP', 'text']] : []),
               ].map(([field, label, type]) => (
                 <div key={field}>
                   <Label>{label}</Label>

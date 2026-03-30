@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 
 export const useDemoGuard = () => {
   const { user, impersonatedRole } = useAuth();
-  const isDemoUser = (user?.isDemo ?? false) && !impersonatedRole;
+  const isDemoUser = false; // Demo users now have full write access
 
   const guardAction = useCallback(
     (fn: () => void) => {

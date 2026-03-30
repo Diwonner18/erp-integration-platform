@@ -89,7 +89,7 @@ export const useUserModulePermissions = (modulo: string) => {
 export const useAllUserPermissions = () => {
   const { effectiveType, user } = useAuth();
   const perfil = effectiveType || user?.type || '';
-  const isFullAccess = perfil === 'admin' || perfil === 'gerenciador_tecnico' || user?.isDemo;
+  const isFullAccess = user?.type === 'admin' || user?.type === 'gerenciador_tecnico' || user?.isDemo;
 
   const query = useQuery({
     queryKey: ['permissoes_perfil', perfil],

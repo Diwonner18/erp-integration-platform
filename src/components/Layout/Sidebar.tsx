@@ -299,7 +299,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     : getUserTypeColor(user.type);
 
   const renderAgentSection = () => {
-    if (user.type !== 'gerenciador_tecnico' && !isDemo) return null;
+    if (user.type !== 'gerenciador_tecnico' && user.type !== 'admin' && !isDemo) return null;
 
     if (impersonatedRole) {
       return (

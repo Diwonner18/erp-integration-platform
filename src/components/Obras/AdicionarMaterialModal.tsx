@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateMaterial, useObras } from '@/hooks/useSupabaseData';
 
 const materialSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  categoria: z.string().min(1, 'Selecione uma categoria'),
+  obra_id: z.string().min(1, 'Selecione uma obra'),
   quantidade: z.number().min(1, 'Quantidade deve ser maior que 0'),
   unidade: z.string().min(1, 'Selecione a unidade'),
   valorUnitario: z.number().min(0, 'Valor deve ser positivo'),
@@ -30,18 +31,8 @@ interface AdicionarMaterialModalProps {
 
 const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps) => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const categorias = [
-    'Fios e Cabos',
-    'Disjuntores',
-    'Tomadas e Interruptores',
-    'Eletrodutos',
-    'Conectores',
-    'Iluminação',
-    'Quadros Elétricos',
-    'Outros'
-  ];
+  const createMaterial = useCreateMaterial();
+  const { data: obras = [] } = useObras();
 
   const unidades = ['UN', 'M', 'KG', 'CX', 'PC', 'RL'];
 
@@ -60,27 +51,30 @@ const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps
   });
 
   const onSubmit = async (data: MaterialFormData) => {
-    setIsLoading(true);
-    
     try {
-      // Simular chamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await createMaterial.mutateAsync({
+        nome: data.nome,
+        obra_id: data.obra_id,
+        quantidade: data.quantidade,
+        unidade: data.unidade,
+        valor_unitario: data.valorUnitario,
+        valor_total: data.quantidade * data.valorUnitario,
+        fornecedor: data.fornecedor || null,
+      });
       
       toast({
         title: 'Material adicionado',
-        description: `${data.nome} foi adicionado ao estoque com sucesso`,
+        description: `${data.nome} foi adicionado com sucesso`,
       });
       
       reset();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro',
-        description: 'Ocorreu um erro ao adicionar o material',
+        description: error.message || 'Ocorreu um erro ao adicionar o material',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -100,26 +94,26 @@ const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps
               placeholder="Ex: Cabo flexível 2,5mm"
             />
             {errors.nome && (
-              <p className="text-sm text-red-600">{errors.nome.message}</p>
+              <p className="text-sm text-destructive">{errors.nome.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="categoria">Categoria</Label>
-            <Select onValueChange={(value) => setValue('categoria', value)}>
+            <Label>Obra</Label>
+            <Select onValueChange={(value) => setValue('obra_id', value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione a categoria" />
+                <SelectValue placeholder="Selecione a obra" />
               </SelectTrigger>
               <SelectContent>
-                {categorias.map((categoria) => (
-                  <SelectItem key={categoria} value={categoria}>
-                    {categoria}
+                {obras.map((obra) => (
+                  <SelectItem key={obra.id} value={obra.id}>
+                    {obra.nome}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.categoria && (
-              <p className="text-sm text-red-600">{errors.categoria.message}</p>
+            {errors.obra_id && (
+              <p className="text-sm text-destructive">{errors.obra_id.message}</p>
             )}
           </div>
 
@@ -134,7 +128,7 @@ const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps
                 min="1"
               />
               {errors.quantidade && (
-                <p className="text-sm text-red-600">{errors.quantidade.message}</p>
+                <p className="text-sm text-destructive">{errors.quantidade.message}</p>
               )}
             </div>
 
@@ -153,7 +147,7 @@ const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps
                 </SelectContent>
               </Select>
               {errors.unidade && (
-                <p className="text-sm text-red-600">{errors.unidade.message}</p>
+                <p className="text-sm text-destructive">{errors.unidade.message}</p>
               )}
             </div>
 
@@ -168,7 +162,7 @@ const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps
                 min="0"
               />
               {errors.valorUnitario && (
-                <p className="text-sm text-red-600">{errors.valorUnitario.message}</p>
+                <p className="text-sm text-destructive">{errors.valorUnitario.message}</p>
               )}
             </div>
           </div>
@@ -196,8 +190,8 @@ const AdicionarMaterialModal = ({ isOpen, onClose }: AdicionarMaterialModalProps
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Adicionando...' : 'Adicionar Material'}
+            <Button type="submit" disabled={createMaterial.isPending}>
+              {createMaterial.isPending ? 'Adicionando...' : 'Adicionar Material'}
             </Button>
           </DialogFooter>
         </form>

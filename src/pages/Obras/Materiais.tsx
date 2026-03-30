@@ -11,7 +11,7 @@ import AdicionarMaterialModal from '@/components/Obras/AdicionarMaterialModal';
 import EditMaterialModal from '@/components/Obras/EditMaterialModal';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
-import { useMateriais, useDeleteMaterial, useUpdateMaterial } from '@/hooks/useSupabaseData';
+import { useMateriais, useDeleteMaterial } from '@/hooks/useSupabaseData';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 
 const Materiais = () => {
@@ -25,7 +25,6 @@ const Materiais = () => {
 
   const { data: materiais = [], isLoading } = useMateriais();
   const deleteMaterial = useDeleteMaterial();
-  const updateMaterial = useUpdateMaterial();
 
   const filteredMateriais = materiais.filter(material => 
     material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,29 +62,6 @@ const Materiais = () => {
     }
   };
 
-  const handleSaveMaterial = async (updatedMaterial: any) => {
-    try {
-      await updateMaterial.mutateAsync({
-        id: updatedMaterial.id,
-        nome: updatedMaterial.nome,
-        quantidade: updatedMaterial.quantidade,
-        unidade: updatedMaterial.unidade,
-        valor_unitario: updatedMaterial.valor_unitario,
-        fornecedor: updatedMaterial.fornecedor,
-        status: updatedMaterial.status,
-      });
-      toast({
-        title: 'Material atualizado',
-        description: `${updatedMaterial.nome} foi atualizado com sucesso`,
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const getStatusBadge = (status: string | null) => {
     if (status === 'entregue') return 'default';
@@ -203,7 +179,6 @@ const Materiais = () => {
             setSelectedMaterial(null);
           }}
           material={selectedMaterial}
-          onSave={handleSaveMaterial}
         />
 
         <ConfirmationModal

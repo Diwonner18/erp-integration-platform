@@ -11,6 +11,7 @@ import ColaboradorDetailModal from './ColaboradorDetailModal';
 import NovoColaboradorModal from './NovoColaboradorModal';
 import { toast } from 'sonner';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ColaboradoresPage = () => {
   const perms = useUserModulePermissions('colaboradores');

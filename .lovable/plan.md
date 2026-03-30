@@ -1,76 +1,73 @@
 
 
-# Corrigir Sidebar e Permissões para Admin (Patricia)
+# Fix: Restrict 'obras' role access to colaboradores table
 
-## Problema
-Patricia (admin) reportou dois problemas:
-1. **Falta seção CLIENTE no sidebar** — O sidebar do admin tem caixinhas para ADMINISTRAÇÃO, COMERCIAL, OBRAS, FINANCEIRO, mas não tem CLIENTE. Ela quer ver as páginas do portal do cliente (Minhas Obras, Minhas Propostas, etc.)
-2. **Falta o Agente Temporário para admin** — O botão de impersonação só aparece para `gerenciador_tecnico` e demo (linha 302), não para admin
-3. **Permissões bloqueiam escrita durante impersonação** — Mesmo problema do plano anterior: admin/GT/demo perdem permissões de escrita ao impersonar
+## Problem
+The `obras` role has `ALL` access to the `colaboradores` table, which contains highly sensitive PII (CPF, RG, PIS/PASEP, salary, date of birth, full address). Field workers/project managers can read and modify salary and identity documents of ALL employees.
 
-## Mudanças
+## Current usage by 'obras' role
+The `obras` role uses colaboradores data in:
+- **EPIs page** — needs `nome` and `id` to select colaborador for EPI delivery
+- **Horas Extras page** — needs `nome` to populate a dropdown
+- **Colaboradores page** — full CRUD (but this should be scoped)
+- **Equipe Ativa page** — uses `profiles`, not `colaboradores`
 
-### 1. `src/components/Layout/Sidebar.tsx`
+The `obras` role realistically needs: `id`, `nome`, `cargo`, `funcao`, `status` for most operations. They should NOT need to modify salary, CPF, RG, PIS/PASEP, or personal contact details.
 
-**Adicionar seção CLIENTE no `getAdminSections`** (após FINANCEIRO, ~linha 133):
-```ts
-{
-  section: 'CLIENTE',
-  items: [
-    { icon: Calendar, label: 'Solicitar Programação', path: '/solicitar-agendamento', show: true },
-    { icon: ClipboardList, label: 'Minhas Obras', path: '/minhas-obras', show: true },
-    { icon: FileText, label: 'Minhas Propostas', path: '/minhas-propostas', show: true },
-    { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: true },
-    { icon: Wallet, label: 'Meus Pagamentos', path: '/meus-pagamentos', show: true },
-  ],
-},
+## Solution
+Replace the permissive `ALL` policy for `obras` with scoped policies:
+
+### Database Migration
+
+1. **Drop** the existing broad policy:
+```sql
+DROP POLICY "Obras can manage colaboradores" ON public.colaboradores;
 ```
 
-**Mostrar Agente Temporário para admin** — Linha 302, mudar de:
-```ts
-if (user.type !== 'gerenciador_tecnico' && !isDemo) return null;
-```
-Para:
-```ts
-if (user.type !== 'gerenciador_tecnico' && user.type !== 'admin' && !isDemo) return null;
-```
-
-### 2. `src/contexts/AuthContext.tsx` — `startImpersonation`
-Não sobrescrever `permissions` quando user real for admin/GT:
-```ts
-const startImpersonation = (role: UserType) => {
-  if (user?.type !== 'gerenciador_tecnico' && user?.type !== 'admin' && !user?.isDemo) return;
-  setImpersonatedRole(role);
-  if (user?.type === 'admin' || user?.type === 'gerenciador_tecnico') return;
-  setPermissions(getPermissionsByUserType(role));
-};
+2. **Create SELECT-only policy** for `obras` (they can view all colaboradores but only non-sensitive columns are controlled at app level since RLS is row-level):
+```sql
+CREATE POLICY "Obras can view colaboradores"
+ON public.colaboradores
+FOR SELECT
+TO authenticated
+USING (has_role(auth.uid(), 'obras'::app_role));
 ```
 
-### 3. `src/components/Auth/ProtectedRoute.tsx` — Linha 39
-Adicionar `realType === 'admin'` ao bypass:
-```ts
-if (realType === 'gerenciador_tecnico' || realType === 'admin' || user.isDemo) {
-  return <>{children}</>;
-}
+3. **Create INSERT policy** scoped to obras role:
+```sql
+CREATE POLICY "Obras can insert colaboradores"
+ON public.colaboradores
+FOR INSERT
+TO authenticated
+WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
 ```
 
-### 4. `src/hooks/usePermissoesPerfil.ts`
-Em `useUserModulePermissions` e `useAllUserPermissions`, usar `user.type` (real) em vez de `effectiveType` para `isFullAccess`:
-```ts
-const isFullAccess = user?.type === 'admin' || user?.type === 'gerenciador_tecnico' || user?.isDemo;
+4. **Create UPDATE policy** — obras can only update colaboradores they created or have shared access to (already enforced by the RESTRICTIVE policy, but we need a permissive base):
+```sql
+CREATE POLICY "Obras can update own colaboradores"
+ON public.colaboradores
+FOR UPDATE
+TO authenticated
+USING (has_role(auth.uid(), 'obras'::app_role))
+WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
 ```
 
-### 5. `src/hooks/useDemoGuard.ts`
-Permitir demo salvar durante impersonação:
-```ts
-const { user, impersonatedRole } = useAuth();
-const isDemoUser = (user?.isDemo ?? false) && !impersonatedRole;
-```
+Since RLS cannot filter columns, we handle sensitive field protection at the application level.
 
-## Arquivos editados
-- `src/components/Layout/Sidebar.tsx` — Seção CLIENTE + Agente Temporário para admin
-- `src/contexts/AuthContext.tsx` — Manter permissões admin durante impersonação
-- `src/components/Auth/ProtectedRoute.tsx` — Bypass admin em rotas
-- `src/hooks/usePermissoesPerfil.ts` — Full access baseado no role real
-- `src/hooks/useDemoGuard.ts` — Demo pode salvar ao impersonar
+### Frontend Changes
+
+**`src/pages/Colaboradores/ColaboradorDetailModal.tsx`** — Hide sensitive fields (salary, CPF, RG, PIS/PASEP, personal contact) from `obras` users. Only show these to `admin`, `gerenciador_tecnico`, and `financeira` roles.
+
+**`src/pages/Colaboradores/ColaboradoresPage.tsx`** — Hide CPF column from `obras` users in the table listing.
+
+### Technical detail
+PostgreSQL RLS operates at the row level, not column level. To properly restrict column access, we would need a database VIEW. However, since the `obras` role legitimately needs to create/manage colaboradores for their projects (allocations, EPIs, etc.), the pragmatic approach is:
+- Keep row-level access via RLS
+- Restrict sensitive field visibility in the frontend
+- The RESTRICTIVE update/delete policies already ensure `obras` users can only modify records they created
+
+## Files to edit
+- 1 SQL migration (replace `Obras can manage colaboradores` with scoped SELECT/INSERT/UPDATE policies)
+- `src/pages/Colaboradores/ColaboradorDetailModal.tsx` — hide sensitive tabs/fields for obras
+- `src/pages/Colaboradores/ColaboradoresPage.tsx` — hide CPF column for obras
 

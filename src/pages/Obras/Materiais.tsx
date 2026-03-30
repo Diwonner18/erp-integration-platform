@@ -25,7 +25,6 @@ const Materiais = () => {
 
   const { data: materiais = [], isLoading } = useMateriais();
   const deleteMaterial = useDeleteMaterial();
-  const updateMaterial = useUpdateMaterial();
 
   const filteredMateriais = materiais.filter(material => 
     material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||

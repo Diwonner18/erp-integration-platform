@@ -28,6 +28,8 @@ interface Props {
 }
 
 const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
+  const { effectiveType } = useAuth();
+  const canSeeSensitive = ['admin', 'gerenciador_tecnico', 'financeira'].includes(effectiveType || '');
   const { data: colab, isLoading } = useColaborador(colaboradorId);
   const updateColaborador = useUpdateColaborador();
   const { data: beneficios } = useColaboradorBeneficios(colaboradorId);

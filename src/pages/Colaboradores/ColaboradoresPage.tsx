@@ -11,8 +11,11 @@ import ColaboradorDetailModal from './ColaboradorDetailModal';
 import NovoColaboradorModal from './NovoColaboradorModal';
 import { toast } from 'sonner';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ColaboradoresPage = () => {
+  const { effectiveType } = useAuth();
+  const canSeeSensitive = ['admin', 'gerenciador_tecnico', 'financeira'].includes(effectiveType || '');
   const perms = useUserModulePermissions('colaboradores');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -94,7 +97,7 @@ const ColaboradoresPage = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>CPF</TableHead>
+                {canSeeSensitive && <TableHead>CPF</TableHead>}
                 <TableHead>Cargo</TableHead>
                 <TableHead>Função</TableHead>
                 <TableHead>Status</TableHead>
@@ -103,14 +106,14 @@ const ColaboradoresPage = () => {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={canSeeSensitive ? 6 : 5} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum colaborador encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={canSeeSensitive ? 6 : 5} className="text-center py-8 text-muted-foreground">Nenhum colaborador encontrado</TableCell></TableRow>
               ) : (
                 filtered.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.nome}</TableCell>
-                    <TableCell>{c.cpf || '—'}</TableCell>
+                    {canSeeSensitive && <TableCell>{c.cpf || '—'}</TableCell>}
                     <TableCell>{c.cargo || '—'}</TableCell>
                     <TableCell>{c.funcao || '—'}</TableCell>
                     <TableCell>{getStatusBadge(c.status)}</TableCell>

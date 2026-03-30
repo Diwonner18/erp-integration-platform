@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +28,8 @@ interface Props {
 }
 
 const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
+  const { effectiveType } = useAuth();
+  const canSeeSensitive = ['admin', 'gerenciador_tecnico', 'financeira'].includes(effectiveType || '');
   const { data: colab, isLoading } = useColaborador(colaboradorId);
   const updateColaborador = useUpdateColaborador();
   const { data: beneficios } = useColaboradorBeneficios(colaboradorId);
@@ -85,10 +88,10 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
           <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="contratacao">Contratação</TabsTrigger>
-            <TabsTrigger value="beneficios">Benefícios</TabsTrigger>
+            {canSeeSensitive && <TabsTrigger value="beneficios">Benefícios</TabsTrigger>}
             <TabsTrigger value="epi">EPI</TabsTrigger>
             <TabsTrigger value="historico">Histórico Alocação</TabsTrigger>
-            <TabsTrigger value="banco-horas">Banco de Horas / Faltas</TabsTrigger>
+            {canSeeSensitive && <TabsTrigger value="banco-horas">Banco de Horas / Faltas</TabsTrigger>}
           </TabsList>
 
           {/* ===== DADOS ===== */}
@@ -96,12 +99,8 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
             <div className="grid grid-cols-2 gap-4">
               {[
                 ['nome', 'Nome'],
-                ['cpf', 'CPF'],
-                ['rg', 'RG'],
-                ['data_nascimento', 'Data de Nascimento'],
-                ['telefone', 'Telefone'],
-                ['celular', 'Celular'],
-                ['email', 'E-mail'],
+                ...(canSeeSensitive ? [['cpf', 'CPF'], ['rg', 'RG'], ['data_nascimento', 'Data de Nascimento']] : []),
+                ...(canSeeSensitive ? [['telefone', 'Telefone'], ['celular', 'Celular'], ['email', 'E-mail']] : []),
               ].map(([field, label]) => (
                 <div key={field}>
                   <Label>{label}</Label>
@@ -113,18 +112,22 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
                 </div>
               ))}
             </div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase mt-4">Endereço</p>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                ['cep', 'CEP'], ['logradouro', 'Logradouro'], ['numero', 'Número'],
-                ['bairro', 'Bairro'], ['complemento', 'Complemento'], ['cidade', 'Cidade'], ['uf', 'UF'],
-              ].map(([field, label]) => (
-                <div key={field}>
-                  <Label>{label}</Label>
-                  <Input value={val(field)} onChange={e => set(field, e.target.value)} />
+            {canSeeSensitive && (
+              <>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mt-4">Endereço</p>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    ['cep', 'CEP'], ['logradouro', 'Logradouro'], ['numero', 'Número'],
+                    ['bairro', 'Bairro'], ['complemento', 'Complemento'], ['cidade', 'Cidade'], ['uf', 'UF'],
+                  ].map(([field, label]) => (
+                    <div key={field}>
+                      <Label>{label}</Label>
+                      <Input value={val(field)} onChange={e => set(field, e.target.value)} />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={Object.keys(editData).length === 0}>Salvar Alterações</Button>
             </div>
@@ -138,8 +141,7 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
                 ['cargo', 'Cargo', 'text'],
                 ['funcao', 'Função', 'text'],
                 ['tipo_contrato', 'Tipo de Contrato', 'text'],
-                ['salario_base', 'Salário Base', 'number'],
-                ['pis_pasep', 'PIS/PASEP', 'text'],
+                ...(canSeeSensitive ? [['salario_base', 'Salário Base', 'number'], ['pis_pasep', 'PIS/PASEP', 'text']] : []),
               ].map(([field, label, type]) => (
                 <div key={field}>
                   <Label>{label}</Label>

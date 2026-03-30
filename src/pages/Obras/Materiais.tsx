@@ -63,29 +63,6 @@ const Materiais = () => {
     }
   };
 
-  const handleSaveMaterial = async (updatedMaterial: any) => {
-    try {
-      await updateMaterial.mutateAsync({
-        id: updatedMaterial.id,
-        nome: updatedMaterial.nome,
-        quantidade: updatedMaterial.quantidade,
-        unidade: updatedMaterial.unidade,
-        valor_unitario: updatedMaterial.valor_unitario,
-        fornecedor: updatedMaterial.fornecedor,
-        status: updatedMaterial.status,
-      });
-      toast({
-        title: 'Material atualizado',
-        description: `${updatedMaterial.nome} foi atualizado com sucesso`,
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao atualizar',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const getStatusBadge = (status: string | null) => {
     if (status === 'entregue') return 'default';

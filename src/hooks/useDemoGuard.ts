@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import { useCallback } from 'react';
 
 export const useDemoGuard = () => {
-  const { user } = useAuth();
-  const isDemoUser = user?.isDemo ?? false;
+  const { user, impersonatedRole } = useAuth();
+  const isDemoUser = (user?.isDemo ?? false) && !impersonatedRole;
 
   const guardAction = useCallback(
     (fn: () => void) => {

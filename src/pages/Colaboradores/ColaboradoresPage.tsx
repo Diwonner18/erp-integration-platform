@@ -14,6 +14,8 @@ import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ColaboradoresPage = () => {
+  const { effectiveType } = useAuth();
+  const canSeeSensitive = ['admin', 'gerenciador_tecnico', 'financeira'].includes(effectiveType || '');
   const perms = useUserModulePermissions('colaboradores');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');

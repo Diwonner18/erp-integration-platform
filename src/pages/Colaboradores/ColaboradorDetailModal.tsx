@@ -99,12 +99,8 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
             <div className="grid grid-cols-2 gap-4">
               {[
                 ['nome', 'Nome'],
-                ['cpf', 'CPF'],
-                ['rg', 'RG'],
-                ['data_nascimento', 'Data de Nascimento'],
-                ['telefone', 'Telefone'],
-                ['celular', 'Celular'],
-                ['email', 'E-mail'],
+                ...(canSeeSensitive ? [['cpf', 'CPF'], ['rg', 'RG'], ['data_nascimento', 'Data de Nascimento']] : []),
+                ...(canSeeSensitive ? [['telefone', 'Telefone'], ['celular', 'Celular'], ['email', 'E-mail']] : []),
               ].map(([field, label]) => (
                 <div key={field}>
                   <Label>{label}</Label>
@@ -116,18 +112,22 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
                 </div>
               ))}
             </div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase mt-4">Endereço</p>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                ['cep', 'CEP'], ['logradouro', 'Logradouro'], ['numero', 'Número'],
-                ['bairro', 'Bairro'], ['complemento', 'Complemento'], ['cidade', 'Cidade'], ['uf', 'UF'],
-              ].map(([field, label]) => (
-                <div key={field}>
-                  <Label>{label}</Label>
-                  <Input value={val(field)} onChange={e => set(field, e.target.value)} />
+            {canSeeSensitive && (
+              <>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mt-4">Endereço</p>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    ['cep', 'CEP'], ['logradouro', 'Logradouro'], ['numero', 'Número'],
+                    ['bairro', 'Bairro'], ['complemento', 'Complemento'], ['cidade', 'Cidade'], ['uf', 'UF'],
+                  ].map(([field, label]) => (
+                    <div key={field}>
+                      <Label>{label}</Label>
+                      <Input value={val(field)} onChange={e => set(field, e.target.value)} />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={Object.keys(editData).length === 0}>Salvar Alterações</Button>
             </div>

@@ -97,7 +97,7 @@ const ColaboradoresPage = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>CPF</TableHead>
+                {canSeeSensitive && <TableHead>CPF</TableHead>}
                 <TableHead>Cargo</TableHead>
                 <TableHead>Função</TableHead>
                 <TableHead>Status</TableHead>

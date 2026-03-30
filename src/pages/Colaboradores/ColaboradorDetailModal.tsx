@@ -88,10 +88,10 @@ const ColaboradorDetailModal = ({ colaboradorId, open, onClose }: Props) => {
           <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="contratacao">Contratação</TabsTrigger>
-            <TabsTrigger value="beneficios">Benefícios</TabsTrigger>
+            {canSeeSensitive && <TabsTrigger value="beneficios">Benefícios</TabsTrigger>}
             <TabsTrigger value="epi">EPI</TabsTrigger>
             <TabsTrigger value="historico">Histórico Alocação</TabsTrigger>
-            <TabsTrigger value="banco-horas">Banco de Horas / Faltas</TabsTrigger>
+            {canSeeSensitive && <TabsTrigger value="banco-horas">Banco de Horas / Faltas</TabsTrigger>}
           </TabsList>
 
           {/* ===== DADOS ===== */}

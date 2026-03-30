@@ -1,57 +1,76 @@
 
 
-# Corrigir Modais que Não Salvam no Banco de Dados
+# Corrigir Sidebar e Permissões para Admin (Patricia)
 
 ## Problema
+Patricia (admin) reportou dois problemas:
+1. **Falta seção CLIENTE no sidebar** — O sidebar do admin tem caixinhas para ADMINISTRAÇÃO, COMERCIAL, OBRAS, FINANCEIRO, mas não tem CLIENTE. Ela quer ver as páginas do portal do cliente (Minhas Obras, Minhas Propostas, etc.)
+2. **Falta o Agente Temporário para admin** — O botão de impersonação só aparece para `gerenciador_tecnico` e demo (linha 302), não para admin
+3. **Permissões bloqueiam escrita durante impersonação** — Mesmo problema do plano anterior: admin/GT/demo perdem permissões de escrita ao impersonar
 
-Patricia reportou que "não está sendo possível salvar". A causa raiz é que **6 modais** usam `setTimeout` para simular chamadas de API, mostrando toast de sucesso mas **sem persistir dados no Supabase**. Ao recarregar a página, tudo desaparece.
+## Mudanças
 
-## Modais Afetados
+### 1. `src/components/Layout/Sidebar.tsx`
 
-| Modal | Problema | Hook Supabase disponível |
-|-------|----------|--------------------------|
-| `NovaPropostaModal.tsx` | Simula insert com setTimeout | `useInsertProposta` (existe) |
-| `EditPropostaModal.tsx` | Simula update com setTimeout e dados locais | `useUpdateProposta` (existe) |
-| `NovoBoletimModal.tsx` | Simula insert com setTimeout | `useInsertBoletim` (existe) |
-| `AdicionarMaterialModal.tsx` | Simula insert com setTimeout | `useInsertMaterial` (existe) |
-| `EditMaterialModal.tsx` | Simula update com setTimeout e dados locais | `useUpdateMaterial` (existe) |
-| `SugestaoEscopoModal.tsx` | Simula insert com setTimeout | `useInsertAlteracaoEscopo` (existe) |
+**Adicionar seção CLIENTE no `getAdminSections`** (após FINANCEIRO, ~linha 133):
+```ts
+{
+  section: 'CLIENTE',
+  items: [
+    { icon: Calendar, label: 'Solicitar Programação', path: '/solicitar-agendamento', show: true },
+    { icon: ClipboardList, label: 'Minhas Obras', path: '/minhas-obras', show: true },
+    { icon: FileText, label: 'Minhas Propostas', path: '/minhas-propostas', show: true },
+    { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: true },
+    { icon: Wallet, label: 'Meus Pagamentos', path: '/meus-pagamentos', show: true },
+  ],
+},
+```
 
-## O que Será Feito
+**Mostrar Agente Temporário para admin** — Linha 302, mudar de:
+```ts
+if (user.type !== 'gerenciador_tecnico' && !isDemo) return null;
+```
+Para:
+```ts
+if (user.type !== 'gerenciador_tecnico' && user.type !== 'admin' && !isDemo) return null;
+```
 
-Para cada modal:
+### 2. `src/contexts/AuthContext.tsx` — `startImpersonation`
+Não sobrescrever `permissions` quando user real for admin/GT:
+```ts
+const startImpersonation = (role: UserType) => {
+  if (user?.type !== 'gerenciador_tecnico' && user?.type !== 'admin' && !user?.isDemo) return;
+  setImpersonatedRole(role);
+  if (user?.type === 'admin' || user?.type === 'gerenciador_tecnico') return;
+  setPermissions(getPermissionsByUserType(role));
+};
+```
 
-1. **Importar o hook correto** do `useSupabaseData.ts` (já existem hooks para todas essas operações)
-2. **Substituir o setTimeout** pela chamada real ao Supabase via `mutateAsync`
-3. **Mapear campos do formulário** para as colunas corretas da tabela (ex: `cliente` → `cliente_id`, `valor` → campo numérico)
-4. **Adicionar selects de dados reais** onde necessário (ex: dropdown de clientes e obras vindos do Supabase em vez de texto livre)
-5. **Tratar erros reais** do Supabase (RLS, validação) no catch
+### 3. `src/components/Auth/ProtectedRoute.tsx` — Linha 39
+Adicionar `realType === 'admin'` ao bypass:
+```ts
+if (realType === 'gerenciador_tecnico' || realType === 'admin' || user.isDemo) {
+  return <>{children}</>;
+}
+```
 
-### Detalhes por Modal
+### 4. `src/hooks/usePermissoesPerfil.ts`
+Em `useUserModulePermissions` e `useAllUserPermissions`, usar `user.type` (real) em vez de `effectiveType` para `isFullAccess`:
+```ts
+const isFullAccess = user?.type === 'admin' || user?.type === 'gerenciador_tecnico' || user?.isDemo;
+```
 
-**NovaPropostaModal** — Usar `useInsertProposta`, adicionar select de `cliente_id` e `obra_id` com dados do `useClientes` e `useObras`. Campos: titulo, descricao, valor (numérico), data_validade, cliente_id, obra_id.
+### 5. `src/hooks/useDemoGuard.ts`
+Permitir demo salvar durante impersonação:
+```ts
+const { user, impersonatedRole } = useAuth();
+const isDemoUser = (user?.isDemo ?? false) && !impersonatedRole;
+```
 
-**EditPropostaModal** — Receber proposta real do Supabase (não o tipo local), usar `useUpdateProposta` com `mutateAsync({ id, ...fields })`. Remover prop `onSave` e usar invalidação automática do React Query.
-
-**NovoBoletimModal** — Usar `useInsertBoletim`, mapear campos para schema do banco (numero, obra_id, medicao_id, valor, data_emissao, observacoes).
-
-**AdicionarMaterialModal** — Usar `useInsertMaterial`, mapear para schema (nome, obra_id, quantidade, valor_unitario, unidade, fornecedor).
-
-**EditMaterialModal** — Usar `useUpdateMaterial`, remover prop `onSave`.
-
-**SugestaoEscopoModal** — Usar `useInsertAlteracaoEscopo`, mapear para schema (obra_id, descricao, justificativa, impacto_valor, impacto_prazo).
-
-### Páginas Pai
-
-As páginas que usam esses modais (Propostas.tsx, BoletinsMedicao.tsx, Materiais.tsx, AlteracoesEscopo.tsx) precisarão de ajustes menores para remover lógica local de state que simula persistência, já que o React Query fará refetch automático após mutação.
-
-## Arquivos a Editar
-
-- `src/components/Comercial/NovaPropostaModal.tsx`
-- `src/components/Comercial/EditPropostaModal.tsx`
-- `src/components/Financeiro/NovoBoletimModal.tsx`
-- `src/components/Obras/AdicionarMaterialModal.tsx`
-- `src/components/Obras/EditMaterialModal.tsx`
-- `src/components/Obras/SugestaoEscopoModal.tsx`
-- Páginas pai que passam props `onSave` locais (ajustes menores)
+## Arquivos editados
+- `src/components/Layout/Sidebar.tsx` — Seção CLIENTE + Agente Temporário para admin
+- `src/contexts/AuthContext.tsx` — Manter permissões admin durante impersonação
+- `src/components/Auth/ProtectedRoute.tsx` — Bypass admin em rotas
+- `src/hooks/usePermissoesPerfil.ts` — Full access baseado no role real
+- `src/hooks/useDemoGuard.ts` — Demo pode salvar ao impersonar
 

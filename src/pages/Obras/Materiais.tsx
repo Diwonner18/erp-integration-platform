@@ -180,7 +180,6 @@ const Materiais = () => {
             setSelectedMaterial(null);
           }}
           material={selectedMaterial}
-          onSave={handleSaveMaterial}
         />
 
         <ConfirmationModal

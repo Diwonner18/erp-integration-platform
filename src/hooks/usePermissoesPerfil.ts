@@ -48,8 +48,8 @@ export const useUserModulePermissions = (modulo: string) => {
   const { effectiveType, user } = useAuth();
   const perfil = effectiveType || user?.type || '';
 
-  // Admin e GT sempre tem acesso total
-  const isFullAccess = perfil === 'admin' || perfil === 'gerenciador_tecnico' || user?.isDemo;
+  // Admin e GT sempre tem acesso total (baseado no role REAL, não impersonado)
+  const isFullAccess = user?.type === 'admin' || user?.type === 'gerenciador_tecnico' || user?.isDemo;
 
   const query = useQuery({
     queryKey: ['permissoes_perfil', perfil, modulo],

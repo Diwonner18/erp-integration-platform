@@ -1,87 +1,31 @@
 
 
-# Fix: Two Security Findings
+# Plano: Proteger arquivo .env no controle de versão
 
-## Finding 1: realtime_messages_no_rls — Ignore (Known Limitation)
+## Problema
+O arquivo `.env` não está listado no `.gitignore`, então ele é versionado no repositório Git. Mesmo contendo apenas chaves públicas (anon key), é uma prática de segurança padrão excluir arquivos `.env` do controle de versão.
 
-**Problem**: The scanner reports no RLS on `realtime.messages`. We already reverted RLS on this reserved schema in the previous migration because modifying `realtime.*` risks breaking Supabase internals.
+## Esclarecimento importante
+As chaves no `.env` e em `src/integrations/supabase/client.ts` são **chaves anon/publishable** — elas são intencionalmente expostas no frontend (o Vite as injeta no bundle JavaScript). A segurança do sistema **não depende do sigilo dessas chaves**, mas sim das **políticas RLS** no banco de dados. Chaves secretas (como `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`) estão armazenadas exclusivamente nos **Supabase Secrets**, nunca no código-fonte.
 
-**Resolution**: Mark as ignored. The `notificacoes` table has its own RLS (`user_id = auth.uid()`), and Supabase `postgres_changes` filters events server-side using the source table's RLS before delivery. Users only receive their own notification events regardless of channel subscription. This is documented in our `realtime-data-filtering` memory.
+Mesmo assim, versionar `.env` é uma má prática que deve ser corrigida.
 
-**Action**: Use `manage_security_finding` to set `ignore: true` with justification.
+## Alteração
 
-## Finding 2: gerenciador_tecnico_privilege_escalation — Restrict GT Role Assignment
+### 1. Adicionar `.env` ao `.gitignore`
 
-**Problem**: The GT has `ALL` access on `user_roles` via the permissive policy "Gerenciador tecnico can manage roles". Existing restrictive policies block GT from:
-- Assigning/updating to `admin` role
-- Deleting `admin` role records
-- Self-assignment (via `self_assign_area` and edge function checks)
+Adicionar as seguintes entradas ao final do `.gitignore`:
 
-However, GT can still assign the `gerenciador_tecnico` role to any user, effectively creating more GTs.
-
-**Solution**: Add a new RESTRICTIVE policy on `user_roles` for INSERT and UPDATE that prevents GT users from assigning the `gerenciador_tecnico` role. Only admins should be able to assign `admin` or `gerenciador_tecnico`. The edge function `manage-user` already enforces an allowlist for GT emails, but RLS should enforce this at the database level too.
-
-Regarding `has_record_access()` granting GT blanket access — this is intentional by design (GT is a trusted supervisory role with visibility across all shared records). We will mark this as acknowledged.
-
-### Database Migration
-
-```sql
--- Restrict GT from assigning gerenciador_tecnico role via RLS
-CREATE POLICY "Only admins can assign privileged roles"
-ON public.user_roles AS RESTRICTIVE
-FOR INSERT TO authenticated
-WITH CHECK (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
-);
-
--- Also restrict UPDATE to prevent GT from changing someone's role TO gerenciador_tecnico
--- (existing policy only blocks updating TO admin)
-DROP POLICY IF EXISTS "GT cannot update to admin role" ON public.user_roles;
-CREATE POLICY "Only admins can update to privileged roles"
-ON public.user_roles AS RESTRICTIVE
-FOR UPDATE TO authenticated
-WITH CHECK (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role != 'admin'::app_role
-)
--- Keep existing admin-only restriction; additionally block GT self-promotion is already handled
--- Note: We keep the admin check as-is since GT assigning GT is blocked by the INSERT policy
-;
+```
+# Environment files
+.env
+.env.*
 ```
 
-Wait — the existing restrictive INSERT policy "Block direct role inserts" already requires the caller to be admin or GT. Combined with the new policy, GT inserts would need `role NOT IN (admin, gerenciador_tecnico)`. This correctly limits GT to only assigning operational roles (obras, financeira, comercial, cliente).
+Isso impedirá que qualquer arquivo `.env` atual ou futuro seja rastreado pelo Git.
 
-### Final Migration SQL
+**Nota**: O arquivo `.env` continuará existindo localmente e no ambiente Lovable (onde é gerado automaticamente), mas não será mais commitado no repositório. As variáveis `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_PROJECT_ID` são injetadas automaticamente pelo Lovable — não há risco de perda.
 
-```sql
--- Block GT from inserting privileged roles (admin or gerenciador_tecnico)
--- Existing "Block direct role inserts" requires admin or GT to insert
--- This further restricts: only admin can insert admin/GT roles
-CREATE POLICY "Only admins can insert privileged roles"
-ON public.user_roles AS RESTRICTIVE
-FOR INSERT TO authenticated
-WITH CHECK (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
-);
-
--- Replace existing update restriction to also block GT→GT promotion
-DROP POLICY IF EXISTS "GT cannot update to admin role" ON public.user_roles;
-CREATE POLICY "Only admins can update to privileged roles"
-ON public.user_roles AS RESTRICTIVE
-FOR UPDATE TO authenticated
-WITH CHECK (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
-);
-```
-
-### Security Finding Management
-- `realtime_messages_no_rls` → ignore (postgres_changes inherits table RLS; reserved schema)
-- `gerenciador_tecnico_privilege_escalation` → resolved via migration (GT restricted to operational roles only; blanket `has_record_access` is intentional for supervisory role)
-
-## Files to edit
-- 1 SQL migration
-- No frontend changes
+## Arquivos a editar
+- `.gitignore` — adicionar exclusão de `.env`
 

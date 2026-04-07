@@ -2,109 +2,86 @@
 
 # Fix: Two Security Findings
 
-## Finding 1: Restrict realtime.messages policy
+## Finding 1: realtime_messages_no_rls — Ignore (Known Limitation)
 
-**Problem**: The current `realtime.messages` policy uses `USING (true)`, allowing any authenticated user to subscribe to any channel topic.
+**Problem**: The scanner reports no RLS on `realtime.messages`. We already reverted RLS on this reserved schema in the previous migration because modifying `realtime.*` risks breaking Supabase internals.
 
-**Important constraint**: `realtime` is a Supabase-reserved schema. Per Supabase guidelines, we should avoid modifying it. However, we already enabled RLS on it in the previous migration.
+**Resolution**: Mark as ignored. The `notificacoes` table has its own RLS (`user_id = auth.uid()`), and Supabase `postgres_changes` filters events server-side using the source table's RLS before delivery. Users only receive their own notification events regardless of channel subscription. This is documented in our `realtime-data-filtering` memory.
 
-**Solution**: Replace the broad `USING (true)` policy with one that restricts channel access. However, `postgres_changes` events are already filtered server-side by the source table's RLS (e.g., `notificacoes` filters by `user_id = auth.uid()`). The practical risk is minimal. The safest approach is to **drop the overly permissive policy and replace it with a more restrictive one**, or alternatively **revert the realtime.messages changes entirely** since they modify a reserved schema and `postgres_changes` already inherits table-level RLS.
+**Action**: Use `manage_security_finding` to set `ignore: true` with justification.
 
-**Recommended approach**: Drop the `USING (true)` policy and the RLS enablement on `realtime.messages` (revert). The `notificacoes` table RLS already ensures users only receive their own notification events via `postgres_changes`. Modifying `realtime.messages` (a reserved schema) risks breaking Supabase internals. We mark this finding as a known limitation with the mitigation documented.
+## Finding 2: gerenciador_tecnico_privilege_escalation — Restrict GT Role Assignment
 
-## Finding 2: Scope banco_horas and faltas_licencas for obras role
+**Problem**: The GT has `ALL` access on `user_roles` via the permissive policy "Gerenciador tecnico can manage roles". Existing restrictive policies block GT from:
+- Assigning/updating to `admin` role
+- Deleting `admin` role records
+- Self-assignment (via `self_assign_area` and edge function checks)
 
-**Problem**: The `obras` role has `ALL` access to `banco_horas` and `faltas_licencas` without restriction. Any obras user can read/modify time records for any employee.
+However, GT can still assign the `gerenciador_tecnico` role to any user, effectively creating more GTs.
 
-**Solution**: Replace the broad `Obras can manage` policies with scoped versions that restrict access to employees allocated to the user's obras (same pattern used for `colaboradores`).
+**Solution**: Add a new RESTRICTIVE policy on `user_roles` for INSERT and UPDATE that prevents GT users from assigning the `gerenciador_tecnico` role. Only admins should be able to assign `admin` or `gerenciador_tecnico`. The edge function `manage-user` already enforces an allowlist for GT emails, but RLS should enforce this at the database level too.
+
+Regarding `has_record_access()` granting GT blanket access — this is intentional by design (GT is a trusted supervisory role with visibility across all shared records). We will mark this as acknowledged.
 
 ### Database Migration
 
 ```sql
--- Revert realtime.messages changes (reserved schema)
-DROP POLICY IF EXISTS "Authenticated users can use realtime" ON realtime.messages;
-ALTER TABLE realtime.messages DISABLE ROW LEVEL SECURITY;
-
--- Scope banco_horas for obras role
-DROP POLICY IF EXISTS "Obras can manage banco_horas" ON public.banco_horas;
-
-CREATE POLICY "Obras can view allocated banco_horas"
-ON public.banco_horas FOR SELECT TO authenticated
-USING (
-  has_role(auth.uid(), 'obras'::app_role)
-  AND colaborador_id IN (
-    SELECT ca.colaborador_id FROM public.colaborador_alocacoes ca
-    JOIN public.obras o ON ca.obra_id = o.id
-    WHERE o.created_by = auth.uid()
-       OR o.responsavel_id = auth.uid()
-       OR has_record_access(auth.uid(), 'obras'::text, o.id, 'view'::text)
-  )
+-- Restrict GT from assigning gerenciador_tecnico role via RLS
+CREATE POLICY "Only admins can assign privileged roles"
+ON public.user_roles AS RESTRICTIVE
+FOR INSERT TO authenticated
+WITH CHECK (
+  has_role(auth.uid(), 'admin'::app_role)
+  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
 );
 
-CREATE POLICY "Obras can insert banco_horas"
-ON public.banco_horas FOR INSERT TO authenticated
-WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
-
-CREATE POLICY "Obras can update allocated banco_horas"
-ON public.banco_horas FOR UPDATE TO authenticated
-USING (
-  has_role(auth.uid(), 'obras'::app_role)
-  AND (
-    created_by = auth.uid()
-    OR colaborador_id IN (
-      SELECT ca.colaborador_id FROM public.colaborador_alocacoes ca
-      JOIN public.obras o ON ca.obra_id = o.id
-      WHERE o.created_by = auth.uid()
-         OR o.responsavel_id = auth.uid()
-         OR has_record_access(auth.uid(), 'obras'::text, o.id, 'edit'::text)
-    )
-  )
+-- Also restrict UPDATE to prevent GT from changing someone's role TO gerenciador_tecnico
+-- (existing policy only blocks updating TO admin)
+DROP POLICY IF EXISTS "GT cannot update to admin role" ON public.user_roles;
+CREATE POLICY "Only admins can update to privileged roles"
+ON public.user_roles AS RESTRICTIVE
+FOR UPDATE TO authenticated
+WITH CHECK (
+  has_role(auth.uid(), 'admin'::app_role)
+  OR role != 'admin'::app_role
 )
-WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
-
--- Scope faltas_licencas for obras role
-DROP POLICY IF EXISTS "Obras can manage faltas_licencas" ON public.faltas_licencas;
-
-CREATE POLICY "Obras can view allocated faltas_licencas"
-ON public.faltas_licencas FOR SELECT TO authenticated
-USING (
-  has_role(auth.uid(), 'obras'::app_role)
-  AND colaborador_id IN (
-    SELECT ca.colaborador_id FROM public.colaborador_alocacoes ca
-    JOIN public.obras o ON ca.obra_id = o.id
-    WHERE o.created_by = auth.uid()
-       OR o.responsavel_id = auth.uid()
-       OR has_record_access(auth.uid(), 'obras'::text, o.id, 'view'::text)
-  )
-);
-
-CREATE POLICY "Obras can insert faltas_licencas"
-ON public.faltas_licencas FOR INSERT TO authenticated
-WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
-
-CREATE POLICY "Obras can update allocated faltas_licencas"
-ON public.faltas_licencas FOR UPDATE TO authenticated
-USING (
-  has_role(auth.uid(), 'obras'::app_role)
-  AND (
-    created_by = auth.uid()
-    OR colaborador_id IN (
-      SELECT ca.colaborador_id FROM public.colaborador_alocacoes ca
-      JOIN public.obras o ON ca.obra_id = o.id
-      WHERE o.created_by = auth.uid()
-         OR o.responsavel_id = auth.uid()
-         OR has_record_access(auth.uid(), 'obras'::text, o.id, 'edit'::text)
-    )
-  )
-)
-WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
+-- Keep existing admin-only restriction; additionally block GT self-promotion is already handled
+-- Note: We keep the admin check as-is since GT assigning GT is blocked by the INSERT policy
+;
 ```
 
-## Files to edit
-- 1 SQL migration (revert realtime.messages + scope banco_horas/faltas_licencas)
-- No frontend changes needed
+Wait — the existing restrictive INSERT policy "Block direct role inserts" already requires the caller to be admin or GT. Combined with the new policy, GT inserts would need `role NOT IN (admin, gerenciador_tecnico)`. This correctly limits GT to only assigning operational roles (obras, financeira, comercial, cliente).
 
-## Security findings resolved
-- `realtime_messages_unrestricted_channel_access` -- reverted; `postgres_changes` already inherits table RLS
-- `banco_horas_faltas_licencas_unscoped` -- scoped to allocated colaboradores
+### Final Migration SQL
+
+```sql
+-- Block GT from inserting privileged roles (admin or gerenciador_tecnico)
+-- Existing "Block direct role inserts" requires admin or GT to insert
+-- This further restricts: only admin can insert admin/GT roles
+CREATE POLICY "Only admins can insert privileged roles"
+ON public.user_roles AS RESTRICTIVE
+FOR INSERT TO authenticated
+WITH CHECK (
+  has_role(auth.uid(), 'admin'::app_role)
+  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
+);
+
+-- Replace existing update restriction to also block GT→GT promotion
+DROP POLICY IF EXISTS "GT cannot update to admin role" ON public.user_roles;
+CREATE POLICY "Only admins can update to privileged roles"
+ON public.user_roles AS RESTRICTIVE
+FOR UPDATE TO authenticated
+WITH CHECK (
+  has_role(auth.uid(), 'admin'::app_role)
+  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
+);
+```
+
+### Security Finding Management
+- `realtime_messages_no_rls` → ignore (postgres_changes inherits table RLS; reserved schema)
+- `gerenciador_tecnico_privilege_escalation` → resolved via migration (GT restricted to operational roles only; blanket `has_record_access` is intentional for supervisory role)
+
+## Files to edit
+- 1 SQL migration
+- No frontend changes
 

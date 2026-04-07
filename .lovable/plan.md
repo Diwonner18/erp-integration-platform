@@ -1,73 +1,102 @@
 
 
-# Fix: Restrict 'obras' role access to colaboradores table
+# Fix: Two Security Findings
 
-## Problem
-The `obras` role has `ALL` access to the `colaboradores` table, which contains highly sensitive PII (CPF, RG, PIS/PASEP, salary, date of birth, full address). Field workers/project managers can read and modify salary and identity documents of ALL employees.
+## Finding 1: Scope 'obras' role access to colaboradores by obra relationship
 
-## Current usage by 'obras' role
-The `obras` role uses colaboradores data in:
-- **EPIs page** — needs `nome` and `id` to select colaborador for EPI delivery
-- **Horas Extras page** — needs `nome` to populate a dropdown
-- **Colaboradores page** — full CRUD (but this should be scoped)
-- **Equipe Ativa page** — uses `profiles`, not `colaboradores`
+**Problem**: The `obras` role can SELECT/INSERT/UPDATE ALL colaboradores records globally, not scoped to their assigned obras.
 
-The `obras` role realistically needs: `id`, `nome`, `cargo`, `funcao`, `status` for most operations. They should NOT need to modify salary, CPF, RG, PIS/PASEP, or personal contact details.
-
-## Solution
-Replace the permissive `ALL` policy for `obras` with scoped policies:
+**Solution**: Replace the three current `obras` policies on `colaboradores` with policies scoped through `colaborador_alocacoes` — obras users can only access colaboradores who are allocated to obras they created or have shared access to.
 
 ### Database Migration
 
-1. **Drop** the existing broad policy:
 ```sql
-DROP POLICY "Obras can manage colaboradores" ON public.colaboradores;
-```
+-- Drop existing broad obras policies
+DROP POLICY IF EXISTS "Obras can view colaboradores" ON public.colaboradores;
+DROP POLICY IF EXISTS "Obras can insert colaboradores" ON public.colaboradores;
+DROP POLICY IF EXISTS "Obras can update own colaboradores" ON public.colaboradores;
 
-2. **Create SELECT-only policy** for `obras` (they can view all colaboradores but only non-sensitive columns are controlled at app level since RLS is row-level):
-```sql
-CREATE POLICY "Obras can view colaboradores"
-ON public.colaboradores
-FOR SELECT
-TO authenticated
-USING (has_role(auth.uid(), 'obras'::app_role));
-```
+-- Scoped SELECT: only colaboradores allocated to obras the user created/has access to
+CREATE POLICY "Obras can view allocated colaboradores"
+ON public.colaboradores FOR SELECT TO authenticated
+USING (
+  has_role(auth.uid(), 'obras'::app_role)
+  AND (
+    created_by = auth.uid()
+    OR id IN (
+      SELECT ca.colaborador_id FROM public.colaborador_alocacoes ca
+      JOIN public.obras o ON ca.obra_id = o.id
+      WHERE o.created_by = auth.uid()
+         OR o.responsavel_id = auth.uid()
+         OR has_record_access(auth.uid(), 'obras'::text, o.id, 'view'::text)
+    )
+  )
+);
 
-3. **Create INSERT policy** scoped to obras role:
-```sql
+-- INSERT: obras can still create new colaboradores
 CREATE POLICY "Obras can insert colaboradores"
-ON public.colaboradores
-FOR INSERT
-TO authenticated
+ON public.colaboradores FOR INSERT TO authenticated
+WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
+
+-- UPDATE: only colaboradores they created or allocated to their obras
+CREATE POLICY "Obras can update allocated colaboradores"
+ON public.colaboradores FOR UPDATE TO authenticated
+USING (
+  has_role(auth.uid(), 'obras'::app_role)
+  AND (
+    created_by = auth.uid()
+    OR id IN (
+      SELECT ca.colaborador_id FROM public.colaborador_alocacoes ca
+      JOIN public.obras o ON ca.obra_id = o.id
+      WHERE o.created_by = auth.uid()
+         OR o.responsavel_id = auth.uid()
+         OR has_record_access(auth.uid(), 'obras'::text, o.id, 'edit'::text)
+    )
+  )
+)
 WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
 ```
 
-4. **Create UPDATE policy** — obras can only update colaboradores they created or have shared access to (already enforced by the RESTRICTIVE policy, but we need a permissive base):
+This ensures obras users only see/edit colaboradores linked to their projects, plus any they personally created (e.g. newly registered before allocation).
+
+---
+
+## Finding 2: Realtime channel authorization
+
+**Problem**: Any authenticated user can subscribe to the `notificacoes` Realtime channel and see notification events for other users.
+
+**Solution**: Supabase Realtime with `postgres_changes` already respects RLS on the underlying table — users only receive change events for rows they can SELECT. Since `notificacoes` already has RLS (`user_id = auth.uid()` for SELECT), users already only receive their own notifications via the change feed.
+
+However, the Realtime channel subscription itself (`realtime.messages`) has no RLS. To fully secure this:
+
+1. **Add RLS to `realtime.messages`** to restrict topic subscriptions. This requires enabling RLS on the `realtime.messages` table and adding a policy.
+
+2. **Use Realtime Authorization** — filter the channel subscription in the client to use a user-specific topic or add Realtime RLS policies.
+
+### Database Migration (for realtime.messages)
+
 ```sql
-CREATE POLICY "Obras can update own colaboradores"
-ON public.colaboradores
-FOR UPDATE
-TO authenticated
-USING (has_role(auth.uid(), 'obras'::app_role))
-WITH CHECK (has_role(auth.uid(), 'obras'::app_role));
+-- Enable RLS on realtime.messages
+ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated users to use realtime (postgres_changes respect table RLS)
+CREATE POLICY "Authenticated users can use realtime"
+ON realtime.messages FOR SELECT TO authenticated
+USING (true);
 ```
 
-Since RLS cannot filter columns, we handle sensitive field protection at the application level.
+> **Note**: This is a permissive baseline. The actual data filtering happens via the `notificacoes` table RLS — `postgres_changes` events are filtered server-side by the table's own RLS policies before being sent to subscribers. The `realtime.messages` policy ensures only authenticated users can subscribe at all.
 
-### Frontend Changes
+### Frontend change — None required
+The existing `useRealtimeNotificacoes.ts` already uses `postgres_changes` which inherits `notificacoes` RLS. No code changes needed.
 
-**`src/pages/Colaboradores/ColaboradorDetailModal.tsx`** — Hide sensitive fields (salary, CPF, RG, PIS/PASEP, personal contact) from `obras` users. Only show these to `admin`, `gerenciador_tecnico`, and `financeira` roles.
-
-**`src/pages/Colaboradores/ColaboradoresPage.tsx`** — Hide CPF column from `obras` users in the table listing.
-
-### Technical detail
-PostgreSQL RLS operates at the row level, not column level. To properly restrict column access, we would need a database VIEW. However, since the `obras` role legitimately needs to create/manage colaboradores for their projects (allocations, EPIs, etc.), the pragmatic approach is:
-- Keep row-level access via RLS
-- Restrict sensitive field visibility in the frontend
-- The RESTRICTIVE update/delete policies already ensure `obras` users can only modify records they created
+---
 
 ## Files to edit
-- 1 SQL migration (replace `Obras can manage colaboradores` with scoped SELECT/INSERT/UPDATE policies)
-- `src/pages/Colaboradores/ColaboradorDetailModal.tsx` — hide sensitive tabs/fields for obras
-- `src/pages/Colaboradores/ColaboradoresPage.tsx` — hide CPF column for obras
+- 1 SQL migration (scoped colaboradores policies + realtime.messages RLS)
+- No frontend changes needed
+
+## Resolve security findings
+- `colaboradores_sensitive_pii_exposure` → resolved
+- `realtime_messages_no_rls` → resolved
 

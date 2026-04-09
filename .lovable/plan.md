@@ -1,45 +1,41 @@
 
 
-# Fix: Three Security Findings
+# Analysis: `user_roles_privilege_escalation` Finding
 
-## Finding 1: `user_roles_gt_escalation` — Add USING clause to UPDATE policy
+## Conclusion: False Positive -- Policies Are Already Secure
 
-**Current state**: The RESTRICTIVE UPDATE policy "Only admins can update to privileged roles" has a `WITH CHECK` that prevents writing admin/GT values, but no `USING` clause. This means a GT user could select existing admin role records and update them (e.g., demote an admin to 'obras'). While the scanner's specific concern (escalation TO privileged roles) is already blocked by WITH CHECK, we should add a USING clause for defense in depth.
+After tracing all restrictive UPDATE policies on `user_roles`, the current configuration correctly blocks all privilege escalation paths:
 
-**Fix**: Drop and recreate the UPDATE restrictive policy with both USING and WITH CHECK:
-- USING: prevent non-admins from modifying records that currently have privileged roles
-- WITH CHECK: prevent non-admins from setting roles to privileged values (already exists)
+### Policy Interaction Analysis
 
-```sql
-DROP POLICY IF EXISTS "Only admins can update to privileged roles" ON public.user_roles;
-CREATE POLICY "Only admins can update to privileged roles"
-ON public.user_roles AS RESTRICTIVE
-FOR UPDATE TO authenticated
-USING (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
-)
-WITH CHECK (
-  has_role(auth.uid(), 'admin'::app_role)
-  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
-);
-```
+For an UPDATE to succeed, ALL restrictive policies must pass AND at least one permissive policy must pass.
 
-## Finding 2: `realtime_messages_no_policies` — Ignore (Known Limitation)
+Current restrictive UPDATE policies:
+1. **"Only admins can update to privileged roles"**: USING checks OLD `role` not in (admin, GT); WITH CHECK checks NEW `role` not in (admin, GT)
+2. **"Prevent self-role modification"**: USING checks `user_id <> auth.uid()`
 
-Same as previously addressed `realtime_messages_no_rls`. The `realtime` schema is reserved by Supabase — modifying it risks breaking internals. Source table RLS on `notificacoes` (`user_id = auth.uid()`) ensures `postgres_changes` events are filtered server-side before delivery.
+**Attack scenario 1 -- GT sets another user to 'admin':**
+- Permissive "GT can manage roles": passes
+- Restrictive #1 USING: OLD role is 'obras' (not privileged) -- passes
+- Restrictive #1 WITH CHECK: NEW role is 'admin' (privileged, user not admin) -- **FAILS**
+- Result: **Blocked**
 
-## Finding 3: `logs_auditoria_no_insert_policy` — Ignore (By Design)
+**Attack scenario 2 -- GT demotes an admin:**
+- Restrictive #1 USING: OLD role is 'admin' (privileged, user not admin) -- **FAILS**
+- Result: **Blocked**
 
-All writes to `logs_auditoria` go through the `insert_audit_log` SECURITY DEFINER function, which captures identity from the authenticated session. There is no permissive INSERT policy, so direct client inserts are already denied by Postgres RLS. This is secure by design.
+**Attack scenario 3 -- GT modifies own role:**
+- Restrictive #2 USING: `user_id = auth.uid()` -- **FAILS**
+- Result: **Blocked**
 
-## Actions
-1. One SQL migration (recreate UPDATE policy with USING clause)
-2. Mark `user_roles_gt_escalation` as fixed
-3. Mark `realtime_messages_no_policies` as ignored
-4. Mark `logs_auditoria_no_insert_policy` as ignored
+## Proposed Action
 
-## Files to edit
-- 1 SQL migration
-- No frontend changes
+Mark `user_roles_privilege_escalation` as **fixed** (already secure) with the explanation that the combination of restrictive policies correctly prevents all escalation paths. The migration applied in the previous message already ensured both USING and WITH CHECK clauses are present.
+
+Also mark `realtime_messages_no_rls` as **ignored** (same known limitation as before -- Supabase reserved schema).
+
+### Technical Details
+- No SQL migration needed
+- No code changes needed
+- Only security finding status updates
 

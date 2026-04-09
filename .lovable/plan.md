@@ -1,31 +1,45 @@
 
 
-# Plano: Proteger arquivo .env no controle de versão
+# Fix: Three Security Findings
 
-## Problema
-O arquivo `.env` não está listado no `.gitignore`, então ele é versionado no repositório Git. Mesmo contendo apenas chaves públicas (anon key), é uma prática de segurança padrão excluir arquivos `.env` do controle de versão.
+## Finding 1: `user_roles_gt_escalation` — Add USING clause to UPDATE policy
 
-## Esclarecimento importante
-As chaves no `.env` e em `src/integrations/supabase/client.ts` são **chaves anon/publishable** — elas são intencionalmente expostas no frontend (o Vite as injeta no bundle JavaScript). A segurança do sistema **não depende do sigilo dessas chaves**, mas sim das **políticas RLS** no banco de dados. Chaves secretas (como `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`) estão armazenadas exclusivamente nos **Supabase Secrets**, nunca no código-fonte.
+**Current state**: The RESTRICTIVE UPDATE policy "Only admins can update to privileged roles" has a `WITH CHECK` that prevents writing admin/GT values, but no `USING` clause. This means a GT user could select existing admin role records and update them (e.g., demote an admin to 'obras'). While the scanner's specific concern (escalation TO privileged roles) is already blocked by WITH CHECK, we should add a USING clause for defense in depth.
 
-Mesmo assim, versionar `.env` é uma má prática que deve ser corrigida.
+**Fix**: Drop and recreate the UPDATE restrictive policy with both USING and WITH CHECK:
+- USING: prevent non-admins from modifying records that currently have privileged roles
+- WITH CHECK: prevent non-admins from setting roles to privileged values (already exists)
 
-## Alteração
-
-### 1. Adicionar `.env` ao `.gitignore`
-
-Adicionar as seguintes entradas ao final do `.gitignore`:
-
+```sql
+DROP POLICY IF EXISTS "Only admins can update to privileged roles" ON public.user_roles;
+CREATE POLICY "Only admins can update to privileged roles"
+ON public.user_roles AS RESTRICTIVE
+FOR UPDATE TO authenticated
+USING (
+  has_role(auth.uid(), 'admin'::app_role)
+  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
+)
+WITH CHECK (
+  has_role(auth.uid(), 'admin'::app_role)
+  OR role NOT IN ('admin'::app_role, 'gerenciador_tecnico'::app_role)
+);
 ```
-# Environment files
-.env
-.env.*
-```
 
-Isso impedirá que qualquer arquivo `.env` atual ou futuro seja rastreado pelo Git.
+## Finding 2: `realtime_messages_no_policies` — Ignore (Known Limitation)
 
-**Nota**: O arquivo `.env` continuará existindo localmente e no ambiente Lovable (onde é gerado automaticamente), mas não será mais commitado no repositório. As variáveis `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_PROJECT_ID` são injetadas automaticamente pelo Lovable — não há risco de perda.
+Same as previously addressed `realtime_messages_no_rls`. The `realtime` schema is reserved by Supabase — modifying it risks breaking internals. Source table RLS on `notificacoes` (`user_id = auth.uid()`) ensures `postgres_changes` events are filtered server-side before delivery.
 
-## Arquivos a editar
-- `.gitignore` — adicionar exclusão de `.env`
+## Finding 3: `logs_auditoria_no_insert_policy` — Ignore (By Design)
+
+All writes to `logs_auditoria` go through the `insert_audit_log` SECURITY DEFINER function, which captures identity from the authenticated session. There is no permissive INSERT policy, so direct client inserts are already denied by Postgres RLS. This is secure by design.
+
+## Actions
+1. One SQL migration (recreate UPDATE policy with USING clause)
+2. Mark `user_roles_gt_escalation` as fixed
+3. Mark `realtime_messages_no_policies` as ignored
+4. Mark `logs_auditoria_no_insert_policy` as ignored
+
+## Files to edit
+- 1 SQL migration
+- No frontend changes
 

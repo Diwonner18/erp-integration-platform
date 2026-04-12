@@ -1,11 +1,17 @@
 project_id = "mpuocbbascmfpfmsrdwo"
 
+# SECURITY NOTE: verify_jwt = false is intentional for all edge functions below.
+# Each function implements its own authentication/authorization internally:
+
 [functions.manage-user]
+# Validates JWT manually via getClaims() and checks admin/GT role before any operation.
 verify_jwt = false
 
 [functions.purge-expired-logs]
+# Called by cron/service. Validates service_role_key in request body.
 verify_jwt = false
 
 [functions.send-auth-email]
+# Called by Supabase Auth Hook (no JWT available). Validates HMAC signature via x-supabase-webhook-signature.
 verify_jwt = false
 

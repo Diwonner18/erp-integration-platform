@@ -163,6 +163,23 @@ export const modeloContratoInsertSchema = z.object({
   ativo: z.boolean().optional().nullable(),
 });
 
+// ==================== UPDATE (PARTIAL) SCHEMAS ====================
+
+export const obraUpdateSchema = obraInsertSchema.partial();
+export const propostaUpdateSchema = propostaInsertSchema.partial();
+export const medicaoUpdateSchema = medicaoInsertSchema.partial();
+export const materialUpdateSchema = materialInsertSchema.partial();
+export const equipamentoUpdateSchema = equipamentoInsertSchema.partial();
+export const programacaoUpdateSchema = programacaoInsertSchema.partial();
+export const epiUpdateSchema = epiInsertSchema.partial();
+export const despesaUpdateSchema = despesaInsertSchema.partial();
+export const boletimUpdateSchema = boletimInsertSchema.partial();
+export const relatorioDiarioUpdateSchema = relatorioDiarioInsertSchema.partial();
+export const horasExtrasUpdateSchema = horasExtrasInsertSchema.partial();
+export const alteracaoEscopoUpdateSchema = alteracaoEscopoInsertSchema.partial();
+export const valorUnitarioUpdateSchema = valorUnitarioInsertSchema.partial();
+export const modeloContratoUpdateSchema = modeloContratoInsertSchema.partial();
+
 // ==================== HELPER ====================
 
 export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {

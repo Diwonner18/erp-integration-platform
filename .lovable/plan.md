@@ -1,134 +1,60 @@
 
 
-# Auditoria Completa de Segurança -- CT Guedes
+# Auditoria Completa de Segurança -- CT Guedes (Atualização)
 
 ## Resumo Executivo
 
-O sistema CT Guedes possui uma arquitetura de segurança **robusta e bem implementada**. A análise identificou **1 vulnerabilidade média acionável**, **2 itens informativos de baixa severidade**, e confirma que a grande maioria dos controles está corretamente aplicada. Abaixo o relatório detalhado.
+Após a implementação das 3 correções da auditoria anterior (split da política GT, validação Zod em UPDATEs, documentação de Edge Functions), o sistema foi re-escaneado. **Nenhuma vulnerabilidade nova foi encontrada.** Os 4 findings do scan automático foram resolvidos:
+
+- 2 confirmados como duplicatas/falsos positivos de findings anteriores (já ignorados)
+- 1 já ignorado anteriormente (Leaked Password Protection -- requer Supabase Pro)
+- 1 confirmado como seguro por design (audit logs)
 
 ---
 
-## PONTOS SEGUROS -- Corretamente Implementados
+## Status dos Findings do Scan
 
-### 1. Autenticação e Sessão
-- Supabase Auth com `onAuthStateChange` configurado **antes** de `getSession()` (padrão correto).
-- Re-autenticação obrigatória para alteração de senha (`signInWithPassword` antes de `updateUser`).
-- Validação de senha no frontend: 8+ caracteres, maiúscula, número.
-- Rate limiting no login: 5 tentativas / lockout de 30 segundos.
-- Token JWT com `autoRefreshToken: true` e `persistSession: true`.
+### 1. Leaked Password Protection Disabled (WARN)
+**Status:** Ignorado (mantido)
+**Motivo:** Requer plano Supabase Pro. Mitigado por validação de senha no frontend (8+ chars, maiúscula, número) e rate limiting (5 tentativas / 30s lockout).
 
-### 2. RLS -- Todas as 32 tabelas protegidas
-- 100% das tabelas públicas têm `row_level_security = true` (confirmado via query).
-- Modelo híbrido PERMISSIVE + RESTRICTIVE corretamente aplicado em tabelas operacionais (obras, materiais, equipamentos, etc.).
-- Políticas RESTRICTIVE impedem DELETE/UPDATE por usuários que não são o `created_by` ou não possuem `acessos_compartilhados`.
+### 2. Audit logs insertion concern (WARN)
+**Status:** Seguro por design -- nenhuma ação necessária
+**Análise:** A tabela `logs_auditoria` tem RLS ativado com **apenas políticas SELECT** (admin e GT). Isso significa que INSERT/UPDATE/DELETE estão **bloqueados** para todos os usuários autenticados. Os registros são escritos exclusivamente pela função `insert_audit_log` (SECURITY DEFINER), que bypassa RLS de forma controlada e captura a identidade do usuário da sessão autenticada, impedindo spoofing.
 
-### 3. Proteção contra Escalação de Privilégios (user_roles)
-- 10 políticas RLS na tabela `user_roles` com defesa em profundidade:
-  - `Prevent self-role assignment/modification/deletion` -- bloqueia auto-escalação.
-  - `Only admins can insert/update privileged roles` -- bloqueia GT de atribuir admin/GT.
-  - `GT cannot assign/delete admin role` -- camada extra de proteção.
-  - `Block direct role inserts` -- restringe INSERT a admin/GT.
-- Edge Function `manage-user` replica essas validações server-side com allowlists de e-mail hardcoded.
+### 3. Realtime channel subscription (ERROR)
+**Status:** Ignorado (duplicata)
+**Análise:** Finding já analisado anteriormente. O Supabase filtra eventos server-side com base no RLS da tabela fonte (`notificacoes` tem `user_id = auth.uid()`). O schema `realtime` é reservado.
 
-### 4. Validação de Dados
-- Zod schemas aplicados em **todas** as mutations de INSERT (14 schemas cobrindo obras, propostas, medições, materiais, EPIs, despesas, etc.).
-- Constraint `nivel_acesso_valid` no banco garante valores `'view'|'edit'|'all'` na tabela `acessos_compartilhados`.
-
-### 5. Auditoria e LGPD
-- Função `insert_audit_log` (SECURITY DEFINER) captura identidade do usuário da sessão, impedindo spoofing.
-- Expurgo automático via `purge-expired-logs` com retenção de 5 anos.
-- Tabela `logs_auditoria` sem INSERT/UPDATE/DELETE para usuários regulares (somente via RPC).
-
-### 6. Edge Functions
-- `purge-expired-logs`: protegida por validação de `service_role_key`.
-- `send-auth-email`: HMAC verification via `x-supabase-webhook-signature`.
-- `manage-user`: validação JWT + verificação de role admin/GT antes de qualquer operação.
-
-### 7. Isolamento de Dados do Cliente (LGPD)
-- Funções SECURITY DEFINER (`get_cliente_ids_for_user`, `get_related_cliente_ids`, `get_obra_ids_for_cliente`) quebram recursão RLS sem expor dados.
-- Clientes só veem seus próprios dados em todas as tabelas relevantes.
-
-### 8. Proteção de Rotas
-- `ProtectedRoute` valida `allowedUserTypes` + `modulo` via `permissoes_perfil`.
-- Admin e GT bypass são baseados no role **real** (não impersonado).
-- Impersonação não altera permissões reais de admin/GT.
+### 4. GT privilege escalation via user_roles (WARN)
+**Status:** Corrigido + Ignorado (falso positivo)
+**Análise:** A política ALL do GT foi substituída por 4 políticas granulares na última correção. As políticas RESTRICTIVE (`Only admins can insert privileged roles`, `Only admins can update to privileged roles`, `Prevent self-role assignment/modification/deletion`, `GT cannot assign/delete admin role`) confirmam que todas as vias de escalação estão bloqueadas.
 
 ---
 
-## VULNERABILIDADES ENCONTRADAS
-
-### V1. GT pode enumerar todos os roles do sistema (Severidade: MÉDIA)
-
-**Finding existente:** `user_roles_enumeration`
-
-**Situação atual:** A política `"Gerenciador tecnico can manage roles"` é um ALL permissivo que concede SELECT em **todas** as linhas de `user_roles`. Usuários regulares só veem seu próprio role via `"Users can view own roles"`.
-
-**Risco real:** Um GT comprometido pode mapear a estrutura completa de roles do sistema (quem é admin, quem é financeira, etc.), facilitando engenharia social ou ataques direcionados.
-
-**Solução proposta:**
-1. Substituir a política ALL do GT por políticas separadas por operação (SELECT restrito, INSERT com WITH CHECK, UPDATE com WITH CHECK, DELETE com USING).
-2. O SELECT do GT pode ser mantido amplo (GT precisa gerenciar usuários), mas a separação permite auditoria mais granular e facilita futuras restrições.
-
-**Recomendação:** Embora o GT seja um role confiável (e-mails em allowlist), a separação da política ALL em políticas por operação é uma boa prática de defesa em profundidade. Severidade média porque o impacto é limitado ao reconhecimento (não permite escalação).
-
----
-
-### V2. Edge Functions com `verify_jwt = false` (Severidade: BAIXA)
-
-**Situação:** As 3 edge functions (`manage-user`, `purge-expired-logs`, `send-auth-email`) têm `verify_jwt = false` no `config.toml`.
-
-**Análise:**
-- `manage-user`: **Compensa** internamente verificando JWT via `getClaims()` e checando roles. Sem risco real.
-- `purge-expired-logs`: **Compensa** verificando `service_role_key`. Sem risco real.
-- `send-auth-email`: **Compensa** com HMAC verification. Chamada pelo Auth Hook do Supabase que não envia JWT.
-
-**Risco real:** Mínimo. Todas as functions implementam autenticação/autorização própria. O `verify_jwt = false` é necessário para seus respectivos fluxos.
-
-**Recomendação:** Nenhuma ação necessária. Documentar que a decisão é intencional.
-
----
-
-### V3. Ausência de validação Zod em mutations de UPDATE (Severidade: BAIXA)
-
-**Situação:** O `validateInput` com Zod é aplicado consistentemente em todas as mutations de **INSERT**, mas as mutations de **UPDATE** (`useUpdateObra`, `useUpdateMedicao`, `useUpdateProposta`, etc.) **não** validam os dados com Zod antes de enviar ao Supabase.
-
-**Risco real:** Baixo. O RLS protege contra escritas não autorizadas, e o TypeScript garante tipos em tempo de compilação. Porém, um atacante manipulando a requisição diretamente poderia enviar valores fora do range esperado (ex: `progresso: 999`).
-
-**Solução proposta:** Criar schemas de validação parcial (`.partial()`) para as mutations de UPDATE e aplicar `validateInput` antes da chamada ao Supabase.
-
----
-
-## CHECKLIST DE SEGURANÇA
+## Checklist de Segurança Atualizado
 
 | Categoria | Status |
 |---|---|
 | RLS em todas as tabelas | OK -- 32/32 |
-| Proteção contra IDOR | OK -- RLS + `created_by` + `acessos_compartilhados` |
+| Proteção contra IDOR | OK |
 | Validação de input (INSERT) | OK -- Zod em 14 schemas |
-| Validação de input (UPDATE) | PARCIAL -- sem Zod |
-| Proteção contra XSS | OK -- React escapa por padrão, sem `dangerouslySetInnerHTML` |
-| CSRF | OK -- Supabase usa Bearer tokens (não cookies) |
-| SQL Injection | OK -- Supabase SDK usa parameterized queries |
-| Escalação de privilégios | OK -- 10 políticas RESTRICTIVE em `user_roles` |
-| Proteção de dados sensíveis | OK -- RLS scoping por role |
-| Auditoria LGPD | OK -- `insert_audit_log` SECURITY DEFINER |
-| Expurgo de dados | OK -- 5 anos com purge automático |
-| Edge Functions protegidas | OK -- JWT/HMAC/service_role |
-| Tokens/secrets no client | OK -- apenas anon key (público por design) |
-| Impersonação segura | OK -- permissões reais preservadas |
-| Rate limiting no login | OK -- 5 tentativas / 30s lockout |
+| Validação de input (UPDATE) | OK -- Zod parcial em 12 schemas (corrigido) |
+| Proteção contra XSS | OK |
+| CSRF | OK -- Bearer tokens |
+| SQL Injection | OK -- parameterized queries |
+| Escalação de privilégios | OK -- 14 políticas em user_roles (corrigido) |
+| Auditoria LGPD | OK -- SECURITY DEFINER + expurgo 5 anos |
+| Edge Functions | OK -- JWT/HMAC/service_role + documentação (corrigido) |
+| Tokens/secrets no client | OK -- apenas anon key |
+| Rate limiting | OK -- 5 tentativas / 30s |
+| Logs de auditoria protegidos | OK -- apenas SELECT para admin/GT |
 
 ---
 
-## AÇÕES RECOMENDADAS (por prioridade)
+## Conclusao
 
-1. **Média** -- Separar a política ALL do GT em `user_roles` em políticas por operação (SELECT, INSERT, UPDATE, DELETE individuais). Migration SQL simples.
-2. **Baixa** -- Adicionar validação Zod `.partial()` nas mutations de UPDATE para consistência de defesa em profundidade.
-3. **Info** -- Documentar a decisão de `verify_jwt = false` nas edge functions.
+O sistema CT Guedes está **seguro dentro do escopo analisado**. Todas as vulnerabilidades identificadas nas auditorias anteriores foram corrigidas. O scan automático não encontrou novas vulnerabilidades acionáveis. Os findings restantes são falsos positivos, duplicatas, ou limitações de plano que já possuem mitigações adequadas.
 
----
-
-## CONCLUSÃO
-
-O sistema CT Guedes apresenta uma postura de segurança **acima da média** para aplicações Lovable + Supabase. Os controles críticos (RLS, escalação de privilégios, auditoria, validação de input) estão corretamente implementados. A única vulnerabilidade acionável (V1) é de severidade média e não permite escalação de privilégios -- apenas reconhecimento por um role já privilegiado. As demais são melhorias de defesa em profundidade.
+A única recomendação pendente é ativar **Leaked Password Protection** quando o projeto migrar para o plano Supabase Pro.
 

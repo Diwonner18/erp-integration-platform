@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface LookupItem {
+  id: string;
+  nome: string;
+  ativo: boolean;
+}
+
 export const useTiposEpi = () => {
   return useQuery({
     queryKey: ['tipos_epi'],
@@ -11,7 +17,7 @@ export const useTiposEpi = () => {
         .eq('ativo', true)
         .order('nome');
       if (error) throw error;
-      return data as { id: string; nome: string; ativo: boolean }[];
+      return (data as unknown) as LookupItem[];
     },
   });
 };
@@ -26,7 +32,7 @@ export const useCategoriasHoraExtra = () => {
         .eq('ativo', true)
         .order('nome');
       if (error) throw error;
-      return data as { id: string; nome: string; ativo: boolean }[];
+      return (data as unknown) as LookupItem[];
     },
   });
 };
@@ -41,7 +47,7 @@ export const useTiposHoraExtra = () => {
         .eq('ativo', true)
         .order('nome');
       if (error) throw error;
-      return data as { id: string; nome: string; ativo: boolean }[];
+      return (data as unknown) as LookupItem[];
     },
   });
 };

@@ -319,7 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPermissions(getPermissionsByUserType(appUser.type));
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login failed');
       return { success: false };
     }
   };

@@ -1743,7 +1743,68 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      agendamentos_cliente: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          data_preferida: string | null
+          descricao: string | null
+          email: string | null
+          endereco: string | null
+          horario: string | null
+          id: string | null
+          nome: string | null
+          prioridade: string | null
+          status: string | null
+          telefone: string | null
+          tipo_servico: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data_preferida?: string | null
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          horario?: string | null
+          id?: string | null
+          nome?: string | null
+          prioridade?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_servico?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string | null
+          data_preferida?: string | null
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          horario?: string | null
+          id?: string | null
+          nome?: string | null
+          prioridade?: string | null
+          status?: string | null
+          telefone?: string | null
+          tipo_servico?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       assign_internal_role: {

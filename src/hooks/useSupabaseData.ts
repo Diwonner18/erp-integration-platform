@@ -7,6 +7,10 @@ import {
   epiInsertSchema, despesaInsertSchema, boletimInsertSchema,
   relatorioDiarioInsertSchema, horasExtrasInsertSchema, alteracaoEscopoInsertSchema,
   valorUnitarioInsertSchema, modeloContratoInsertSchema,
+  obraUpdateSchema, propostaUpdateSchema, medicaoUpdateSchema,
+  materialUpdateSchema, equipamentoUpdateSchema, programacaoUpdateSchema,
+  epiUpdateSchema, horasExtrasUpdateSchema, alteracaoEscopoUpdateSchema,
+  valorUnitarioUpdateSchema, modeloContratoUpdateSchema, relatorioDiarioUpdateSchema,
   validateInput,
 } from '@/lib/validationSchemas';
 

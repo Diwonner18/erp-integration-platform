@@ -153,6 +153,7 @@ const getGerenciadorSections = (): MenuSection[] => [
       { icon: Shield, label: 'Permissões', path: '/permissoes', show: true },
       { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: true },
       { icon: Settings, label: 'Automação', path: '/automacao', show: true },
+      { icon: Settings, label: 'Tabelas de Apoio', path: '/tabelas-apoio', show: true },
       { icon: BarChart3, label: 'Relatórios Gerais', path: '/relatorios', show: true },
     ],
   },

@@ -120,6 +120,12 @@ const App = () => (
               </ProtectedRoute>
             } />
 
+            <Route path="/tabelas-apoio" element={
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
+                <TabelasApoio />
+              </ProtectedRoute>
+            } />
+
             {/* Shared routes */}
             <Route path="/programacao" element={
               <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="programacoes">

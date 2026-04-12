@@ -92,6 +92,7 @@ const getAdminSections = (hasPermission: (p: string) => boolean): MenuSection[] 
       { icon: Shield, label: 'Permissões', path: '/permissoes', show: hasPermission('canManageUsers') },
       { icon: CheckSquare, label: 'Aprovações', path: '/aprovacoes', show: hasPermission('canApproveChanges') },
       { icon: Settings, label: 'Automação', path: '/automacao', show: hasPermission('canManageAutomation') },
+      { icon: Settings, label: 'Tabelas de Apoio', path: '/tabelas-apoio', show: hasPermission('canManageUsers') },
       { icon: BarChart3, label: 'Relatórios Gerais', path: '/relatorios', show: hasPermission('canViewAllReports') },
     ],
   },

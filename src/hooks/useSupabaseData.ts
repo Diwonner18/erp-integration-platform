@@ -379,6 +379,7 @@ export const useUpdateObra = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'obras'> & { id: string }) => {
+      validateInput(obraUpdateSchema, updates);
       const { data, error } = await supabase.from('obras').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -404,6 +405,7 @@ export const useUpdateProposta = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'propostas'> & { id: string }) => {
+      validateInput(propostaUpdateSchema, updates);
       const { data, error } = await supabase.from('propostas').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -429,6 +431,7 @@ export const useUpdateMedicao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'medicoes'> & { id: string }) => {
+      validateInput(medicaoUpdateSchema, updates);
       const { data, error } = await supabase.from('medicoes').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -454,6 +457,7 @@ export const useUpdateProgramacao = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'programacoes'> & { id: string }) => {
+      validateInput(programacaoUpdateSchema, updates);
       const { data, error } = await supabase.from('programacoes').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -479,6 +483,7 @@ export const useUpdateMaterial = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'materiais'> & { id: string }) => {
+      validateInput(materialUpdateSchema, updates);
       const { data, error } = await supabase.from('materiais').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -515,6 +520,7 @@ export const useUpdateEquipamento = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'equipamentos'> & { id: string }) => {
+      validateInput(equipamentoUpdateSchema, updates);
       const { data, error } = await supabase.from('equipamentos').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -551,6 +557,7 @@ export const useUpdateEPI = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'epis'> & { id: string }) => {
+      validateInput(epiUpdateSchema, updates);
       const { data, error } = await supabase.from('epis').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -576,6 +583,7 @@ export const useUpdateHorasExtras = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'horas_extras'> & { id: string }) => {
+      validateInput(horasExtrasUpdateSchema, updates);
       const { data, error } = await supabase.from('horas_extras').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -627,6 +635,7 @@ export const useUpdateAlteracaoEscopo = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'alteracoes_escopo'> & { id: string }) => {
+      validateInput(alteracaoEscopoUpdateSchema, updates);
       const { data, error } = await supabase.from('alteracoes_escopo').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -652,6 +661,7 @@ export const useUpdateValorUnitario = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'valores_unitarios'> & { id: string }) => {
+      validateInput(valorUnitarioUpdateSchema, updates);
       const { data, error } = await supabase.from('valores_unitarios').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -677,6 +687,7 @@ export const useUpdateModeloContrato = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'modelos_contrato'> & { id: string }) => {
+      validateInput(modeloContratoUpdateSchema, updates);
       const { data, error } = await supabase.from('modelos_contrato').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -726,6 +737,7 @@ export const useUpdateRelatorioDiario = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<'relatorios_diarios'> & { id: string }) => {
+      validateInput(relatorioDiarioUpdateSchema, updates);
       const { data, error } = await supabase.from('relatorios_diarios').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;

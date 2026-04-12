@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    console.log(`Email sent: type=${emailType}, to=${recipientEmail}`)
+    console.log(`Email sent: type=${emailType}, to=${recipientEmail.substring(0, 3)}***`)
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

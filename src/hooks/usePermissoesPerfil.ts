@@ -106,7 +106,7 @@ export const useAllUserPermissions = () => {
 
   const hasModuleAccess = (modulo: string): boolean => {
     if (isFullAccess) return true;
-    if (!query.data) return true; // default allow while loading
+    if (!query.data) return false; // deny access while permissions are loading
     const perm = query.data.find(p => p.modulo === modulo);
     return perm?.acesso_modulo ?? true;
   };

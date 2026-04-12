@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
+import { useCepLookup } from '@/hooks/useCepLookup';
 
 const agendamentoSchema = z.object({
   nome: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(200),
@@ -21,7 +22,13 @@ const agendamentoSchema = z.object({
   tipoServico: z.string().trim().min(1, 'Selecione o tipo de serviço').max(200),
   dataPreferida: z.string().min(1, 'Data é obrigatória'),
   horario: z.string().min(1, 'Selecione um horário'),
-  endereco: z.string().trim().min(10, 'Endereço deve ter pelo menos 10 caracteres').max(500),
+  cep: z.string().trim().min(8, 'CEP inválido').max(10),
+  logradouro: z.string().trim().min(1, 'Logradouro é obrigatório').max(300),
+  numero: z.string().trim().max(20).optional(),
+  bairro: z.string().trim().min(1, 'Bairro é obrigatório').max(200),
+  cidade: z.string().trim().min(1, 'Cidade é obrigatória').max(200),
+  uf: z.string().trim().min(2, 'UF é obrigatória').max(2),
+  complemento: z.string().trim().max(200).optional(),
   descricao: z.string().trim().min(20, 'Descrição deve ter pelo menos 20 caracteres').max(2000),
   prioridade: z.string().min(1, 'Selecione a prioridade'),
 });
@@ -32,11 +39,14 @@ const SolicitarAgendamento = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { fetchCep, loading: cepLoading } = useCepLookup();
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors }
   } = useForm<AgendamentoFormData>({
     resolver: zodResolver(agendamentoSchema),
@@ -45,6 +55,22 @@ const SolicitarAgendamento = () => {
       email: user?.email || '',
     },
   });
+
+  const cepValue = watch('cep');
+
+  const handleCepBlur = useCallback(async () => {
+    if (!cepValue || cepValue.replace(/\D/g, '').length !== 8) return;
+    const data = await fetchCep(cepValue);
+    if (data) {
+      setValue('logradouro', data.logradouro, { shouldValidate: true });
+      setValue('bairro', data.bairro, { shouldValidate: true });
+      setValue('cidade', data.cidade, { shouldValidate: true });
+      setValue('uf', data.uf, { shouldValidate: true });
+      toast({ title: 'Endereço encontrado', description: `${data.logradouro}, ${data.bairro} - ${data.cidade}/${data.uf}` });
+    } else {
+      toast({ title: 'CEP não encontrado', description: 'Verifique o CEP informado', variant: 'destructive' });
+    }
+  }, [cepValue, fetchCep, setValue, toast]);
 
   const { data: agendamentos = [], isLoading: loadingAgendamentos } = useQuery({
     queryKey: ['agendamentos'],
@@ -61,6 +87,15 @@ const SolicitarAgendamento = () => {
 
   const createAgendamento = useMutation({
     mutationFn: async (formData: AgendamentoFormData) => {
+      const enderecoCompleto = [
+        formData.logradouro,
+        formData.numero ? `nº ${formData.numero}` : '',
+        formData.complemento || '',
+        formData.bairro,
+        `${formData.cidade}/${formData.uf}`,
+        `CEP: ${formData.cep}`,
+      ].filter(Boolean).join(', ');
+
       const { error } = await supabase.from('agendamentos').insert({
         user_id: user!.id,
         nome: formData.nome,
@@ -69,11 +104,19 @@ const SolicitarAgendamento = () => {
         tipo_servico: formData.tipoServico,
         data_preferida: formData.dataPreferida,
         horario: formData.horario,
-        endereco: formData.endereco,
+        endereco: enderecoCompleto,
         descricao: formData.descricao,
         prioridade: formData.prioridade,
       });
       if (error) throw error;
+
+      // Create notification for admin/obras
+      await supabase.from('notificacoes').insert({
+        titulo: 'Nova solicitação de agendamento',
+        mensagem: `${formData.nome} solicitou agendamento de ${formData.tipoServico} para ${new Date(formData.dataPreferida).toLocaleDateString('pt-BR')}`,
+        tipo: 'interna' as const,
+        prioridade: formData.prioridade === 'emergencia' ? 'alta' : 'normal',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
@@ -165,10 +208,56 @@ const SolicitarAgendamento = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground">Endereço completo da obra (incluindo CEP) *</label>
-                  <Input placeholder="Rua, número, bairro, cidade, estado, CEP" className="mt-1" {...register('endereco')} />
-                  {errors.endereco && <p className="text-sm text-destructive mt-1">{errors.endereco.message}</p>}
+                {/* CEP + Address with auto-fill */}
+                <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Endereço da Obra
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">CEP *</label>
+                      <div className="relative">
+                        <Input
+                          placeholder="00000-000"
+                          className="mt-1"
+                          {...register('cep')}
+                          onBlur={handleCepBlur}
+                        />
+                        {cepLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground mt-0.5" />}
+                      </div>
+                      {errors.cep && <p className="text-sm text-destructive mt-1">{errors.cep.message}</p>}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">UF *</label>
+                      <Input placeholder="SP" className="mt-1" maxLength={2} {...register('uf')} />
+                      {errors.uf && <p className="text-sm text-destructive mt-1">{errors.uf.message}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Logradouro *</label>
+                    <Input placeholder="Rua / Avenida" className="mt-1" {...register('logradouro')} />
+                    {errors.logradouro && <p className="text-sm text-destructive mt-1">{errors.logradouro.message}</p>}
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Número</label>
+                      <Input placeholder="123" className="mt-1" {...register('numero')} />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Complemento</label>
+                      <Input placeholder="Apto, Sala..." className="mt-1" {...register('complemento')} />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Bairro *</label>
+                      <Input placeholder="Bairro" className="mt-1" {...register('bairro')} />
+                      {errors.bairro && <p className="text-sm text-destructive mt-1">{errors.bairro.message}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Cidade *</label>
+                    <Input placeholder="Cidade" className="mt-1" {...register('cidade')} />
+                    {errors.cidade && <p className="text-sm text-destructive mt-1">{errors.cidade.message}</p>}
+                  </div>
                 </div>
 
                 <div>

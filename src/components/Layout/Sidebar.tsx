@@ -137,8 +137,8 @@ const getAdminSections = (hasPermission: (p: string) => boolean): MenuSection[] 
       { icon: Calendar, label: 'Solicitar Programação', path: '/solicitar-agendamento', show: true },
       { icon: ClipboardList, label: 'Minhas Obras', path: '/minhas-obras', show: true },
       { icon: FileText, label: 'Minhas Propostas', path: '/minhas-propostas', show: true },
-      { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: true },
       { icon: Wallet, label: 'Meus Pagamentos', path: '/meus-pagamentos', show: true },
+      { icon: BarChart3, label: 'Meus Relatórios', path: '/meus-relatorios', show: true },
     ],
   },
 ];

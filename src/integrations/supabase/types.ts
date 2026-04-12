@@ -106,6 +106,71 @@ export type Database = {
           },
         ]
       }
+      agendamentos: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_preferida: string
+          descricao: string
+          email: string | null
+          endereco: string
+          horario: string
+          id: string
+          nome: string
+          observacoes_internas: string | null
+          prioridade: string
+          status: string
+          telefone: string | null
+          tipo_servico: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_preferida: string
+          descricao: string
+          email?: string | null
+          endereco: string
+          horario: string
+          id?: string
+          nome: string
+          observacoes_internas?: string | null
+          prioridade?: string
+          status?: string
+          telefone?: string | null
+          tipo_servico: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_preferida?: string
+          descricao?: string
+          email?: string | null
+          endereco?: string
+          horario?: string
+          id?: string
+          nome?: string
+          observacoes_internas?: string | null
+          prioridade?: string
+          status?: string
+          telefone?: string | null
+          tipo_servico?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alteracoes_escopo: {
         Row: {
           aprovado_por: string | null

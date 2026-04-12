@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Clock, Plus, Search, Download, FileSpreadsheet } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Clock, Plus, Search, Download, FileSpreadsheet, CalendarDays } from 'lucide-react';
 import FileImportButton from '@/components/shared/FileImportButton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } fr
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
 import { useCategoriasHoraExtra, useTiposHoraExtra } from '@/hooks/useLookupTables';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const HorasExtrasPage = () => {
   const { toast } = useToast();
@@ -33,6 +35,12 @@ const HorasExtrasPage = () => {
     dataFinal: null,
     status: ''
   });
+  const [activeTab, setActiveTab] = useState('registros');
+  const [quinzenaMes, setQuinzenaMes] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [quinzena, setQuinzena] = useState<'1' | '2'>('1');
 
   const { data: registros = [], isLoading } = useHorasExtras();
   const { data: obrasData = [] } = useObras();
@@ -66,6 +74,38 @@ const HorasExtrasPage = () => {
     }
     return result;
   }, [registros, filters, searchTerm]);
+
+  // Biweekly report data
+  const quinzenalData = useMemo(() => {
+    const [year, month] = quinzenaMes.split('-').map(Number);
+    const startDay = quinzena === '1' ? 1 : 16;
+    const lastDay = quinzena === '1' ? 15 : new Date(year, month, 0).getDate();
+    const start = new Date(year, month - 1, startDay);
+    const end = new Date(year, month - 1, lastDay, 23, 59, 59);
+
+    const filtered = registros.filter(r => {
+      const d = new Date(r.data);
+      return d >= start && d <= end;
+    });
+
+    // Group by funcionario
+    const grouped: Record<string, { funcionario: string; totalHoras: number; totalValor: number; registros: typeof filtered }> = {};
+    filtered.forEach(r => {
+      if (!grouped[r.funcionario]) {
+        grouped[r.funcionario] = { funcionario: r.funcionario, totalHoras: 0, totalValor: 0, registros: [] };
+      }
+      grouped[r.funcionario].totalHoras += r.horas || 0;
+      grouped[r.funcionario].totalValor += (r.horas || 0) * (r.valor_hora || 0);
+      grouped[r.funcionario].registros.push(r);
+    });
+
+    return {
+      items: Object.values(grouped).sort((a, b) => a.funcionario.localeCompare(b.funcionario)),
+      totalHoras: filtered.reduce((s, r) => s + (r.horas || 0), 0),
+      totalValor: filtered.reduce((s, r) => s + ((r.horas || 0) * (r.valor_hora || 0)), 0),
+      periodo: `${startDay.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')} a ${lastDay.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`,
+    };
+  }, [registros, quinzenaMes, quinzena]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +141,33 @@ const HorasExtrasPage = () => {
 
   const formatCurrency = (v: number | null) => v ? `R$ ${v.toFixed(2)}` : 'R$ 0,00';
 
+  const exportQuinzenal = (type: 'pdf' | 'excel') => {
+    const columns = [
+      { header: 'Funcionário', key: 'funcionario' },
+      { header: 'Total Horas', key: 'totalHoras' },
+      { header: 'Total Valor', key: 'totalValor', format: formatCurrencyExport },
+    ];
+    const data = quinzenalData.items;
+    const title = `Relatório Quinzenal HE - ${quinzenalData.periodo}`;
+    const filename = `he_quinzenal_${quinzenaMes}_q${quinzena}`;
+    if (type === 'pdf') {
+      exportToPDF({ title, columns, data, filename });
+    } else {
+      exportToExcel({ title, columns, data, filename });
+    }
+    toast({ title: `${type === 'pdf' ? 'PDF' : 'Excel'} exportado` });
+  };
+
+  const exportColumns = [
+    { header: 'Funcionário', key: 'funcionario' },
+    { header: 'Obra', key: 'obra_nome' },
+    { header: 'Data', key: 'data', format: formatDateExport },
+    { header: 'Horas', key: 'horas' },
+    { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
+    { header: 'Total', key: 'total', format: formatCurrencyExport },
+    { header: 'Status', key: 'status' },
+  ];
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -112,90 +179,144 @@ const HorasExtrasPage = () => {
           <div className="flex gap-2 flex-wrap" data-tour="page-export">
             <FileImportButton targetType="horas_extras" />
             <Button variant="outline" size="sm" onClick={() => {
-              const columns = [
-                { header: 'Funcionário', key: 'funcionario' },
-                { header: 'Obra', key: 'obra_nome' },
-                { header: 'Data', key: 'data', format: formatDateExport },
-                { header: 'Horas', key: 'horas' },
-                { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
-                { header: 'Total', key: 'total', format: formatCurrencyExport },
-                { header: 'Status', key: 'status' },
-              ];
               const data = filteredRegistros.map(r => ({ ...r, obra_nome: r.obras?.nome || '-', total: (r.horas || 0) * (r.valor_hora || 0) }));
-              exportToPDF({ title: 'Relatório de Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
+              exportToPDF({ title: 'Relatório de Horas Extras', columns: exportColumns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
               toast({ title: 'PDF exportado' });
             }}><Download className="w-4 h-4 mr-2" />PDF</Button>
             <Button variant="outline" size="sm" onClick={() => {
-              const columns = [
-                { header: 'Funcionário', key: 'funcionario' },
-                { header: 'Obra', key: 'obra_nome' },
-                { header: 'Data', key: 'data', format: formatDateExport },
-                { header: 'Horas', key: 'horas' },
-                { header: 'Valor/h', key: 'valor_hora', format: formatCurrencyExport },
-                { header: 'Total', key: 'total', format: formatCurrencyExport },
-                { header: 'Status', key: 'status' },
-              ];
               const data = filteredRegistros.map(r => ({ ...r, obra_nome: r.obras?.nome || '-', total: (r.horas || 0) * (r.valor_hora || 0) }));
-              exportToExcel({ title: 'Horas Extras', columns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
+              exportToExcel({ title: 'Horas Extras', columns: exportColumns, data, filename: `horas_extras_${new Date().toISOString().split('T')[0]}` });
               toast({ title: 'Excel exportado' });
             }}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel</Button>
             {perms.incluir_editar && <Button onClick={() => setShowAddModal(true)} data-tour="page-new-btn"><Plus className="w-4 h-4 mr-2" />Registrar Horas</Button>}
           </div>
         </div>
 
-        <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="registros"><Clock className="w-4 h-4 mr-1" />Registros</TabsTrigger>
+            <TabsTrigger value="quinzenal"><CalendarDays className="w-4 h-4 mr-1" />Relatório Quinzenal</TabsTrigger>
+          </TabsList>
 
-        <div className="flex items-center space-x-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input placeholder="Buscar por funcionário ou obra..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
-          <div className="text-sm text-muted-foreground">{filteredRegistros.length} de {registros.length} registros</div>
-        </div>
+          <TabsContent value="registros" className="space-y-4 mt-4">
+            <div data-tour="page-filters"><AdvancedFilters onFiltersChange={setFilters} obras={obras} statusOptions={statusOptions} /></div>
 
-        {isLoading ? (
-          <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>
-        ) : filteredRegistros.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="font-medium">Nenhum registro encontrado</p>
-          </div>
-        ) : (
-          <div className="grid gap-4" data-tour="page-list">
-            {filteredRegistros.map((registro) => (
-              <Card key={registro.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Clock className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{registro.funcionario}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {registro.obras?.nome || '-'} - {registro.horas}h
-                          {(registro as any).categoria && <span className="ml-2">Cat. {(registro as any).categoria}</span>}
-                          {(registro as any).tipo_hora_extra && (registro as any).tipo_hora_extra !== 'normal' && (
-                            <span className="ml-2 capitalize">({(registro as any).tipo_hora_extra})</span>
+            <div className="flex items-center space-x-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input placeholder="Buscar por funcionário ou obra..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
+              <div className="text-sm text-muted-foreground">{filteredRegistros.length} de {registros.length} registros</div>
+            </div>
+
+            {isLoading ? (
+              <div className="grid gap-4">{[1,2].map(i => <Skeleton key={i} className="h-24 w-full" />)}</div>
+            ) : filteredRegistros.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">Nenhum registro encontrado</p>
+              </div>
+            ) : (
+              <div className="grid gap-4" data-tour="page-list">
+                {filteredRegistros.map((registro) => (
+                  <Card key={registro.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">{registro.funcionario}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {registro.obras?.nome || '-'} - {registro.horas}h
+                              {(registro as any).categoria && <span className="ml-2">Cat. {(registro as any).categoria}</span>}
+                              {(registro as any).tipo_hora_extra && (registro as any).tipo_hora_extra !== 'normal' && (
+                                <span className="ml-2 capitalize">({(registro as any).tipo_hora_extra})</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Data: {new Date(registro.data).toLocaleDateString('pt-BR')} | Valor/h: {formatCurrency(registro.valor_hora)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant={registro.status === 'aprovada' ? 'default' : 'secondary'}>
+                            {registro.status === 'aprovada' ? 'Aprovada' : 'Pendente'}
+                          </Badge>
+                          {registro.status === 'pendente' && (
+                            <Button size="sm" onClick={() => { setSelectedRegistro(registro); setShowConfirmModal(true); }}>Aprovar</Button>
                           )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Data: {new Date(registro.data).toLocaleDateString('pt-BR')} | Valor/h: {formatCurrency(registro.valor_hora)}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant={registro.status === 'aprovada' ? 'default' : 'secondary'}>
-                        {registro.status === 'aprovada' ? 'Aprovada' : 'Pendente'}
-                      </Badge>
-                      {registro.status === 'pendente' && (
-                        <Button size="sm" onClick={() => { setSelectedRegistro(registro); setShowConfirmModal(true); }}>Aprovar</Button>
-                      )}
-                    </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="quinzenal" className="space-y-4 mt-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-wrap items-end gap-4 mb-6">
+                  <div>
+                    <Label>Mês/Ano</Label>
+                    <Input type="month" value={quinzenaMes} onChange={(e) => setQuinzenaMes(e.target.value)} className="w-48" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  <div>
+                    <Label>Quinzena</Label>
+                    <Select value={quinzena} onValueChange={(v) => setQuinzena(v as '1' | '2')}>
+                      <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1ª Quinzena (1-15)</SelectItem>
+                        <SelectItem value="2">2ª Quinzena (16-fim)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => exportQuinzenal('pdf')}><Download className="w-4 h-4 mr-1" />PDF</Button>
+                    <Button variant="outline" size="sm" onClick={() => exportQuinzenal('excel')}><FileSpreadsheet className="w-4 h-4 mr-1" />Excel</Button>
+                  </div>
+                </div>
+
+                <div className="text-sm text-muted-foreground mb-4">Período: {quinzenalData.periodo}</div>
+
+                {quinzenalData.items.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p>Nenhum registro nesta quinzena</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Funcionário</TableHead>
+                        <TableHead className="text-right">Total Horas</TableHead>
+                        <TableHead className="text-right">Total Valor</TableHead>
+                        <TableHead className="text-right">Registros</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {quinzenalData.items.map((item) => (
+                        <TableRow key={item.funcionario}>
+                          <TableCell className="font-medium">{item.funcionario}</TableCell>
+                          <TableCell className="text-right">{item.totalHoras}h</TableCell>
+                          <TableCell className="text-right">{formatCurrency(item.totalValor)}</TableCell>
+                          <TableCell className="text-right">{item.registros.length}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="font-bold border-t-2">
+                        <TableCell>TOTAL</TableCell>
+                        <TableCell className="text-right">{quinzenalData.totalHoras}h</TableCell>
+                        <TableCell className="text-right">{formatCurrency(quinzenalData.totalValor)}</TableCell>
+                        <TableCell className="text-right">{quinzenalData.items.reduce((s, i) => s + i.registros.length, 0)}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
           <DialogContent>

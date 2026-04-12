@@ -44,6 +44,16 @@ const ObrasEmAndamento = () => {
                     <div>
                       <CardTitle className="text-xl">{obra.nome}</CardTitle>
                       <p className="text-muted-foreground mt-1">{obra.clientes?.razao_social || '-'} - {obra.endereco || '-'}</p>
+                      {(obra as any).cno && (
+                        <p className="text-xs text-muted-foreground mt-0.5">CNO: {(obra as any).cno}</p>
+                      )}
+                      {((obra as any).responsavel_telefone || (obra as any).responsavel_email) && (
+                        <p className="text-xs text-muted-foreground">
+                          {(obra as any).responsavel_telefone && `Tel: ${(obra as any).responsavel_telefone}`}
+                          {(obra as any).responsavel_telefone && (obra as any).responsavel_email && ' | '}
+                          {(obra as any).responsavel_email && `Email: ${(obra as any).responsavel_email}`}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

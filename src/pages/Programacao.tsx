@@ -42,6 +42,8 @@ const Programacao = () => {
     dataProgramada: '',
     responsavel: '',
     tipo: 'execucao' as string,
+    horaInicio: '',
+    horaFim: '',
   });
 
   const obrasOptions = obrasData.map(o => ({ id: o.id, nome: o.nome }));
@@ -133,10 +135,12 @@ const Programacao = () => {
         descricao: newFormData.descricao || null,
         responsavel: newFormData.responsavel || null,
         tipo: newFormData.tipo as any,
+        hora_inicio: newFormData.horaInicio || null,
+        hora_fim: newFormData.horaFim || null,
       });
       toast({ title: "Programação criada", description: "Nova programação criada com sucesso." });
       setShowForm(false);
-      setNewFormData({ obraId: '', descricao: '', dataProgramada: '', responsavel: '', tipo: 'execucao' });
+      setNewFormData({ obraId: '', descricao: '', dataProgramada: '', responsavel: '', tipo: 'execucao', horaInicio: '', horaFim: '' });
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     }
@@ -305,7 +309,32 @@ const Programacao = () => {
                   <Label>Responsável</Label>
                   <Input value={newFormData.responsavel} onChange={(e) => setNewFormData(prev => ({...prev, responsavel: e.target.value}))} placeholder="Responsável técnico" />
                 </div>
+                <div className="space-y-2">
+                  <Label>Hora Início</Label>
+                  <Input type="time" value={newFormData.horaInicio} onChange={(e) => setNewFormData(prev => ({...prev, horaInicio: e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora Fim</Label>
+                  <Input type="time" value={newFormData.horaFim} onChange={(e) => setNewFormData(prev => ({...prev, horaFim: e.target.value}))} />
+                </div>
               </div>
+
+              {/* Auto-fill from selected obra */}
+              {newFormData.obraId && (() => {
+                const obraSelecionada = obrasData.find(o => o.id === newFormData.obraId);
+                if (!obraSelecionada) return null;
+                return (
+                  <div className="p-3 bg-muted/50 rounded-lg space-y-1 text-sm">
+                    <p className="font-medium text-foreground">Dados da Obra:</p>
+                    {obraSelecionada.metragem ? <p className="text-muted-foreground">M²: {obraSelecionada.metragem}</p> : null}
+                    {obraSelecionada.endereco ? <p className="text-muted-foreground">Endereço: {obraSelecionada.endereco}</p> : null}
+                    {obraSelecionada.escopo ? <p className="text-muted-foreground">Escopo: {obraSelecionada.escopo}</p> : null}
+                    {obraSelecionada.data_inicio ? <p className="text-muted-foreground">Início: {new Date(obraSelecionada.data_inicio).toLocaleDateString('pt-BR')}</p> : null}
+                    {obraSelecionada.data_previsao ? <p className="text-muted-foreground">Previsão: {new Date(obraSelecionada.data_previsao).toLocaleDateString('pt-BR')}</p> : null}
+                  </div>
+                );
+              })()}
+
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Textarea value={newFormData.descricao} onChange={(e) => setNewFormData(prev => ({...prev, descricao: e.target.value}))} placeholder="Descreva a programação..." rows={3} />

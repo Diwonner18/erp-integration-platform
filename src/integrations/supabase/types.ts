@@ -361,6 +361,27 @@ export type Database = {
           },
         ]
       }
+      categorias_hora_extra: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           cnpj: string | null
@@ -1148,6 +1169,7 @@ export type Database = {
       obras: {
         Row: {
           cliente_id: string | null
+          cno: string | null
           created_at: string
           created_by: string | null
           data_conclusao: string | null
@@ -1160,7 +1182,9 @@ export type Database = {
           nome: string
           progresso: number | null
           proposta_id: string | null
+          responsavel_email: string | null
           responsavel_id: string | null
+          responsavel_telefone: string | null
           status: Database["public"]["Enums"]["obra_status"]
           ultima_programacao: string | null
           updated_at: string
@@ -1168,6 +1192,7 @@ export type Database = {
         }
         Insert: {
           cliente_id?: string | null
+          cno?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -1180,7 +1205,9 @@ export type Database = {
           nome: string
           progresso?: number | null
           proposta_id?: string | null
+          responsavel_email?: string | null
           responsavel_id?: string | null
+          responsavel_telefone?: string | null
           status?: Database["public"]["Enums"]["obra_status"]
           ultima_programacao?: string | null
           updated_at?: string
@@ -1188,6 +1215,7 @@ export type Database = {
         }
         Update: {
           cliente_id?: string | null
+          cno?: string | null
           created_at?: string
           created_by?: string | null
           data_conclusao?: string | null
@@ -1200,7 +1228,9 @@ export type Database = {
           nome?: string
           progresso?: number | null
           proposta_id?: string | null
+          responsavel_email?: string | null
           responsavel_id?: string | null
+          responsavel_telefone?: string | null
           status?: Database["public"]["Enums"]["obra_status"]
           ultima_programacao?: string | null
           updated_at?: string
@@ -1600,6 +1630,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tipos_epi: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      tipos_hora_extra: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

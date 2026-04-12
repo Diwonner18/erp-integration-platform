@@ -17,17 +17,7 @@ import { useEPIs, useObras, useCreateEPI, useUpdateEPI, useDeleteEPI } from '@/h
 import { useColaboradores } from '@/hooks/useColaboradoresData';
 import FileImportButton from '@/components/shared/FileImportButton';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
-
-const tiposEPI = [
-  'Capacete de Segurança',
-  'Luvas de Proteção',
-  'Óculos de Proteção',
-  'Botas de Segurança',
-  'Máscara/Respirador',
-  'Cinto de Segurança',
-  'Colete Refletivo',
-  'Protetor Auricular'
-];
+import { useTiposEpi } from '@/hooks/useLookupTables';
 
 const getValidityStatus = (validade: string | null) => {
   if (!validade) return null;
@@ -61,6 +51,7 @@ const EPIs = () => {
   const { data: epis = [], isLoading: loadingEPIs } = useEPIs();
   const { data: obrasData = [], isLoading: loadingObras } = useObras();
   const { data: colaboradores = [] } = useColaboradores();
+  const { data: tiposEPI = [] } = useTiposEpi();
   const createEPI = useCreateEPI();
   const updateEPI = useUpdateEPI();
   const deleteEPI = useDeleteEPI();
@@ -331,7 +322,7 @@ const EPIs = () => {
                   <Label>Tipo de EPI *</Label>
                   <Select value={formData.tipoEPI} onValueChange={(v) => setFormData({ ...formData, tipoEPI: v })}>
                     <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
-                    <SelectContent>{tiposEPI.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}</SelectContent>
+                    <SelectContent>{tiposEPI.map((t) => (<SelectItem key={t.id} value={t.nome}>{t.nome}</SelectItem>))}</SelectContent>
                   </Select>
                 </div>
                 <div>

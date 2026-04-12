@@ -1,83 +1,163 @@
 
 
-# Verificacao Cruzada: PDFs de Alinhamento vs Implementacao Atual
-
-## PDF 1: MODULO OBRAS - Alinhamento 2
-
-| # | Requisito do PDF | Status | Detalhe |
-|---|---|---|---|
-| 1 | **Programacao: campos M2, Endereco, Escopo, Datas na edicao** | FEITO | Formulario EditProgramacaoModal ja tem esses campos |
-| 2 | **Incluir CNO na obra** | PARCIAL | Campo `cno` existe no DB, mas nao ha UI de criacao/edicao de obra expondo esse campo |
-| 3 | **Contato do responsavel da obra** | PARCIAL | Campos `responsavel_telefone` e `responsavel_email` existem no DB, mas sem UI |
-| 4 | **Vincular CEP ao endereco (auto-preenchimento)** | PARCIAL | Hook `useCepLookup` criado e integrado em `NovoColaboradorModal`. Falta em: SolicitarAgendamento, formularios de obra |
-| 5 | **Medicoes: campos m2, percentual, valor bruto, IGP-M** | FEITO | NovaMedicaoModal ja tem todos esses campos |
-| 6 | **Medicoes disponiveis ao cliente apos aprovacao** | FEITO | RLS de `medicoes` filtra por `status = 'aprovada'` para cliente |
-| 7 | **Alteracoes de Escopo (complemento de servico)** | FEITO | Modulo completo implementado |
-| 8 | **Materiais e Equipamentos - nao e prioridade** | N/A | PDF diz "sera verificado depois" |
-| 9 | **EPIs: cadastro dos tipos em lista (nao texto livre)** | FEITO | Tabela `tipos_epi` criada, `EPIs.tsx` usa Select dinamico |
-| 10 | **Horas Extras: cadastro de Categoria e Tipo** | FEITO | Tabelas `categorias_hora_extra` e `tipos_hora_extra` criadas, `HorasExtras.tsx` usa Select dinamico |
-| 11 | **HE: controle via diario de obra automatico** | PENDENTE | RDO nao gera registros de HE automaticamente |
-| 12 | **HE: relatorio quinzenal** | PENDENTE | Nao existe filtro/relatorio por quinzena |
-
-## PDF 2: MODULO CLIENTE - Alinhamento 2
-
-| # | Requisito do PDF | Status | Detalhe |
-|---|---|---|---|
-| 1 | **Fluxo de liberacao de acesso ao cliente (convite/link)** | PENDENTE | Nao ha fluxo de convite implementado |
-| 2 | **Solicitar Agendamento: campos Nome, telefone, email** | FEITO | Formulario ja tem esses campos |
-| 3 | **Endereco: incluir CEP com auto-preenchimento** | PENDENTE | SolicitarAgendamento tem campo endereco unico, sem campo CEP separado nem integracao ViaCEP |
-| 4 | **Direcionamento da solicitacao (email/alertas)** | PARCIAL | Salva no DB e aparece na lista, mas nao envia email/notificacao ao admin |
-| 5 | **Minhas Obras/Propostas/Pagamentos: filtrar por cliente** | FEITO | RLS garante que cliente ve apenas seus dados |
-| 6 | **Dados precisam ser aprovados pela CT Guedes antes de o cliente visualizar** | FEITO | Medicoes filtradas por status aprovada; propostas e obras vinculadas ao cliente |
-| 7 | **"Meus Relatorios" deve ser o ultimo da lista no menu** | FEITO (parcial) | Na funcao `getFlatMenuByRole` para cliente (linha 200-208), "Meus Relatorios" JA esta por ultimo. Porem no array `menuSections` do admin (linha 140), esta antes de "Meus Pagamentos" |
+# Auditoria Completa de Seguranca - CT Guedes
 
 ---
 
-## Itens Pendentes para Implementar
+## 1. AUTENTICACAO E AUTORIZACAO
 
-### Media Prioridade
-1. **UI de CNO e Contato do Responsavel na obra** - Criar/localizar formulario de criacao/edicao de obra e expor os campos `cno`, `responsavel_telefone`, `responsavel_email`
-2. **ViaCEP em SolicitarAgendamento** - Adicionar campo CEP separado, integrar `useCepLookup`, auto-preencher logradouro/bairro/cidade/UF
-3. **Corrigir ordem "Meus Relatorios" no menu admin/cliente** - No array `menuSections` (linha 134-142), mover "Meus Relatorios" para ultimo
+### Pontos Seguros
+- Autenticacao via Supabase Auth com `signInWithPassword` e `signUp`
+- Rate limiting no login: 5 tentativas antes de lockout de 30s
+- Re-autenticacao obrigatoria para alteracao de senha (`changePassword` verifica senha atual)
+- Validacao de senha no cadastro: minimo 8 chars, maiuscula + numero
+- Trigger `handle_new_user` atribui roles automaticamente com logica segura
+- Funcao `self_assign_area` restrita a emails `@ctguedes.com.br` e roles operacionais
+- Impersonacao restrita a admin/GT (nao altera permissoes reais de admin/GT)
+- ProtectedRoute valida `allowedUserTypes` e `modulo` via `permissoes_perfil`
+- Edge Function `manage-user` valida JWT via `getClaims()` e verifica role admin/GT antes de qualquer operacao
 
-### Baixa Prioridade
-4. **Relatorio quinzenal de HE** - Adicionar filtro por quinzena (1-15 / 16-fim) com agrupamento por colaborador e exportacao PDF/XLS
-5. **Integracao RDO -> Horas Extras** - Ao registrar presenca no RDO com saida apos limite, gerar registro de HE automaticamente
-6. **Notificacao de agendamento** - Quando cliente cria agendamento, notificar admin/obras (insert em `notificacoes` ou envio de email)
-7. **Fluxo de convite/onboarding do cliente** - Vincular `user_id` ao registro `clientes`, envio de convite via Supabase Auth
-8. **Tela admin para gerenciar tabelas de apoio** - CRUD de tipos_epi, categorias_hora_extra, tipos_hora_extra
+### Vulnerabilidade V-01: Leaked Password Protection desabilitada
+- **Severidade: MEDIA**
+- **Risco**: Usuarios podem cadastrar senhas que ja foram vazadas em breaches publicos (ex: "Password1")
+- **Solucao**: Ativar em Supabase Dashboard > Auth > Security > Enable leaked password protection
 
-## Plano de Implementacao
+### Vulnerabilidade V-02: Politicas de UPDATE em `user_roles` — risco teorico de escalacao GT
+- **Severidade: MEDIA** (mitigada pela combinacao de politicas restritivas)
+- **Risco**: A policy `Only admins can update to privileged roles` usa USING e WITH CHECK que verificam `role <> ALL (ARRAY['admin', 'gerenciador_tecnico'])`. Isso bloqueia GT de atualizar PARA roles privilegiados (WITH CHECK) e DE roles privilegiados (USING). Analisando todas as 14 policies no `user_roles`, a combinacao efetiva impede escalacao. Porem, a complexidade (14 policies com logicas PERMISSIVE + RESTRICTIVE cruzadas) e fragil e dificil de auditar.
+- **Solucao**: Simplificar para 4-5 policies mais claras. Consolidar as 3 RESTRICTIVE de INSERT em uma unica. Adicionar teste automatizado que valida cenarios de escalacao.
 
-### Passo 1: Corrigir ordem do menu cliente (Sidebar.tsx)
-- Mover "Meus Relatorios" para depois de "Meus Pagamentos" no array `menuSections` (linhas 137-142)
+---
 
-### Passo 2: ViaCEP em SolicitarAgendamento
-- Adicionar campo CEP separado no formulario
-- Integrar `useCepLookup` para auto-preencher logradouro, bairro, cidade, UF
-- Manter campo endereco completo composto pelos campos separados
+## 2. BACKEND, BANCO DE DADOS E RLS
 
-### Passo 3: UI de CNO e Contato na obra
-- Localizar/criar formulario de criacao e edicao de obra
-- Adicionar campos CNO, Telefone do Responsavel, Email do Responsavel
-- Exibir CNO nos cards/detalhes de obra
+### Pontos Seguros
+- 100% das tabelas publicas tem RLS habilitado
+- Event trigger `rls_auto_enable` garante RLS em tabelas futuras
+- Politicas RESTRICTIVE em UPDATE/DELETE nas tabelas operacionais (criador ou acesso compartilhado)
+- Funcoes SECURITY DEFINER (`has_role`, `has_record_access`, `get_cliente_ids_for_user`) evitam recursao
+- `insert_audit_log` captura identidade do usuario automaticamente da sessao (anti-spoofing)
+- Expurgo LGPD automatico via `purge-expired-logs` com retencao de 5 anos
+- Tabela `logs_auditoria` sem politicas de INSERT/UPDATE/DELETE = bloqueio total de escrita direta (correto por design)
+- Validacao Zod em todas as mutations criticas no frontend
 
-### Passo 4: Relatorio quinzenal de HE
-- Adicionar aba ou botao em HorasExtras.tsx
-- Filtro por quinzena (1-15 ou 16-fim do mes)
-- Agrupamento por colaborador com totais
-- Exportacao PDF/XLS usando `exportUtils`
+### Vulnerabilidade V-03: `observacoes_internas` expostas ao cliente em `agendamentos`
+- **Severidade: MEDIA**
+- **Risco**: A coluna `observacoes_internas` na tabela `agendamentos` e visivel ao cliente via `SELECT *` (policy `Clientes can view own agendamentos` nao restringe colunas). Notas internas da equipe podem conter informacoes sensiveis sobre o cliente.
+- **Solucao**: Mover `observacoes_internas` para tabela separada (`agendamento_notas_internas`) com RLS que bloqueia acesso do cliente. Alternativa: criar VIEW sem a coluna para acesso do cliente.
 
-### Passo 5: Tela admin de tabelas de apoio
-- Nova pagina `Admin/TabelasApoio.tsx` com CRUD para tipos_epi, categorias/tipos HE
-- Rota no App.tsx, link no Sidebar
+### Vulnerabilidade V-04: INSERT de `colaboradores` sem restricao de escopo para role `obras`
+- **Severidade: BAIXA**
+- **Risco**: Qualquer usuario `obras` pode inserir colaboradores arbitrarios (a policy de INSERT so verifica `has_role('obras')`). O SELECT e UPDATE ja sao corretamente filtrados por alocacao. O risco pratico e baixo porque inserir um colaborador nao concede acesso a dados de outros.
+- **Solucao**: Adicionar `created_by = auth.uid()` no WITH CHECK do INSERT, e garantir que o trigger `set_created_by` esta ativo na tabela.
 
-### Passo 6: Integracao RDO -> HE (se desejado)
-- No RelatorioDiarioObra, ao salvar presenca com horario de saida apos 17h (seg-qui) ou 16h (sex), inserir registro em `horas_extras`
+### Achado V-05: Realtime — canal de notificacoes sem autorizacao por topico
+- **Severidade: BAIXA** (dados ja filtrados por RLS no SELECT)
+- **Risco**: Qualquer usuario autenticado pode se inscrever no canal `notificacoes-realtime` e receber eventos de INSERT. Porem, o Supabase Realtime aplica RLS nas mensagens — o evento so e entregue se o usuario tiver permissao de SELECT no registro. Logo, o risco real e minimo (o usuario nao vera o conteudo de notificacoes de terceiros).
+- **Solucao**: Nenhuma acao necessaria. O design atual e seguro porque o RLS do SELECT filtra automaticamente.
 
-### Passo 7: Notificacao de agendamento + Fluxo de convite cliente
-- Insert em `notificacoes` ao criar agendamento
-- Fluxo de convite via Supabase Auth invite no cadastro de cliente
+---
 
-**Total estimado: ~10 arquivos modificados, 0 migrations adicionais**
+## 3. FRONTEND E FLUXOS DE USUARIO
+
+### Pontos Seguros
+- Nenhum uso de `dangerouslySetInnerHTML` com input de usuario (apenas no `chart.tsx` da biblioteca shadcn com dados estaticos)
+- Nenhum segredo armazenado em localStorage/sessionStorage (apenas flags de tour/onboarding)
+- Roles determinadas pelo backend (trigger + `user_roles`), nao por localStorage
+- Tokens gerenciados pelo Supabase SDK (`auth.storage = localStorage` e padrao seguro)
+- Validacao Zod antes de cada mutation (client-side)
+- Todas as rotas protegidas por `ProtectedRoute` com verificacao de tipo e modulo
+
+### Achado V-06: Permissoes `permissoes_perfil` default como `true` durante carregamento
+- **Severidade: BAIXA**
+- **Risco**: Em `useAllUserPermissions`, `hasModuleAccess()` retorna `true` quando `query.data` ainda nao carregou (linha 109). Isso permite flash momentaneo de conteudo protegido no Sidebar. O `ProtectedRoute` tambem depende desse hook, mas tem loading state separado.
+- **Solucao**: Alterar default para `false` quando `query.data` e null/undefined: `if (!query.data) return false;`
+
+---
+
+## 4. INTEGRACOES EXTERNAS E WEBHOOKS
+
+### Pontos Seguros
+- `send-auth-email`: Valida assinatura HMAC (`x-supabase-webhook-signature`) antes de processar
+- `purge-expired-logs`: Valida `service_role_key` via header/body antes de executar
+- `manage-user`: Valida JWT via `getClaims()` + verifica role admin/GT
+- Resend API key armazenada como Supabase Secret (nao exposta no frontend)
+- Nenhuma integracao com APIs externas de pagamento/WhatsApp/CRM no momento
+
+### Achado V-07: Log de email do destinatario em `send-auth-email`
+- **Severidade: INFORMATIVA**
+- **Risco**: Linha 214 faz `console.log` do email do destinatario. Logs do Edge Function sao visiveis no dashboard Supabase para admins do projeto. Risco minimo, mas nao ideal para LGPD.
+- **Solucao**: Substituir por hash parcial: `console.log(\`Email sent: type=\${emailType}, to=\${recipientEmail.substring(0,3)}***\`)`
+
+---
+
+## 5. DADOS SENSIVEIS E LGPD
+
+### Pontos Seguros
+- Tabela `colaboradores` com PII (CPF, RG, PIS/PASEP, salario) protegida por RLS granular
+- Frontend oculta campos sensiveis para role `obras` (apenas admin/GT/financeira veem)
+- Expurgo automatico de logs apos 5 anos (LGPD compliance)
+- Funcao `insert_audit_log` registra usuario, acao e dados anteriores/novos
+- `logs_auditoria` bloqueada para escrita direta (anti-tamper)
+- Clientes isolados por `user_id` e funcoes SECURITY DEFINER
+
+### Achado V-08: Dados de `clientes` (CPF, CNPJ, email, telefone) visiveis para `comercial` sem restricao de coluna
+- **Severidade: BAIXA**
+- **Risco**: Role `comercial` tem full access a tabela `clientes` incluindo CPF e CNPJ. Isso e provavelmente intencional (comercial precisa desses dados para propostas), mas viola principio de minimizacao se houver usuarios comerciais que nao necessitam desses dados.
+- **Solucao**: Avaliar se e necessario restringir. Se sim, criar VIEW sem CPF/CNPJ para comercial operacional.
+
+---
+
+## 6. EDGE CASES E ATAQUES COMUNS
+
+### Pontos Seguros
+- **IDOR**: Mitigado por RLS em todas as tabelas — alterar IDs na URL/request nao permite acessar dados de terceiros
+- **Injection (SQL)**: Supabase SDK usa queries parametrizadas. Validacao Zod adiciona camada extra
+- **XSS**: Sem uso de `dangerouslySetInnerHTML` com input do usuario. React escapa HTML por padrao
+- **CSRF**: Supabase usa Bearer tokens (nao cookies de sessao), CSRF nao se aplica
+- **Race conditions**: Nao ha fluxos criticos sujeitos a race conditions (operacoes atomicas via Supabase)
+- **Acesso direto via URL**: `ProtectedRoute` bloqueia todas as rotas protegidas
+- **Requisicoes duplicadas**: React Query previne duplicacao via cache e deduplicacao
+- **Replay attacks**: JWT tem expiracao (`autoRefreshToken: true`), tokens expirados sao rejeitados
+
+---
+
+## 7. LOGS, ERROS E OBSERVABILIDADE
+
+### Pontos Seguros
+- Erros de API capturados sem expor stacktrace ao usuario (mensagens genericas como "Erro interno do servidor")
+- Edge Functions retornam mensagens de erro limpas (sem detalhes internos)
+- `console.error` no frontend captura erros para debug sem expor ao usuario
+- Auditoria via `insert_audit_log` registra acoes criticas com nivel de sensibilidade
+
+### Achado V-09: `console.error` no AuthContext pode logar detalhes de autenticacao
+- **Severidade: INFORMATIVA**
+- **Risco**: `console.error('Login error:', error)` pode logar mensagens de erro do Supabase Auth no console do navegador, potencialmente incluindo detalhes sobre a existencia ou nao de contas.
+- **Solucao**: Remover ou sanitizar `console.error` em producao
+
+---
+
+## RESUMO EXECUTIVO
+
+| ID | Vulnerabilidade | Severidade | Status |
+|----|----------------|------------|--------|
+| V-01 | Leaked Password Protection desabilitada | MEDIA | Pendente |
+| V-02 | Complexidade excessiva nas policies de user_roles | MEDIA | Risco mitigado, refatoracao recomendada |
+| V-03 | `observacoes_internas` expostas ao cliente | MEDIA | Pendente |
+| V-04 | INSERT irrestrito de colaboradores por `obras` | BAIXA | Risco pratico minimo |
+| V-05 | Realtime sem autorizacao por topico | BAIXA | Mitigado por RLS no SELECT |
+| V-06 | Default `true` para permissoes durante loading | BAIXA | Pendente |
+| V-07 | Log de email em Edge Function | INFO | Recomendacao |
+| V-08 | Dados PII de clientes para comercial | BAIXA | Avaliar necessidade |
+| V-09 | console.error com detalhes de auth | INFO | Recomendacao |
+
+**Conclusao**: O sistema demonstra maturidade de seguranca acima da media para aplicacoes Lovable/Supabase. As protecoes fundamentais (RLS 100%, SECURITY DEFINER functions, validacao Zod, JWT verification em Edge Functions, anti-privilege-escalation, LGPD compliance) estao corretamente implementadas. As 3 vulnerabilidades de severidade media sao corrigiveis com mudancas pontuais e nenhuma e critica ou permite acesso nao autorizado imediato.
+
+## PLANO DE CORRECAO (por prioridade)
+
+1. **V-01**: Ativar leaked password protection no dashboard Supabase (1 clique)
+2. **V-06**: Alterar default de `hasModuleAccess` para `false` quando dados nao carregaram
+3. **V-03**: Mover `observacoes_internas` para tabela separada ou criar VIEW para clientes
+4. **V-02**: Simplificar policies de `user_roles` (consolidar 14 → 6-7 policies)
+5. **V-07/V-09**: Sanitizar logs em producao
 

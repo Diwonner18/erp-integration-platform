@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const MinhasPropostas = () => {
-  const { data: propostas = [], isLoading } = usePropostas();
+  const { data: allPropostas = [], isLoading } = usePropostas();
+  // Clients only see proposals that are not in draft status (approved by CT Guedes)
+  const propostas = allPropostas.filter(p => p.status !== 'rascunho');
   const { data: clientes = [] } = useClientes();
   const createAceite = useCreateAceiteDigital();
   const { toast } = useToast();

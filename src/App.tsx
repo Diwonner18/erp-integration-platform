@@ -19,6 +19,7 @@ import GerenciarUsuarios from "./pages/Admin/GerenciarUsuarios";
 import Permissoes from "./pages/Admin/Permissoes";
 import Aprovacoes from "./pages/Admin/Aprovacoes";
 import Automacao from "./pages/Admin/Automacao";
+import TabelasApoio from "./pages/Admin/TabelasApoio";
 
 // Commercial pages
 import Propostas from "./pages/Comercial/Propostas";
@@ -116,6 +117,12 @@ const App = () => (
             <Route path="/automacao" element={
               <ProtectedRoute allowedUserTypes={['admin', gt]}>
                 <Automacao />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/tabelas-apoio" element={
+              <ProtectedRoute allowedUserTypes={['admin', gt]}>
+                <TabelasApoio />
               </ProtectedRoute>
             } />
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -96,6 +97,42 @@ const RelatorioDiarioObra = () => {
         ocorrencias: formData.observacoes || null,
         mao_de_obra_presente: colaboradores.length,
       });
+
+      // RDO → HE automation: generate overtime records for workers with excess hours
+      const reportDate = selectedDate || new Date();
+      const dayOfWeek = reportDate.getDay(); // 0=Sun, 5=Fri
+      const limitHours = (dayOfWeek === 5) ? 8 : 9; // Fri: 8h (16h limit), Mon-Thu: 9h (17h limit)
+      
+      const heRecords = colaboradores
+        .filter(c => c.horas && c.horas > limitHours)
+        .map(c => {
+          const extraHours = (c.horas || 0) - limitHours;
+          let tipoHE = 'Normal';
+          // Virada: worked past midnight (~15+ hours)
+          if ((c.horas || 0) >= 15) tipoHE = 'Virada';
+          // Dobra: worked until next morning (~23+ hours)
+          if ((c.horas || 0) >= 23) tipoHE = 'Dobra';
+          
+          return {
+            funcionario: c.nome,
+            horas: extraHours,
+            obra_id: formData.obra,
+            data: format(reportDate, 'yyyy-MM-dd'),
+            motivo: `Gerado automaticamente via RDO - ${tipoHE}`,
+            valor_hora: 30,
+            categoria: 'A',
+            tipo_hora_extra: tipoHE.toLowerCase(),
+            status: 'pendente',
+          };
+        });
+
+      if (heRecords.length > 0) {
+        await supabase.from('horas_extras').insert(heRecords as any);
+        toast({ 
+          title: "Horas extras geradas", 
+          description: `${heRecords.length} registro(s) de HE gerado(s) automaticamente`,
+        });
+      }
 
       toast({ title: "Relatório salvo", description: "Relatório diário foi registrado com sucesso" });
 

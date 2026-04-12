@@ -17,6 +17,7 @@ import { useColaboradores } from '@/hooks/useColaboradoresData';
 import { exportToPDF, exportToExcel, formatCurrencyExport, formatDateExport } from '@/lib/exportUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserModulePermissions } from '@/hooks/usePermissoesPerfil';
+import { useCategoriasHoraExtra, useTiposHoraExtra } from '@/hooks/useLookupTables';
 
 const HorasExtrasPage = () => {
   const { toast } = useToast();
@@ -36,6 +37,8 @@ const HorasExtrasPage = () => {
   const { data: registros = [], isLoading } = useHorasExtras();
   const { data: obrasData = [] } = useObras();
   const { data: colaboradores = [] } = useColaboradores();
+  const { data: categoriasHE = [] } = useCategoriasHoraExtra();
+  const { data: tiposHE = [] } = useTiposHoraExtra();
   const createHE = useCreateHorasExtras();
   const updateHE = useUpdateHorasExtras();
 
@@ -209,9 +212,7 @@ const HorasExtrasPage = () => {
                   <Select value={formData.categoria} onValueChange={(v) => setFormData({...formData, categoria: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="A">A</SelectItem>
-                      <SelectItem value="B">B</SelectItem>
-                      <SelectItem value="C">C</SelectItem>
+                      {categoriasHE.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -219,11 +220,7 @@ const HorasExtrasPage = () => {
                   <Select value={formData.tipo_hora_extra} onValueChange={(v) => setFormData({...formData, tipo_hora_extra: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="virada">Virada</SelectItem>
-                      <SelectItem value="dobra">Dobra</SelectItem>
-                      <SelectItem value="diaria">Diária</SelectItem>
-                      <SelectItem value="continuacao">Continuação</SelectItem>
+                      {tiposHE.map(t => <SelectItem key={t.id} value={t.nome}>{t.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

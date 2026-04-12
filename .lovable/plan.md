@@ -1,41 +1,23 @@
 
 
-# Analysis: `user_roles_privilege_escalation` Finding
+# Fix: Add CHECK constraint to `nivel_acesso` column
 
-## Conclusion: False Positive -- Policies Are Already Secure
+## Problem
+The `acessos_compartilhados.nivel_acesso` column is `text NOT NULL DEFAULT 'view'` with no database-level constraint. A direct API call could write arbitrary values.
 
-After tracing all restrictive UPDATE policies on `user_roles`, the current configuration correctly blocks all privilege escalation paths:
+## Solution
+One SQL migration to add a CHECK constraint restricting values to `'view'`, `'edit'`, `'all'`.
 
-### Policy Interaction Analysis
+```sql
+ALTER TABLE public.acessos_compartilhados
+  ADD CONSTRAINT nivel_acesso_valid
+  CHECK (nivel_acesso IN ('view', 'edit', 'all'));
+```
 
-For an UPDATE to succeed, ALL restrictive policies must pass AND at least one permissive policy must pass.
+The value `'all'` is included because the existing `has_record_access` function and the Aprovacoes UI both use it as a valid level.
 
-Current restrictive UPDATE policies:
-1. **"Only admins can update to privileged roles"**: USING checks OLD `role` not in (admin, GT); WITH CHECK checks NEW `role` not in (admin, GT)
-2. **"Prevent self-role modification"**: USING checks `user_id <> auth.uid()`
-
-**Attack scenario 1 -- GT sets another user to 'admin':**
-- Permissive "GT can manage roles": passes
-- Restrictive #1 USING: OLD role is 'obras' (not privileged) -- passes
-- Restrictive #1 WITH CHECK: NEW role is 'admin' (privileged, user not admin) -- **FAILS**
-- Result: **Blocked**
-
-**Attack scenario 2 -- GT demotes an admin:**
-- Restrictive #1 USING: OLD role is 'admin' (privileged, user not admin) -- **FAILS**
-- Result: **Blocked**
-
-**Attack scenario 3 -- GT modifies own role:**
-- Restrictive #2 USING: `user_id = auth.uid()` -- **FAILS**
-- Result: **Blocked**
-
-## Proposed Action
-
-Mark `user_roles_privilege_escalation` as **fixed** (already secure) with the explanation that the combination of restrictive policies correctly prevents all escalation paths. The migration applied in the previous message already ensured both USING and WITH CHECK clauses are present.
-
-Also mark `realtime_messages_no_rls` as **ignored** (same known limitation as before -- Supabase reserved schema).
-
-### Technical Details
-- No SQL migration needed
-- No code changes needed
-- Only security finding status updates
+## Files changed
+- 1 SQL migration
+- No frontend changes
+- Mark `nivel_acesso_unconstrained` as fixed
 

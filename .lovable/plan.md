@@ -1,40 +1,35 @@
 
-The scanner is flagging that any authenticated user could subscribe to the `notificacoes-realtime` channel. However, there are critical considerations here:
+The scanner flags a real privilege escalation risk on `user_roles`:
 
-1. **Reserved schema warning**: The instructions explicitly state we must NOT modify `realtime` schema (it's a Supabase-reserved schema). Adding RLS policies on `realtime.messages` would violate this rule and risk service degradation.
+1. **Insert risk**: Restrictive policy "Only admins can insert privileged roles" already blocks `admin` and `gerenciador_tecnico` assignments to others. But the scanner notes that GTs can still insert other non-privileged roles for any user — which is actually the intended behavior (GT manages operational users). However, we should verify the restrictive policy correctly blocks `gerenciador_tecnico` insertion by GTs.
 
-2. **Memory note confirms**: The memory `security/realtime-data-filtering` says: *"o uso de RLS manual no schema reservado 'realtime' foi revertido para evitar interferências"*. We already tried this before and reverted it.
+2. **Update risk**: The current `WITH CHECK` only blocks promoting to `admin`/`gerenciador_tecnico`, but a GT could downgrade/change any existing role for any user without restriction.
 
-3. **How Supabase Realtime actually works with `postgres_changes`**: The current code uses `postgres_changes` (NOT broadcast). For `postgres_changes`, Supabase server-side applies the table's RLS to each event before delivering — users only receive events for rows they could SELECT. The `notificacoes` SELECT policy is `user_id = auth.uid()`, so users physically cannot receive other users' notification payloads.
+3. **Edge function check**: `manage-user/index.ts` already validates allowed emails for `admin` and `gerenciador_tecnico` roles, but RLS at the DB level is the source of truth.
 
-4. **The toast shows only the title of the inserted row**: Looking at `useRealtimeNotificacoes.ts`, the payload comes from `postgres_changes`. RLS filters this server-side.
+# Plan: Restrict GT role management to non-privileged roles only
 
-**Real risk assessment**: The scanner is generic and assumes `broadcast`/`presence` channels. For `postgres_changes`, the table's RLS is the authorization mechanism. Current setup IS secure.
+## Database migration
+Add/strengthen RESTRICTIVE RLS policies on `public.user_roles`:
 
-**However**, there is one minor issue: when ANY notification is inserted (even for another user), the channel fires `INSERT` event. Supabase filters by RLS, but to be extra safe, we should add a server-side filter on the subscription using `filter: 'user_id=eq.<current_user_id>'`. This is the documented Supabase pattern and reduces unnecessary network traffic + adds defense-in-depth.
+1. **Restrict GT INSERT** to only non-privileged roles (`obras`, `financeira`, `comercial`, `cliente`):
+   - New RESTRICTIVE policy: GTs can only insert rows where `role NOT IN ('admin', 'gerenciador_tecnico')`.
 
-# Plano: Fortalecer subscription de Realtime com filtro server-side
+2. **Restrict GT UPDATE** to only operate on rows that are currently non-privileged AND only set to non-privileged roles:
+   - New RESTRICTIVE policy: GTs updating user_roles must satisfy both:
+     - USING: existing role is not `admin` or `gerenciador_tecnico`
+     - WITH CHECK: new role is not `admin` or `gerenciador_tecnico`
 
-## Contexto
-O scanner sinaliza risco teórico. Na prática, o RLS da tabela `notificacoes` (`user_id = auth.uid()`) já filtra eventos `postgres_changes` no servidor antes da entrega. NÃO podemos modificar o schema `realtime` (regra crítica do Supabase).
+3. **Restrict GT DELETE** similarly: GTs cannot delete `admin` or `gerenciador_tecnico` rows (only admins can).
 
-## Solução: Defense-in-depth no client
-Adicionar filtro `user_id=eq.<uid>` na subscription do canal. Isso:
-- Reduz tráfego de rede (servidor só envia eventos do próprio usuário)
-- Adiciona camada extra além do RLS
-- É a prática oficial recomendada pelo Supabase
+These are RESTRICTIVE policies — they combine via AND with existing permissive ones, closing the loophole without breaking legitimate GT workflows (managing obras/financeira/comercial/cliente users).
 
-## Mudança em 1 arquivo
+Admins remain unaffected (their permissive policies allow full management).
 
-**`src/hooks/useRealtimeNotificacoes.ts`**:
-- Obter `user.id` via `useAuth()` ou `supabase.auth.getUser()`
-- Adicionar `filter: \`user_id=eq.${userId}\`` nas duas subscriptions (INSERT e UPDATE)
-- Não criar canal se não houver usuário autenticado
-- Usar nome de canal único por usuário: `notificacoes-${userId}`
+## Mark finding as fixed
+After migration is applied, mark `user_roles_gt_privilege_escalation` as fixed with explanation of the new restrictive policies.
 
-## Após implementar
-- Marcar a finding `notificacoes_realtime_no_channel_auth` como `mark_as_fixed` com explicação técnica clara: RLS da tabela já filtra + filtro adicional no client por user_id + impossibilidade de modificar schema reservado `realtime`.
-
-## O que NÃO faremos
-- NÃO criar policies em `realtime.messages` (proibido pelas regras do Supabase)
-- NÃO mudar a tabela `notificacoes` (RLS já está correto)
+## What we will NOT change
+- Edge function `manage-user` already enforces allowed emails — no changes needed.
+- Admin policies remain untouched.
+- `Prevent self-role assignment` policy stays in place.

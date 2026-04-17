@@ -1,35 +1,51 @@
 
-The scanner flags a real privilege escalation risk on `user_roles`:
+## Análise da finding
 
-1. **Insert risk**: Restrictive policy "Only admins can insert privileged roles" already blocks `admin` and `gerenciador_tecnico` assignments to others. But the scanner notes that GTs can still insert other non-privileged roles for any user — which is actually the intended behavior (GT manages operational users). However, we should verify the restrictive policy correctly blocks `gerenciador_tecnico` insertion by GTs.
+A tabela `agendamentos` contém PII de clientes (email, telefone, endereço) e `observacoes_internas`. As policies atuais dão acesso total a qualquer usuário com perfil `comercial` ou `obras`, sem filtrar por relacionamento.
 
-2. **Update risk**: The current `WITH CHECK` only blocks promoting to `admin`/`gerenciador_tecnico`, but a GT could downgrade/change any existing role for any user without restriction.
+**Políticas atuais problemáticas:**
+- `Comercial can view agendamentos`: `has_role(auth.uid(), 'comercial')` — vê TODOS
+- `Obras can view and update agendamentos`: `has_role(auth.uid(), 'obras')` — vê TODOS
+- `Obras can update agendamentos status`: idem para UPDATE
 
-3. **Edge function check**: `manage-user/index.ts` already validates allowed emails for `admin` and `gerenciador_tecnico` roles, but RLS at the DB level is the source of truth.
+**Contexto operacional (do código `Solicitar Agendamento` e memórias):**
+- `agendamentos.user_id` é o cliente que solicitou
+- `agendamentos.cliente_id` pode estar vinculado a um cliente da tabela `clientes`
+- Comercial e Obras precisam ver agendamentos para processá-los — mas nem todos precisam ver TODOS
+- Já existe a função `get_related_cliente_ids(_user_id)` que retorna clientes relacionados a obras do usuário (via `created_by`, `responsavel_id` ou acesso compartilhado)
+- Já existe a VIEW `agendamentos_cliente` que omite `observacoes_internas` para clientes
 
-# Plan: Restrict GT role management to non-privileged roles only
+**Risco real:** Vazamento de PII entre funcionários sem necessidade operacional + exposição de notas internas confidenciais.
 
-## Database migration
-Add/strengthen RESTRICTIVE RLS policies on `public.user_roles`:
+## Plano: Escopar acesso de Comercial e Obras a agendamentos relevantes
 
-1. **Restrict GT INSERT** to only non-privileged roles (`obras`, `financeira`, `comercial`, `cliente`):
-   - New RESTRICTIVE policy: GTs can only insert rows where `role NOT IN ('admin', 'gerenciador_tecnico')`.
+### Mudanças no banco (migration)
 
-2. **Restrict GT UPDATE** to only operate on rows that are currently non-privileged AND only set to non-privileged roles:
-   - New RESTRICTIVE policy: GTs updating user_roles must satisfy both:
-     - USING: existing role is not `admin` or `gerenciador_tecnico`
-     - WITH CHECK: new role is not `admin` or `gerenciador_tecnico`
+**1. Substituir `Comercial can view agendamentos`** por uma versão escopada:
+- Comercial só vê agendamentos onde:
+  - `cliente_id IS NULL` (agendamentos novos sem cliente vinculado — comercial precisa para qualificar leads), OU
+  - `cliente_id IN (SELECT get_related_cliente_ids(auth.uid()))` (clientes já relacionados ao seu trabalho), OU
+  - foi ele mesmo quem criou/atendeu (vamos verificar se há campo de atribuição — se não, manter os dois primeiros critérios)
 
-3. **Restrict GT DELETE** similarly: GTs cannot delete `admin` or `gerenciador_tecnico` rows (only admins can).
+**2. Substituir `Obras can view and update agendamentos`** + `Obras can update agendamentos status` por versão escopada:
+- Obras só vê/atualiza agendamentos onde:
+  - `cliente_id IS NULL` (precisa ver novos para agendar/programar), OU
+  - `cliente_id IN (SELECT get_related_cliente_ids(auth.uid()))`
 
-These are RESTRICTIVE policies — they combine via AND with existing permissive ones, closing the loophole without breaking legitimate GT workflows (managing obras/financeira/comercial/cliente users).
+**3. Manter inalterado:**
+- Admin (acesso total — operacional necessário)
+- GT (acesso total — supervisão técnica)
+- Cliente (já vê apenas os próprios via `user_id = auth.uid()`)
+- INSERT por cliente (já correto)
 
-Admins remain unaffected (their permissive policies allow full management).
+### Justificativa do critério `cliente_id IS NULL`
+Quando o cliente solicita um agendamento pela primeira vez, ele ainda não tem registro vinculado em `clientes` (apenas `user_id`). Comercial/Obras precisam ver esses leads para qualificá-los e vinculá-los. Após vinculação, o filtro por `get_related_cliente_ids` se aplica automaticamente.
 
-## Mark finding as fixed
-After migration is applied, mark `user_roles_gt_privilege_escalation` as fixed with explanation of the new restrictive policies.
+### Marcar finding como resolvida
+Após aplicar a migration, marcar `agendamentos_internal_roles_full_access` como `mark_as_fixed` explicando o escopo aplicado.
 
-## What we will NOT change
-- Edge function `manage-user` already enforces allowed emails — no changes needed.
-- Admin policies remain untouched.
-- `Prevent self-role assignment` policy stays in place.
+### O que NÃO faremos
+- NÃO mexer nas políticas de admin, GT e cliente
+- NÃO alterar a tabela `agendamentos` em si
+- NÃO mexer na VIEW `agendamentos_cliente` (já está correta)
+- NÃO criar novos campos — usaremos a função `get_related_cliente_ids` já existente

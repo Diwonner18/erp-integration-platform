@@ -146,18 +146,30 @@ Deno.serve(async (req) => {
   try {
     const payload = await req.text()
 
-    // Verify HMAC signature if SEND_EMAIL_HOOK_SECRET is configured
+    // MANDATORY HMAC verification — never allow unauthenticated calls
     const hookSecret = Deno.env.get('SEND_EMAIL_HOOK_SECRET')
-    if (hookSecret) {
-      const signature = req.headers.get('x-supabase-webhook-signature') || ''
-      const isValid = await verifyHMAC(payload, signature, hookSecret)
-      if (!isValid) {
-        console.warn('send-auth-email: Invalid HMAC signature')
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
+    if (!hookSecret) {
+      console.error('send-auth-email: SEND_EMAIL_HOOK_SECRET not configured — refusing to send')
+      return new Response(JSON.stringify({ error: 'Hook secret not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const signature = req.headers.get('x-supabase-webhook-signature') || ''
+    if (!signature) {
+      console.warn('send-auth-email: Missing webhook signature header')
+      return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const isValid = await verifyHMAC(payload, signature, hookSecret)
+    if (!isValid) {
+      console.warn('send-auth-email: Invalid HMAC signature')
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const body = JSON.parse(payload)

@@ -85,10 +85,17 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
           throw new Error(result?.error || error?.message || 'Erro ao criar usuário');
         }
 
-        toast({
-          title: 'Usuário criado',
-          description: `Usuário ${data.name} foi criado com sucesso`,
-        });
+        if (result?.pending_approval) {
+          toast({
+            title: 'Aguardando aprovação',
+            description: result.message || `Usuário ${data.name} criado. Atribuição de role aguarda aprovação de um administrador.`,
+          });
+        } else {
+          toast({
+            title: 'Usuário criado',
+            description: `Usuário ${data.name} foi criado com sucesso`,
+          });
+        }
       } else if (mode === 'edit' && user?.id) {
         const { data: result, error } = await supabase.functions.invoke('manage-user', {
           body: {
@@ -102,10 +109,17 @@ const GerenciarUsuarioModal = ({ isOpen, onClose, user, mode }: GerenciarUsuario
           throw new Error(result?.error || error?.message || 'Erro ao atualizar usuário');
         }
 
-        toast({
-          title: 'Usuário atualizado',
-          description: `Role de ${data.name} atualizado para ${data.type}`,
-        });
+        if (result?.pending_approval) {
+          toast({
+            title: 'Aguardando aprovação',
+            description: result.message || `Solicitação de alteração de role enviada. Aguardando aprovação de um administrador.`,
+          });
+        } else {
+          toast({
+            title: 'Usuário atualizado',
+            description: `Role de ${data.name} atualizado para ${data.type}`,
+          });
+        }
       }
       
       onClose();

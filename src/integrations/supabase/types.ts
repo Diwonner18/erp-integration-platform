@@ -229,6 +229,7 @@ export type Database = {
           aprovador_id: string | null
           comentario: string | null
           created_at: string
+          dados_solicitacao: Json | null
           data_resposta: string | null
           id: string
           referencia_id: string
@@ -241,6 +242,7 @@ export type Database = {
           aprovador_id?: string | null
           comentario?: string | null
           created_at?: string
+          dados_solicitacao?: Json | null
           data_resposta?: string | null
           id?: string
           referencia_id: string
@@ -253,6 +255,7 @@ export type Database = {
           aprovador_id?: string | null
           comentario?: string | null
           created_at?: string
+          dados_solicitacao?: Json | null
           data_resposta?: string | null
           id?: string
           referencia_id?: string
@@ -1807,6 +1810,7 @@ export type Database = {
       }
     }
     Functions: {
+      apply_role_change: { Args: { _aprovacao_id: string }; Returns: undefined }
       assign_internal_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

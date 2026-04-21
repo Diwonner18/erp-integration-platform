@@ -3,11 +3,13 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckSquare, Clock, Eye, Pencil, Shield } from 'lucide-react';
+import { CheckSquare, Clock, Eye, Pencil, Shield, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAprovacoes, useUpdateAprovacao, useInsertAcessoCompartilhado } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const nivelLabels: Record<string, { label: string; desc: string; icon: React.ReactNode }> = {
   view: { label: 'Visualizar', desc: 'Apenas leitura dos dados', icon: <Eye className="w-4 h-4" /> },
@@ -20,6 +22,7 @@ const Aprovacoes = () => {
   const { data: aprovacoes = [], isLoading } = useAprovacoes();
   const updateAprovacao = useUpdateAprovacao();
   const insertAcesso = useInsertAcessoCompartilhado();
+  const queryClient = useQueryClient();
 
   const [accessDialog, setAccessDialog] = useState<any>(null);
 
@@ -28,6 +31,17 @@ const Aprovacoes = () => {
   const handleApprove = async (item: any) => {
     if (item.tipo === 'acesso_registro') {
       setAccessDialog(item);
+      return;
+    }
+    if (item.tipo === 'atribuicao_role' || item.tipo === 'alteracao_role') {
+      try {
+        const { error } = await supabase.rpc('apply_role_change' as any, { _aprovacao_id: item.id });
+        if (error) throw error;
+        toast({ title: 'Role aplicado com sucesso' });
+        queryClient.invalidateQueries({ queryKey: ['aprovacoes'] });
+      } catch (err: any) {
+        toast({ title: 'Erro ao aplicar role', description: err.message, variant: 'destructive' });
+      }
       return;
     }
     try {
@@ -81,21 +95,42 @@ const Aprovacoes = () => {
           </CardContent></Card>
         ) : (
           <div className="grid gap-4" data-tour="page-list">
-            {pendentes.map((item) => (
+            {pendentes.map((item) => {
+              const isRoleReq = item.tipo === 'atribuicao_role' || item.tipo === 'alteracao_role';
+              const dados = (item as any).dados_solicitacao || {};
+              return (
               <Card key={item.id}><CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{item.tipo}</h3>
+                      {isRoleReq && <UserCog className="w-4 h-4 text-primary" />}
+                      <h3 className="font-semibold text-foreground">
+                        {item.tipo === 'atribuicao_role' ? 'Atribuição de Role (novo usuário)'
+                          : item.tipo === 'alteracao_role' ? 'Alteração de Role'
+                          : item.tipo}
+                      </h3>
                       {item.tipo === 'acesso_registro' && (
                         <Badge variant="outline" className="text-xs">Solicitação de Acesso</Badge>
                       )}
+                      {isRoleReq && (
+                        <Badge variant="outline" className="text-xs">Solicitado por GT</Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.tipo === 'acesso_registro'
-                        ? `Tabela: ${item.referencia_tabela || '-'} | Registro: ${item.referencia_id?.slice(0, 8)}...`
-                        : `Ref: ${item.referencia_tabela || '-'}`}
-                    </p>
+                    {isRoleReq ? (
+                      <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
+                        <p><span className="font-medium text-foreground">Usuário:</span> {dados.target_email || dados.target_user_id}</p>
+                        <p>
+                          <span className="font-medium text-foreground">Role:</span>{' '}
+                          {dados.role_anterior ?? 'nenhum'} → <span className="text-primary font-semibold">{dados.role_pretendido}</span>
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {item.tipo === 'acesso_registro'
+                          ? `Tabela: ${item.referencia_tabela || '-'} | Registro: ${item.referencia_id?.slice(0, 8)}...`
+                          : `Ref: ${item.referencia_tabela || '-'}`}
+                      </p>
+                    )}
                     {item.comentario && (
                       <p className="text-sm text-muted-foreground mt-1 italic">"{item.comentario}"</p>
                     )}
@@ -104,12 +139,15 @@ const Aprovacoes = () => {
                   <div className="flex space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleReject(item)}>Rejeitar</Button>
                     <Button size="sm" onClick={() => handleApprove(item)}>
-                      {item.tipo === 'acesso_registro' ? 'Conceder Acesso' : 'Aprovar'}
+                      {item.tipo === 'acesso_registro' ? 'Conceder Acesso'
+                        : isRoleReq ? 'Aprovar e Aplicar'
+                        : 'Aprovar'}
                     </Button>
                   </div>
                 </div>
               </CardContent></Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

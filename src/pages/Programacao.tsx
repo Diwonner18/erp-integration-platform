@@ -396,6 +396,13 @@ const Programacao = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Modal inline de criação de obra */}
+        <NovaObraInlineModal
+          open={showNovaObra}
+          onClose={() => setShowNovaObra(false)}
+          onCreated={(obra) => setNewFormData((prev) => ({ ...prev, obraId: obra.id }))}
+        />
       </div>
     </MainLayout>
   );

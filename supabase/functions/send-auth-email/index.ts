@@ -5,6 +5,41 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+// Headers de segurança aplicados em TODAS as respostas (OWASP A05/A07)
+const secureHeaders = {
+  ...corsHeaders,
+  'Content-Type': 'application/json',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'Cache-Control': 'no-store',
+}
+
+// Limite de payload para mitigar DoS (auth hook real envia <8KB)
+const MAX_PAYLOAD_BYTES = 64 * 1024
+
+// Rate-limit em memória por IP (OWASP A07): 20 req / 60s
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX = 20
+const ipHits = new Map<string, number[]>()
+
+function getClientIp(req: Request): string {
+  const fwd = req.headers.get('x-forwarded-for') || ''
+  const first = fwd.split(',')[0]?.trim()
+  return first || req.headers.get('x-real-ip') || 'unknown'
+}
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const arr = (ipHits.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
+  if (arr.length >= RATE_LIMIT_MAX) {
+    ipHits.set(ip, arr)
+    return false
+  }
+  arr.push(now)
+  ipHits.set(ip, arr)
+  return true
+}
+
 // HMAC verification for Supabase Auth Hook
 async function verifyHMAC(payload: string, signature: string, secret: string): Promise<boolean> {
   try {

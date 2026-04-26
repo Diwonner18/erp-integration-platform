@@ -5,6 +5,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+// Headers de segurança aplicados em TODAS as respostas (OWASP A05)
+const secureHeaders = {
+  ...corsHeaders,
+  'Content-Type': 'application/json',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Robots-Tag': 'noindex',
+  'Cache-Control': 'no-store',
+  'Referrer-Policy': 'no-referrer',
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -24,7 +34,7 @@ Deno.serve(async (req) => {
       console.warn('purge-expired-logs called without valid authorization')
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
 
@@ -43,9 +53,10 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('Erro ao purgar logs:', error.message)
-      return new Response(JSON.stringify({ error: error.message }), {
+      // Não vazar message interna do Postgres ao caller
+      return new Response(JSON.stringify({ error: 'Internal server error' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
 
@@ -62,13 +73,13 @@ Deno.serve(async (req) => {
     })
 
     return new Response(JSON.stringify({ success: true, purged: count }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: secureHeaders,
     })
   } catch (error) {
     console.error('Erro interno no expurgo:', error)
-    return new Response(JSON.stringify({ error: 'Erro interno do servidor' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: secureHeaders,
     })
   }
 })

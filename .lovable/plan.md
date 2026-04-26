@@ -1,105 +1,171 @@
+# 🔎 AUDITORIA TÉCNICA COMPLETA — CT Guedes
 
-## Auditoria Cliente + Correções dos PDFs (Patricia — 12/abr)
+Diagnóstico baseado em inspeção real do banco (`information_schema`, `pg_policy`), do código (`src/hooks/useSupabaseData.ts`, `src/App.tsx`, páginas Cliente) e do linter Supabase. **Não é especulação — são achados verificáveis.**
 
-### Achados da auditoria (código + RLS no banco)
+---
 
-| # | Tabela / Tela | Problema | Severidade |
-|---|---|---|---|
-| 1 | `boletins_medicao` em `/meus-pagamentos` | **Sem policy SELECT para clientes**. Cliente acessa via `useBoletins()` sem filtro. RLS bloqueia tudo → tela vazia. Mas se um dia adicionarem policy genérica, vaza tudo. | 🔴 Crítico |
-| 2 | `useObras()` em `/minhas-obras` | Hook é compartilhado com perfis internos. Para cliente, depende 100% da RLS `cliente_id IN get_cliente_ids_for_user`. Funciona, mas só se `clientes.user_id` estiver setado. | 🟡 Médio (UX) |
-| 3 | `usePropostas()` em `/minhas-propostas` | Mesmo padrão — depende só de RLS. Filtro client-side `status !== 'rascunho'` está ok, mas não há filtro explícito por cliente no código. | 🟡 Médio |
-| 4 | `useBoletins()` traz `clientes(razao_social)` no select | Se cliente conseguir SELECT, joins expõem dados de outros clientes via embed. | 🔴 Crítico |
-| 5 | `agendamentos` em `/solicitar-agendamento` | Query carrega últimos 10 sem `.eq('user_id', user.id)`. Confia em RLS — que está correta — mas é frágil. | 🟢 Baixo |
-| 6 | `MeusRelatorios.tsx` | Página é **100% mock/local** (`useState` em memória, lista de obras hardcoded vazia). Reembolsos não persistem. | 🟡 Médio |
-| 7 | Rota `/meus-pagamentos` no App.tsx | Verificar se está protegida com `allowedUserTypes={['cliente']}`. | A confirmar |
+## 1. ESTRUTURA DE DADOS
 
-### Correções planejadas (em ordem de prioridade)
+### ✅ O que está correto
+- Hierarquia conceitual `Cliente → Obra → Medição → Boletim` existe (colunas `cliente_id`, `obra_id`, `medicao_id`).
+- Tabelas estão razoavelmente normalizadas (sem campos compostos óbvios).
+- Uso de `enums` (`app_role`, `obra_status`, `medicao_status`, `despesa_categoria`) padroniza valores.
 
-#### 🔴 BLOCO 1 — Segurança / LGPD (essencial)
+### 🚨 CRÍTICO — **Banco SEM foreign keys**
+A consulta `information_schema.table_constraints WHERE constraint_type='FOREIGN KEY'` retornou **vazio**. Nenhuma tabela em `public` declara FK formal. Implicações:
+- Pode-se inserir `obra.cliente_id` apontando para um UUID inexistente — sem erro.
+- Não há `ON DELETE CASCADE`/`SET NULL`; deletar um cliente deixa órfãos silenciosos em obras, propostas, medições, boletins, agendamentos, despesas, EPIs, etc.
+- Hoje há **6 obras sem `proposta_id`** e **5 propostas sem `obra_id`** — é só inconsistência ou dado sujo? Sem FK não dá nem para investigar.
+- `materiais.obra_id`, `programacoes.obra_id`, `medicoes.obra_id`, `boletins_medicao.medicao_id`, `colaborador_alocacoes.colaborador_id`, etc. — **todos sem FK**.
 
-**1.1 Migration: adicionar policy SELECT em `boletins_medicao` para clientes**
-```sql
-CREATE POLICY "Clientes view own boletins"
-ON public.boletins_medicao FOR SELECT TO authenticated
-USING (
-  has_role(auth.uid(), 'cliente'::app_role)
-  AND obra_id IN (SELECT get_obra_ids_for_cliente(auth.uid()))
-);
-```
-Sem essa policy, a tela fica permanentemente vazia para clientes legítimos.
+### 🟠 MÉDIO — **"Contrato" não existe como entidade**
+A pergunta da auditoria menciona `Cliente → Obra → Contrato → Módulos`, mas no banco **não há tabela `contratos`**. O que existe:
+- `propostas` (com `condicoes_pagamento`, `prazo_execucao`, `valor`).
+- `modelos_contrato` (template apenas — não é o contrato firmado).
+- `aceites_digitais` (assinatura da proposta).
+- `obras.valor_contrato` (campo solto em `obras`).
 
-**1.2 Hooks scoped para perfil cliente** (defesa em profundidade — não confiar só na RLS)
+→ Hoje, "contrato" = proposta aprovada + aceite + obra criada. Funciona, mas **não há registro único e versionado do contrato vigente**, nem histórico de aditivos formal (alterações de escopo são separadas).
 
-Criar variantes filtradas explicitamente em `useSupabaseData.ts`:
-- `useObrasCliente()` — `.eq` indireto via join `clientes!inner(user_id)`
-- `useBoletinsCliente()` — filtra por `obras.cliente.user_id = auth.uid()`
-- `usePropostasCliente()` — filtra por `cliente_id IN clientes.user_id = auth.uid()` + status ≠ 'rascunho'
-- `useMedicoesCliente()` — só `status = 'aprovada'`
+### 🟠 MÉDIO — Duplicação de dados de valor
+- `propostas.valor` ↔ `obras.valor_contrato` ↔ `medicoes.valor`/`valor_bruto` ↔ `boletins_medicao.valor`. Não há trigger de sincronização nem regra clara de "fonte da verdade". Risco de divergência.
+- `obras.endereco` (texto livre) duplica o endereço do cliente em vez de referenciar.
+- `colaboradores` tem CEP/cidade/UF/etc. duplicado de outras fontes.
 
-Trocar nas páginas `MinhasObras`, `MeusPagamentos`, `MinhasPropostas`.
+### 🟠 MÉDIO — Tabela `epis` legada vs `epi_movimentacoes` nova
+Coexistem `epis` (entrega antiga) e `epi_movimentacoes` + view `epi_saldos` (estoque novo). A página `EPIs.tsx` ainda usa `useEPIs` (tabela antiga), enquanto `EstoqueEPI.tsx` usa a nova. **Dois sistemas paralelos para a mesma coisa.**
 
-**1.3 Remover joins sensíveis no hook do cliente**
-- `useBoletinsCliente()` NÃO traz `clientes(razao_social)` — só `obras(nome)`
-- `useMedicoesCliente()` similar
+---
 
-**1.4 Garantir `clientes.user_id` populado**
-- Auditar dados existentes via SELECT
-- Adicionar trigger ou validação no fluxo de criação de cliente quando há e-mail correspondente em `auth.users`
+## 2. INTEGRAÇÃO ENTRE MÓDULOS
 
-#### 🟡 BLOCO 2 — UX dos PDFs (Patricia)
+| Fluxo | Status | Observação |
+|---|---|---|
+| Obra → Programação | ✅ | `programacoes.obra_id` + JOIN funciona |
+| Obra → Medição → Boletim | ✅ | Encadeamento correto |
+| Obra → Financeiro (despesas) | ✅ | `despesas.obra_id` |
+| Obra → Horas Extras | 🟠 | `horas_extras` usa `funcionario` como **texto livre**, não FK para `colaboradores`. Trigger HE (`gerar_he_do_rdo`) faz lookup de nome — quebra se colaborador for renomeado. |
+| Cliente filtra dados | ✅ | Hooks `*Cliente` + RLS + view `agendamentos_cliente` |
+| Alteração de escopo → Medição/Financeiro | 🚨 | **Não há propagação automática.** `alteracoes_escopo.impacto_valor` e `impacto_prazo` ficam isolados; aprovar não atualiza `obras.valor_contrato` nem cria medição/proposta complementar. Decisão manual. |
+| Proposta aprovada → Obra | 🟠 | `propostas.obra_id` existe mas é preenchido manualmente. Não há trigger "ao aprovar proposta, criar obra". |
 
-**2.1 Sidebar do cliente** — confirmar que "Meus Relatórios" é o último item (já documentado em `mem://ux/sidebar-client-menu-order`, validar `Sidebar.tsx`)
+---
 
-**2.2 `MeusRelatorios.tsx` — converter mock em real**
-- Buscar obras via `useObrasCliente()` (preencher dropdown do reembolso)
-- Persistir reembolsos como `despesas` ou nova tabela `reembolsos_cliente` (decidir)
-- Estatísticas (Investimento Total, Obras Realizadas) calculadas a partir de obras reais
+## 3. CONTROLE DE ACESSO
 
-**2.3 Rótulos de endereço com CEP** (PDF Cliente #5)
-- Em `MinhasObras` e `ObraDetailModal`, mostrar endereço com CEP visível
-- Já implementado em `SolicitarAgendamento` ✅
+### ✅ Bem feito
+- Roles em tabela separada (`user_roles` + enum `app_role`) — segue best practice.
+- `has_role()` e `get_obra_ids_for_cliente()` como `SECURITY DEFINER` evitam recursão.
+- `assign_internal_role` valida e-mails autorizados para `admin`/`gerenciador_tecnico`.
+- `self_assign_area` permite só `obras/financeira/comercial`.
+- Cliente com defesa em profundidade: hooks `*Cliente` + RLS + trigger `auto_link_cliente_user`.
 
-**2.4 `SolicitarAgendamento`** já cobre CEP + ViaCEP + nome/tel/email ✅ — sem mudança
+### 🚨 CRÍTICO — Cliente perde acesso porque **`clientes.user_id` está NULL em 100% dos registros (5 de 5)**
+O trigger `auto_link_cliente_user` depende de `contato_email = auth.users.email`, mas nenhum cliente atual tem o link feito. Isto significa:
+- `useObrasCliente`, `usePropostasCliente`, `useBoletinsCliente`, `useMedicoesCliente` retornam **vazio** para qualquer cliente que loge hoje.
+- RLS `Clientes view own obras` (`cliente_id IN get_cliente_ids_for_user(auth.uid())`) não retorna nada.
 
-#### 🟢 BLOCO 3 — Programação (Módulo Obras PDF)
+→ O fluxo de cadastro de cliente provavelmente **não está pedindo `contato_email`** ou está cadastrando antes de o cliente criar conta. Precisa-se de migração para popular `user_id` retroativo + UI que garanta o e-mail.
 
-**3.1 Criação inline de obra dentro de "Nova Programação"**
-- Reusar `useCepLookup` no formulário
-- Campos: nome obra, M², endereço completo, contato (nome/tel/email)
-- Sem isso, GT precisa abrir 2 telas
+### 🟠 MÉDIO — `notificacoes` sem política INSERT explícita
+Notificações são lidas/atualizadas pelo dono, mas a inserção depende de admin/GT ou edge function. Se houver inserção via cliente Supabase no front, pode falhar silenciosamente.
 
-#### 🔵 BLOCO 4 — Lookups EPI/HE (verificação)
+### 🟠 MÉDIO — `acessos_compartilhados` permite escalada se mal usado
+Política `Admins full access acessos` é OK, mas qualquer admin pode conceder `nivel_acesso='all'` a qualquer registro/usuário. Falta log obrigatório (já existe `insert_audit_log` mas não é trigger automático aqui).
 
-**4.1** Conferir `TabelasApoio.tsx` — listar quais lookups existem
-**4.2** Garantir CRUD para "Categoria HE" (`categorias_hora_extra` já existe) e "Tipo EPI"
+### 🟢 BAIXO — Leaked Password Protection desligado
+Linter Supabase reporta. Habilitar em Auth → Policies (manual no dashboard).
 
-#### 🟣 BLOCO 5 — Decisões de escopo (perguntar antes)
+---
 
-**5.1** Estoque de EPI (entrada/saída/saldo) — feature nova significativa
-**5.2** HE automática a partir do RDO — exige campos novos no RDO
+## 4. MÓDULO CLIENTE
 
-### O que NÃO faremos nesta entrega
-- Estoque de EPI (5.1) e HE-via-RDO (5.2) — apenas levanto se quer escopo
-- Mudanças em RLS de `obras`/`programacoes`/`medicoes`/`propostas` (já estão corretas)
-- Mexer em fluxo de admin/GT (Opção D já implementada)
+### ✅
+- Hooks scoped corretos (`useObrasCliente` usa `clientes!inner` + filtro `clientes.user_id`).
+- `useMedicoesCliente` filtra `status='aprovada'`.
+- `usePropostasCliente` filtra `status != 'rascunho'`.
+- View `agendamentos_cliente` esconde `observacoes_internas`.
 
-### Ordem de execução sugerida
-1. **Migration** policy `boletins_medicao` cliente (BLOCO 1.1) — sozinha
-2. **Hooks scoped + troca nas 3 páginas cliente** (BLOCO 1.2 + 1.3)
-3. **Auditoria dados** `clientes.user_id` (BLOCO 1.4) — query + relatório
-4. **`MeusRelatorios` real** (BLOCO 2.2)
-5. **Endereço com CEP** em telas de obra (BLOCO 2.3)
-6. **Criação inline em Nova Programação** (BLOCO 3.1)
-7. **Verificação lookups** (BLOCO 4)
+### 🚨 Mas — vide item 3 — **na prática cliente não vê nada** porque `clientes.user_id` está vazio.
 
-### Resultado
-- Cliente vê **somente** seus próprios dados em todas as 4 telas (Obras, Pagamentos, Propostas, Relatórios)
-- Defesa em profundidade: RLS no banco + filtros explícitos no hook
-- "Meus Relatórios" funcional (não mais mock)
-- Programação enriquecida com criação inline de obra
-- Trilha de auditoria mantida; nenhuma regressão para perfis internos
+---
 
-### Perguntas de escopo (responder no fim)
-1. Reembolsos do cliente entram em `despesas` (categoria nova) ou tabela própria?
-2. Estoque de EPI vai entrar nesta sprint ou fica para depois?
-3. HE automática via RDO vai entrar nesta sprint ou fica para depois?
+## 5. MÓDULOS OPERACIONAIS
+
+### Programação
+- ✅ Sem duplicação aparente; JOIN com obras.
+- 🟠 `equipe` é JSONB livre — equipe não é validada contra `colaboradores`. Pode-se digitar nome inexistente.
+
+### Medições
+- ✅ Fluxo `em_elaboracao → aprovada` existe (enum `medicao_status`).
+- ✅ Cálculo IGP-M documentado, exportação PDF/Excel via `exportUtils.ts`.
+- 🟠 Cliente só vê `aprovada`, mas **não há trigger que impeça emitir boletim de medição não aprovada**. Hoje é regra de UI apenas.
+
+### Horas Extras
+- 🚨 `horas_extras.funcionario` é **TEXT** (nome), não FK para `colaboradores`. Trigger `gerar_he_do_rdo` faz `SELECT nome FROM colaboradores WHERE id = _colab_id` e grava o nome. Renomear o colaborador quebra rastreabilidade histórica.
+- 🟠 `categoria` é TEXT ('A'/'B'/'C') livre — deveria ser enum ou FK para `categorias_hora_extra`.
+- ✅ Cálculo automático via trigger funciona.
+
+### EPI
+- 🚨 **Dois sistemas vivos em paralelo:** `epis` (entregas) + `epi_movimentacoes`/`epi_saldos` (estoque). A página `EPIs.tsx` ainda escreve no antigo. Decisão: migrar `epis` para `epi_movimentacoes` (saídas) ou manter como tabela de "entregas formais"? Hoje é incoerente.
+- 🟠 `tipos_epi` (11 registros) não é referenciada por FK em `epi_movimentacoes.tipo_epi` (também TEXT livre).
+
+---
+
+## 6. GARGALOS E RISCOS
+
+| Risco | Severidade | Detalhe |
+|---|---|---|
+| Sem FKs no schema | 🚨 CRÍTICO | Integridade referencial frágil |
+| `clientes.user_id` NULL em 100% | 🚨 CRÍTICO | Cliente não vê dados |
+| `funcionario` como TEXT em HE/EPI antigo | 🟠 MÉDIO | Quebra ao renomear |
+| Duplicação `valor` (proposta/obra/medição) | 🟠 MÉDIO | Risco de divergência |
+| Dois sistemas de EPI | 🟠 MÉDIO | Confusão operacional |
+| Alteração de escopo não propaga | 🟠 MÉDIO | Trabalho manual |
+| Limit 1000 implícito | 🟢 BAIXO | OK por enquanto, virar problema em escala |
+| `useSupabaseData.ts` com 1013 linhas | 🟢 BAIXO | Refatorar para arquivos por entidade |
+| Auth: leaked password protection off | 🟢 BAIXO | Habilitar no dashboard |
+
+---
+
+## 7. UX & CONSISTÊNCIA
+
+- ✅ Sidebar boxed para admin/GT, ordenação cliente fixa, design tokens respeitados.
+- ✅ Componentes UI (shadcn) reutilizados — sem duplicação significativa.
+- 🟠 `EPIs.tsx` (antigo) e `EstoqueEPI.tsx` (novo) coexistem no menu — usuário tem dúvida de qual usar.
+- 🟢 ProtectedRoute padroniza guards por `modulo` consistentemente em todas as rotas operacionais.
+
+---
+
+## 8. CLASSIFICAÇÃO FINAL
+
+### 🚨 CRÍTICO — corrigir antes de continuar evoluindo
+1. **Adicionar Foreign Keys** em todas as colunas `*_id` (obras, propostas, medicoes, boletins_medicao, programacoes, despesas, materiais, equipamentos, epis, epi_movimentacoes, colaborador_alocacoes, alteracoes_escopo, agendamentos, retencoes, etc.) com política explícita (`ON DELETE RESTRICT` para histórico, `CASCADE` para filhos).
+2. **Backfill `clientes.user_id`** + ajustar UI de cadastro para sempre exigir `contato_email` antes de o cliente conseguir logar.
+3. **Migrar `horas_extras.funcionario` (TEXT) para `colaborador_id` (UUID FK)**, mantendo `funcionario` como cache opcional.
+4. **Decidir destino de `epis` legada**: descontinuar página antiga e roteá-la para o novo módulo de estoque.
+
+### 🟠 MÉDIO — planejar próxima sprint
+5. **Criar entidade `contratos`** (ou enriquecer `propostas` com versionamento + status "vigente") para ter fonte única do contrato firmado.
+6. **Trigger de propagação de Alteração de Escopo aprovada** → soma em `obras.valor_contrato` + cria medição complementar opcional.
+7. **`epi_movimentacoes.tipo_epi` virar FK para `tipos_epi.id`**; `horas_extras.categoria` virar FK para `categorias_hora_extra` (ou enum).
+8. **Quebrar `useSupabaseData.ts`** em `hooks/obras.ts`, `hooks/financeiro.ts`, `hooks/cliente.ts`, etc.
+
+### 🟢 BAIXO — melhoria contínua
+9. Habilitar **Leaked Password Protection** (manual no dashboard).
+10. Validar `equipe` (JSONB) contra `colaboradores` no momento de salvar `programacao`.
+11. Adicionar trigger que impeça `boletins_medicao` de ser criado para `medicao.status != 'aprovada'`.
+
+---
+
+## 🎯 RECOMENDAÇÃO
+
+**Pausar entrega de novas features e priorizar os 4 itens CRÍTICOS** (FKs + backfill cliente + colaborador_id em HE + decisão sobre EPIs). Sem isso, a base de dados pode acumular sujeira difícil de limpar e clientes continuarão sem ver nada ao logar.
+
+Após aprovação deste diagnóstico, posso entregar:
+- **Migração SQL** adicionando todas as FKs faltantes (com `ON DELETE` apropriado por relação).
+- **Migração de backfill** de `clientes.user_id` cruzando com `auth.users` por e-mail.
+- **Refatoração** de `horas_extras` para usar `colaborador_id`.
+- **Plano de descontinuação** da tabela `epis` antiga (manter dados, migrar UI).
+
+Aprovando, executo na ordem CRÍTICO → MÉDIO.

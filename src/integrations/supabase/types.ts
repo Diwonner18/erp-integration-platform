@@ -638,6 +638,57 @@ export type Database = {
           },
         ]
       }
+      epi_movimentacoes: {
+        Row: {
+          certificado_aprovacao: string | null
+          colaborador_id: string | null
+          created_at: string
+          created_by: string | null
+          data_movimentacao: string
+          fornecedor: string | null
+          id: string
+          obra_id: string | null
+          observacoes: string | null
+          quantidade: number
+          tipo_epi: string
+          tipo_movimentacao: string
+          validade: string | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          certificado_aprovacao?: string | null
+          colaborador_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_movimentacao?: string
+          fornecedor?: string | null
+          id?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          quantidade: number
+          tipo_epi: string
+          tipo_movimentacao: string
+          validade?: string | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          certificado_aprovacao?: string | null
+          colaborador_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_movimentacao?: string
+          fornecedor?: string | null
+          id?: string
+          obra_id?: string | null
+          observacoes?: string | null
+          quantidade?: number
+          tipo_epi?: string
+          tipo_movimentacao?: string
+          validade?: string | null
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
       epis: {
         Row: {
           certificado_aprovacao: string | null
@@ -1807,6 +1858,16 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      epi_saldos: {
+        Row: {
+          saldo_atual: number | null
+          tipo_epi: string | null
+          total_entradas: number | null
+          total_saidas: number | null
+          ultima_movimentacao: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {

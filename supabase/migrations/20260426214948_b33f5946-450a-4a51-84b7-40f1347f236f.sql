@@ -1,0 +1,1 @@
+ALTER TYPE public.despesa_categoria ADD VALUE IF NOT EXISTS 'reembolso_cliente';

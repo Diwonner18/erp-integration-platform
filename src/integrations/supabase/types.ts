@@ -1890,6 +1890,7 @@ export type Database = {
         | "transporte"
         | "alimentacao"
         | "outro"
+        | "reembolso_cliente"
       medicao_status: "em_elaboracao" | "pendente" | "aprovada" | "rejeitada"
       notificacao_tipo: "interna" | "email" | "alerta_seguranca" | "sistema"
       obra_status:
@@ -2064,6 +2065,7 @@ export const Constants = {
         "transporte",
         "alimentacao",
         "outro",
+        "reembolso_cliente",
       ],
       medicao_status: ["em_elaboracao", "pendente", "aprovada", "rejeitada"],
       notificacao_tipo: ["interna", "email", "alerta_seguranca", "sistema"],

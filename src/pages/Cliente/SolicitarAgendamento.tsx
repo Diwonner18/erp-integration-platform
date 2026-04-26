@@ -114,7 +114,7 @@ const SolicitarAgendamento = () => {
         prioridade: formData.prioridade as 'baixa' | 'normal' | 'alta' | 'emergencia',
       });
 
-      const { error } = await supabase.from('agendamentos').insert(payload);
+      const { error } = await supabase.from('agendamentos').insert(payload as any);
       if (error) throw error;
 
       // Notificação interna (best-effort, não bloqueia)

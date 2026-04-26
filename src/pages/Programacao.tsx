@@ -106,6 +106,9 @@ const Programacao = () => {
     } catch (error: unknown) {
       toast({ title: "Erro", description: getSafeErrorMessage(error, 'Não foi possível atualizar a programação.'), variant: "destructive" });
     }
+  };
+
+  const handleConfirmarProgramacao = async () => {
     if (!selectedProgramacao) return;
     try {
       await updateProgramacao.mutateAsync({
@@ -116,8 +119,8 @@ const Programacao = () => {
       setShowAceiteModal(false);
       setSelectedProgramacao(null);
       setAceiteComentario('');
-    } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Erro", description: getSafeErrorMessage(error, 'Não foi possível confirmar a programação.'), variant: "destructive" });
     }
   };
 

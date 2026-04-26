@@ -6,13 +6,13 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, DollarSign, Clock, Eye, ClipboardList } from 'lucide-react';
 import ObraDetailModal from '@/components/Cliente/ObraDetailModal';
-import { useObras } from '@/hooks/useSupabaseData';
+import { useObrasCliente } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const MinhasObras = () => {
   const [selectedObra, setSelectedObra] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const { data: obras = [], isLoading } = useObras();
+  const { data: obras = [], isLoading } = useObrasCliente();
 
   const formatCurrency = (v: number | null) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : 'R$ 0,00';
 

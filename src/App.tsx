@@ -34,6 +34,7 @@ import AlteracoesEscopo from "./pages/Obras/AlteracoesEscopo";
 import Materiais from "./pages/Obras/Materiais";
 import HorasExtras from "./pages/Obras/HorasExtras";
 import EPIs from "./pages/Obras/EPIs";
+import EstoqueEPI from "./pages/Obras/EstoqueEPI";
 import RelatoriosObra from "./pages/Obras/RelatoriosObra";
 import ObrasConcluidas from "./pages/Obras/ObrasConcluidas";
 import ObrasEmAndamento from "./pages/Obras/ObrasEmAndamento";
@@ -279,6 +280,13 @@ const App = () => (
             <Route path="/epis" element={
               <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="epis">
                 <EPIs />
+              </ProtectedRoute>
+            } />
+
+            {/* Estoque de EPIs */}
+            <Route path="/estoque-epis" element={
+              <ProtectedRoute allowedUserTypes={['admin', gt, 'obras']} modulo="epis">
+                <EstoqueEPI />
               </ProtectedRoute>
             } />
 

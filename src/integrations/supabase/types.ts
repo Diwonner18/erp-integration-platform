@@ -687,7 +687,22 @@ export type Database = {
           validade?: string | null
           valor_unitario?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "epi_movimentacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_movimentacoes_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       epis: {
         Row: {
@@ -846,6 +861,7 @@ export type Database = {
       horas_extras: {
         Row: {
           categoria: string | null
+          colaborador_id: string | null
           created_at: string
           created_by: string | null
           data: string
@@ -860,6 +876,7 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          colaborador_id?: string | null
           created_at?: string
           created_by?: string | null
           data: string
@@ -874,6 +891,7 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          colaborador_id?: string | null
           created_at?: string
           created_by?: string | null
           data?: string
@@ -887,6 +905,13 @@ export type Database = {
           valor_hora?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "horas_extras_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "horas_extras_obra_id_fkey"
             columns: ["obra_id"]

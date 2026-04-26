@@ -14,6 +14,7 @@ import ProgramacaoDetailModal from '../components/Programacao/ProgramacaoDetailM
 import EditProgramacaoModal from '../components/Programacao/EditProgramacaoModal';
 import { useProgramacoes, useObras, useCreateProgramacao, useUpdateProgramacao } from '@/hooks/useSupabaseData';
 import NovaObraInlineModal from '../components/Obras/NovaObraInlineModal';
+import { getSafeErrorMessage } from '@/lib/errorMessages';
 
 const Programacao = () => {
   const { toast } = useToast();
@@ -102,8 +103,8 @@ const Programacao = () => {
         responsavel: updatedProgramacao.responsavel,
       });
       toast({ title: "Programação atualizada", description: "Atualizada com sucesso" });
-    } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Erro", description: getSafeErrorMessage(error, 'Não foi possível atualizar a programação.'), variant: "destructive" });
     }
   };
 
@@ -118,8 +119,8 @@ const Programacao = () => {
       setShowAceiteModal(false);
       setSelectedProgramacao(null);
       setAceiteComentario('');
-    } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Erro", description: getSafeErrorMessage(error, 'Não foi possível confirmar a programação.'), variant: "destructive" });
     }
   };
 
@@ -143,8 +144,8 @@ const Programacao = () => {
       toast({ title: "Programação criada", description: "Nova programação criada com sucesso." });
       setShowForm(false);
       setNewFormData({ obraId: '', descricao: '', dataProgramada: '', responsavel: '', tipo: 'execucao', horaInicio: '', horaFim: '' });
-    } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Erro", description: getSafeErrorMessage(error, 'Não foi possível criar a programação.'), variant: "destructive" });
     }
   };
 

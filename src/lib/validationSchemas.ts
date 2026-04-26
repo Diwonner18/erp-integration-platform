@@ -163,6 +163,58 @@ export const modeloContratoInsertSchema = z.object({
   ativo: z.boolean().optional().nullable(),
 });
 
+// ==================== CLIENT-FACING & OPERATIONAL SCHEMAS ====================
+
+const phoneRegex = /^[0-9()+\-.\s]{8,20}$/;
+const cepRegex = /^\d{5}-?\d{3}$/;
+
+export const agendamentoInsertSchema = z.object({
+  nome: z.string().trim().min(2, 'Nome muito curto').max(120, 'Nome muito longo'),
+  email: z.string().trim().email('Email inválido').max(255).optional().nullable(),
+  telefone: z.string().trim().regex(phoneRegex, 'Telefone inválido').max(20).optional().nullable(),
+  tipo_servico: z.string().trim().min(2, 'Informe o tipo de serviço').max(120),
+  data_preferida: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  horario: z.string().trim().min(1, 'Informe o horário').max(40),
+  endereco: z.string().trim().min(5, 'Endereço muito curto').max(500),
+  descricao: z.string().trim().min(3, 'Descrição muito curta').max(2000, 'Descrição muito longa'),
+  prioridade: z.enum(['baixa', 'normal', 'alta', 'emergencia']),
+  status: z.enum(['pendente', 'confirmado', 'reagendado', 'cancelado', 'concluido']).optional(),
+  cliente_id: uuidSchema.optional().nullable(),
+  user_id: uuidSchema,
+  observacoes_internas: optionalString,
+});
+
+export const agendamentoUpdateSchema = agendamentoInsertSchema.partial();
+
+export const reembolsoClienteInsertSchema = z.object({
+  categoria: z.literal('reembolso_cliente'),
+  descricao: z.string().trim().min(3, 'Descreva o reembolso').max(500),
+  valor: z.number().positive('Valor deve ser maior que zero').max(10_000_000, 'Valor acima do permitido'),
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  obra_id: uuidSchema,
+  created_by: uuidSchema,
+  comprovante_url: optionalString,
+});
+
+export const epiMovimentacaoInsertSchema = z.object({
+  tipo_movimentacao: z.enum(['entrada', 'saida'], { errorMap: () => ({ message: 'Tipo de movimentação inválido' }) }),
+  tipo_epi: z.string().trim().min(1, 'Selecione o tipo de EPI').max(120),
+  quantidade: z.number().int('Quantidade deve ser inteira').positive('Quantidade deve ser maior que zero').max(100_000),
+  observacoes: z.string().trim().max(1000).optional().nullable(),
+  fornecedor: z.string().trim().max(200).optional().nullable(),
+  valor_unitario: z.number().min(0).max(1_000_000).optional().nullable(),
+  certificado_aprovacao: z.string().trim().max(60).optional().nullable(),
+  validade: dateString,
+  colaborador_id: uuidSchema.optional().nullable(),
+  obra_id: uuidSchema.optional().nullable(),
+}).refine(
+  (data) => data.tipo_movimentacao !== 'saida' || !!data.colaborador_id,
+  { message: 'Selecione o colaborador que recebeu o EPI', path: ['colaborador_id'] }
+);
+
+// Reuse cepRegex for any future address validations
+export { cepRegex };
+
 // ==================== UPDATE (PARTIAL) SCHEMAS ====================
 
 export const obraUpdateSchema = obraInsertSchema.partial();

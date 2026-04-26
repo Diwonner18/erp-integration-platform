@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useObrasCliente } from '@/hooks/useSupabaseData';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { reembolsoClienteInsertSchema, validateInput } from '@/lib/validationSchemas';
+import { getSafeErrorMessage } from '@/lib/errorMessages';
 
 const TIPOS_DESPESA = [
   { value: 'material', label: 'Material' },
@@ -66,14 +68,19 @@ const MeusRelatorios = () => {
     mutationFn: async (payload: typeof novoReembolso) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
       const tipoLabel = TIPOS_DESPESA.find((t) => t.value === payload.tipoDespesa)?.label || 'Outros';
-      const { error } = await supabase.from('despesas').insert({
-        categoria: 'reembolso_cliente' as any,
+      const valorNum = parseFloat(payload.valor);
+      if (!Number.isFinite(valorNum)) throw new Error('Valor inválido');
+
+      const validated = validateInput(reembolsoClienteInsertSchema, {
+        categoria: 'reembolso_cliente' as const,
         descricao: `[${tipoLabel}] ${payload.descricao.trim()}`,
-        valor: parseFloat(payload.valor),
+        valor: valorNum,
         data: new Date().toISOString().slice(0, 10),
         obra_id: payload.obraId,
         created_by: user.id,
       });
+
+      const { error } = await supabase.from('despesas').insert(validated as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -85,10 +92,10 @@ const MeusRelatorios = () => {
       setShowReembolsoModal(false);
       setNovoReembolso({ obraId: '', tipoDespesa: '', valor: '', descricao: '' });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       toast({
         title: 'Erro ao registrar reembolso',
-        description: err.message || 'Tente novamente.',
+        description: getSafeErrorMessage(err, 'Não foi possível registrar o reembolso. Tente novamente.'),
         variant: 'destructive',
       });
     },

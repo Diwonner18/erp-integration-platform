@@ -18,6 +18,8 @@ import { useColaboradores } from '@/hooks/useColaboradoresData';
 import { useObras } from '@/hooks/useSupabaseData';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { epiMovimentacaoInsertSchema, validateInput } from '@/lib/validationSchemas';
+import { getSafeErrorMessage } from '@/lib/errorMessages';
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
@@ -76,28 +78,23 @@ const EstoqueEPI = () => {
 
   const createMov = useMutation({
     mutationFn: async () => {
-      if (!form.tipo_epi) throw new Error('Selecione o tipo de EPI');
-      const qty = parseInt(form.quantidade);
-      if (!qty || qty <= 0) throw new Error('Quantidade inválida');
+      const qty = parseInt(form.quantidade, 10);
+      const valorUnit = parseFloat(form.valor_unitario);
 
-      const payload: any = {
-        tipo_movimentacao: tipoMov,
+      const payload = validateInput(epiMovimentacaoInsertSchema, {
+        tipo_movimentacao: tipoMov as 'entrada' | 'saida',
         tipo_epi: form.tipo_epi,
-        quantidade: qty,
+        quantidade: Number.isFinite(qty) ? qty : 0,
         observacoes: form.observacoes || null,
-      };
-      if (tipoMov === 'entrada') {
-        payload.fornecedor = form.fornecedor || null;
-        payload.valor_unitario = parseFloat(form.valor_unitario) || 0;
-        payload.certificado_aprovacao = form.certificado_aprovacao || null;
-        payload.validade = form.validade || null;
-      } else {
-        if (!form.colaborador_id) throw new Error('Selecione o colaborador que recebeu');
-        payload.colaborador_id = form.colaborador_id;
-        payload.obra_id = form.obra_id || null;
-      }
+        fornecedor: tipoMov === 'entrada' ? (form.fornecedor || null) : null,
+        valor_unitario: tipoMov === 'entrada' ? (Number.isFinite(valorUnit) ? valorUnit : 0) : null,
+        certificado_aprovacao: tipoMov === 'entrada' ? (form.certificado_aprovacao || null) : null,
+        validade: tipoMov === 'entrada' ? (form.validade || null) : null,
+        colaborador_id: tipoMov === 'saida' ? (form.colaborador_id || null) : null,
+        obra_id: tipoMov === 'saida' ? (form.obra_id || null) : null,
+      });
 
-      const { error } = await supabase.from('epi_movimentacoes' as any).insert(payload);
+      const { error } = await supabase.from('epi_movimentacoes' as any).insert(payload as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -111,8 +108,8 @@ const EstoqueEPI = () => {
         validade: '', observacoes: '',
       });
     },
-    onError: (err: any) => {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    onError: (err: unknown) => {
+      toast({ title: 'Erro', description: getSafeErrorMessage(err, 'Não foi possível salvar a movimentação.'), variant: 'destructive' });
     },
   });
 

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useUpdateProposta } from '@/hooks/useSupabaseData';
+import { getSafeErrorMessage } from '@/lib/errorMessages';
 
 interface EditPropostaModalProps {
   open: boolean;
@@ -63,10 +64,10 @@ const EditPropostaModal = ({ open, onClose, proposta, onSave }: EditPropostaModa
 
       onSave?.();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar a proposta.",
+        description: getSafeErrorMessage(error, "Não foi possível atualizar a proposta."),
         variant: "destructive"
       });
     }

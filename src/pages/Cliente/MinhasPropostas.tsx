@@ -4,16 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileText, CheckCircle } from 'lucide-react';
-import { usePropostas, useCreateAceiteDigital, useClientes } from '@/hooks/useSupabaseData';
+import { usePropostasCliente, useCreateAceiteDigital, useClientes } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const MinhasPropostas = () => {
-  const { data: allPropostas = [], isLoading } = usePropostas();
-  // Clients only see proposals that are not in draft status (approved by CT Guedes)
-  const propostas = allPropostas.filter(p => p.status !== 'rascunho');
+  const { data: propostas = [], isLoading } = usePropostasCliente();
   const { data: clientes = [] } = useClientes();
   const createAceite = useCreateAceiteDigital();
   const { toast } = useToast();

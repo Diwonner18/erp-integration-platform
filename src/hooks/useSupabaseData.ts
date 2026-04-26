@@ -126,6 +126,107 @@ export const useBoletins = () => {
   });
 };
 
+// ==================== CLIENT-SCOPED HOOKS (defense in depth) ====================
+// These hooks add explicit cliente_id filters on top of RLS for the cliente profile.
+
+export const useObrasCliente = () => {
+  return useQuery({
+    queryKey: ['obras_cliente'],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return [];
+      const { data, error } = await supabase
+        .from('obras')
+        .select('*, clientes!inner(razao_social, user_id)')
+        .eq('clientes.user_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(DEFAULT_LIMIT);
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const usePropostasCliente = () => {
+  return useQuery({
+    queryKey: ['propostas_cliente'],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return [];
+      // Get cliente IDs first via separate query (RLS already filters)
+      const { data: clientes } = await supabase.from('clientes').select('id').eq('user_id', uid);
+      const clienteIds = (clientes || []).map(c => c.id);
+      if (clienteIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('propostas')
+        .select('id, titulo, descricao, valor, status, data_validade, created_at, cliente_id, obra_id')
+        .in('cliente_id', clienteIds)
+        .neq('status', 'rascunho')
+        .order('created_at', { ascending: false })
+        .limit(DEFAULT_LIMIT);
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useBoletinsCliente = () => {
+  return useQuery({
+    queryKey: ['boletins_cliente'],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return [];
+      // Get obra_ids the cliente owns
+      const { data: clientes } = await supabase.from('clientes').select('id').eq('user_id', uid);
+      const clienteIds = (clientes || []).map(c => c.id);
+      if (clienteIds.length === 0) return [];
+      const { data: obras } = await supabase.from('obras').select('id, nome').in('cliente_id', clienteIds);
+      const obraIds = (obras || []).map(o => o.id);
+      if (obraIds.length === 0) return [];
+      const obrasMap = new Map((obras || []).map(o => [o.id, o.nome]));
+      const { data, error } = await supabase
+        .from('boletins_medicao')
+        .select('id, numero, valor, status, data_emissao, obra_id, created_at, medicoes(numero)')
+        .in('obra_id', obraIds)
+        .order('created_at', { ascending: false })
+        .limit(DEFAULT_LIMIT);
+      if (error) throw error;
+      // Attach obra name without exposing other clientes
+      return (data || []).map(b => ({ ...b, obras: { nome: obrasMap.get(b.obra_id) || '-' } }));
+    },
+  });
+};
+
+export const useMedicoesCliente = () => {
+  return useQuery({
+    queryKey: ['medicoes_cliente'],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return [];
+      const { data: clientes } = await supabase.from('clientes').select('id').eq('user_id', uid);
+      const clienteIds = (clientes || []).map(c => c.id);
+      if (clienteIds.length === 0) return [];
+      const { data: obras } = await supabase.from('obras').select('id, nome').in('cliente_id', clienteIds);
+      const obraIds = (obras || []).map(o => o.id);
+      if (obraIds.length === 0) return [];
+      const obrasMap = new Map((obras || []).map(o => [o.id, o.nome]));
+      const { data, error } = await supabase
+        .from('medicoes')
+        .select('id, numero, descricao, valor, status, data_medicao, periodo_inicio, periodo_fim, obra_id, created_at')
+        .in('obra_id', obraIds)
+        .eq('status', 'aprovada')
+        .order('created_at', { ascending: false })
+        .limit(DEFAULT_LIMIT);
+      if (error) throw error;
+      return (data || []).map(m => ({ ...m, obras: { nome: obrasMap.get(m.obra_id) || '-' } }));
+    },
+  });
+};
+
 export const useDespesas = () => {
   return useQuery({
     queryKey: ['despesas'],

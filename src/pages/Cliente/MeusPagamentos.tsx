@@ -3,11 +3,11 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
-import { useBoletins } from '@/hooks/useSupabaseData';
+import { useBoletinsCliente } from '@/hooks/useSupabaseData';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const MeusPagamentos = () => {
-  const { data: boletins = [], isLoading } = useBoletins();
+  const { data: boletins = [], isLoading } = useBoletinsCliente();
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
   const totalPago = boletins.filter(b => b.status === 'pago').reduce((acc, b) => acc + (b.valor || 0), 0);

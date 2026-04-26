@@ -144,8 +144,8 @@ const Programacao = () => {
       toast({ title: "Programação criada", description: "Nova programação criada com sucesso." });
       setShowForm(false);
       setNewFormData({ obraId: '', descricao: '', dataProgramada: '', responsavel: '', tipo: 'execucao', horaInicio: '', horaFim: '' });
-    } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: "Erro", description: getSafeErrorMessage(error, 'Não foi possível criar a programação.'), variant: "destructive" });
     }
   };
 

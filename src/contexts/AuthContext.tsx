@@ -251,8 +251,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setPermissions(null);
       }
-    } catch (error) {
-      console.error('Error loading user data:', error);
+    } catch {
+      console.error('Auth error: failed to load user data');
     }
   };
 
@@ -329,7 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.rpc('self_assign_area', { _area: area });
 
       if (error) {
-        console.error('Error assigning area:', error);
+        console.error('Auth error: assign area failed');
         return false;
       }
 
@@ -338,8 +338,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await loadUserData(currentUser);
       }
       return true;
-    } catch (error) {
-      console.error('Error assigning user area:', error);
+    } catch {
+      console.error('Auth error: assign area failed');
       return false;
     }
   };
@@ -356,7 +356,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error || !data.user) {
-        console.error('Register error:', error);
+        console.error('Auth error: register failed');
         return false;
       }
 
@@ -367,8 +367,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // - Company emails → use self_assign_area RPC after login
 
       return true;
-    } catch (error) {
-      console.error('Register error:', error);
+    } catch {
+      console.error('Auth error: register failed');
       return false;
     }
   };
@@ -382,18 +382,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .update({ full_name: name, email })
         .eq('id', user.id);
 
-      if (profileError) return { success: false, error: profileError.message };
+      if (profileError) return { success: false, error: 'Não foi possível atualizar o perfil.' };
 
       if (email !== user.email) {
         const { error: authError } = await supabase.auth.updateUser({ email });
-        if (authError) return { success: false, error: authError.message };
+        if (authError) return { success: false, error: 'Não foi possível atualizar o e-mail.' };
       }
 
       await supabase.auth.updateUser({ data: { full_name: name } });
 
       setUser(prev => prev ? { ...prev, name, email } : null);
       return { success: true };
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Erro ao atualizar perfil.' };
     }
   };
@@ -409,7 +409,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (signInError) return { success: false, error: 'Senha atual incorreta.' };
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) return { success: false, error: error.message };
+      if (error) return { success: false, error: 'Não foi possível alterar a senha.' };
 
       return { success: true };
     } catch (error) {

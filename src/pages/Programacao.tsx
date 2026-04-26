@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import ProgramacaoDetailModal from '../components/Programacao/ProgramacaoDetailModal';
 import EditProgramacaoModal from '../components/Programacao/EditProgramacaoModal';
 import { useProgramacoes, useObras, useCreateProgramacao, useUpdateProgramacao } from '@/hooks/useSupabaseData';
+import NovaObraInlineModal from '../components/Obras/NovaObraInlineModal';
 
 const Programacao = () => {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ const Programacao = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAceiteModal, setShowAceiteModal] = useState(false);
+  const [showNovaObra, setShowNovaObra] = useState(false);
   const [aceiteComentario, setAceiteComentario] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<FilterValues>({
@@ -280,7 +282,12 @@ const Programacao = () => {
             <form onSubmit={handleSubmitNovaProgramacao} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Obra *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Obra *</Label>
+                    <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowNovaObra(true)}>
+                      <Plus className="w-3 h-3 mr-1" /> Cadastrar nova
+                    </Button>
+                  </div>
                   <Select value={newFormData.obraId} onValueChange={(v) => setNewFormData(prev => ({...prev, obraId: v}))}>
                     <SelectTrigger><SelectValue placeholder="Selecione a obra" /></SelectTrigger>
                     <SelectContent>
@@ -389,6 +396,13 @@ const Programacao = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Modal inline de criação de obra */}
+        <NovaObraInlineModal
+          open={showNovaObra}
+          onClose={() => setShowNovaObra(false)}
+          onCreated={(obra) => setNewFormData((prev) => ({ ...prev, obraId: obra.id }))}
+        />
       </div>
     </MainLayout>
   );

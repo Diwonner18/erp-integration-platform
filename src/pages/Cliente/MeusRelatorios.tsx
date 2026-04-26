@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -6,142 +5,122 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BarChart3, Download, FileText, Calendar, Plus, DollarSign, Building, Receipt } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { BarChart3, FileText, Calendar, Plus, DollarSign, Building, Receipt } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useObrasCliente } from '@/hooks/useSupabaseData';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-interface Reembolso {
-  id: string;
-  obraId: string;
-  obraNome: string;
-  tiposDespesa: string;
-  valor: number;
-  descricao: string;
-  dataLancamento: string;
-  status: 'pendente' | 'aprovado' | 'pago';
-}
+const TIPOS_DESPESA = [
+  { value: 'material', label: 'Material' },
+  { value: 'transporte', label: 'Transporte' },
+  { value: 'alimentacao', label: 'Alimentação' },
+  { value: 'hospedagem', label: 'Hospedagem' },
+  { value: 'outros', label: 'Outros' },
+];
+
+const formatCurrency = (v: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 const MeusRelatorios = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: obras = [], isLoading: loadingObras } = useObrasCliente();
+
   const [showReembolsoModal, setShowReembolsoModal] = useState(false);
-  const [reembolsos, setReembolsos] = useState<Reembolso[]>([]);
-  
   const [novoReembolso, setNovoReembolso] = useState({
     obraId: '',
-    tiposDespesa: '',
+    tipoDespesa: '',
     valor: '',
-    descricao: ''
+    descricao: '',
   });
 
-  const obras: { id: string; nome: string }[] = [];
+  // Carrega reembolsos reais do cliente
+  const { data: reembolsos = [], isLoading: loadingReembolsos } = useQuery({
+    queryKey: ['reembolsos_cliente', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('despesas')
+        .select('id, descricao, valor, data, obra_id, created_at')
+        .eq('categoria', 'reembolso_cliente')
+        .eq('created_by', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const tiposDespesa = [
-    { value: 'material', label: 'Material' },
-    { value: 'transporte', label: 'Transporte' },
-    { value: 'alimentacao', label: 'Alimentação' },
-    { value: 'hospedagem', label: 'Hospedagem' },
-    { value: 'outros', label: 'Outros' }
-  ];
+  const obrasMap = new Map(obras.map((o: any) => [o.id, o.nome]));
 
-  const handleSubmitReembolso = (e: React.FormEvent) => {
+  const obrasConcluidas = obras.filter((o: any) => o.status === 'concluida').length;
+  const investimentoTotal = obras.reduce((acc: number, o: any) => acc + (Number(o.valor_contrato) || 0), 0);
+  const totalReembolsos = reembolsos.reduce((acc: number, r: any) => acc + (Number(r.valor) || 0), 0);
+
+  const createReembolso = useMutation({
+    mutationFn: async (payload: typeof novoReembolso) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
+      const tipoLabel = TIPOS_DESPESA.find((t) => t.value === payload.tipoDespesa)?.label || 'Outros';
+      const { error } = await supabase.from('despesas').insert({
+        categoria: 'reembolso_cliente' as any,
+        descricao: `[${tipoLabel}] ${payload.descricao.trim()}`,
+        valor: parseFloat(payload.valor),
+        data: new Date().toISOString().slice(0, 10),
+        obra_id: payload.obraId,
+        created_by: user.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reembolsos_cliente'] });
+      toast({
+        title: 'Reembolso registrado',
+        description: 'Seu pedido de reembolso foi enviado para análise.',
+      });
+      setShowReembolsoModal(false);
+      setNovoReembolso({ obraId: '', tipoDespesa: '', valor: '', descricao: '' });
+    },
+    onError: (err: any) => {
+      toast({
+        title: 'Erro ao registrar reembolso',
+        description: err.message || 'Tente novamente.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validações
     if (!novoReembolso.obraId) {
-      toast({
-        title: "Erro de validação",
-        description: "Selecione uma obra",
-        variant: "destructive"
-      });
+      toast({ title: 'Selecione uma obra', variant: 'destructive' });
       return;
     }
-
-    if (!novoReembolso.tiposDespesa) {
-      toast({
-        title: "Erro de validação", 
-        description: "Selecione o tipo de despesa",
-        variant: "destructive"
-      });
+    if (!novoReembolso.tipoDespesa) {
+      toast({ title: 'Selecione o tipo de despesa', variant: 'destructive' });
       return;
     }
-
     if (!novoReembolso.valor || parseFloat(novoReembolso.valor) <= 0) {
-      toast({
-        title: "Erro de validação",
-        description: "Informe um valor válido maior que zero",
-        variant: "destructive"
-      });
+      toast({ title: 'Informe um valor válido', variant: 'destructive' });
       return;
     }
-
     if (!novoReembolso.descricao.trim()) {
-      toast({
-        title: "Erro de validação",
-        description: "A descrição é obrigatória",
-        variant: "destructive"
-      });
+      toast({ title: 'A descrição é obrigatória', variant: 'destructive' });
       return;
     }
-
-    const obraSelecionada = obras.find(obra => obra.id === novoReembolso.obraId);
-    
-    const reembolso: Reembolso = {
-      id: Date.now().toString(),
-      obraId: novoReembolso.obraId,
-      obraNome: obraSelecionada?.nome || '',
-      tiposDespesa: novoReembolso.tiposDespesa,
-      valor: parseFloat(novoReembolso.valor),
-      descricao: novoReembolso.descricao.trim(),
-      dataLancamento: new Date().toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      status: 'pendente'
-    };
-
-    setReembolsos(prev => [...prev, reembolso]);
-    setNovoReembolso({ obraId: '', tiposDespesa: '', valor: '', descricao: '' });
-    setShowReembolsoModal(false);
-
-    toast({
-      title: "Reembolso registrado",
-      description: "Seu reembolso foi registrado e será integrado ao controle financeiro",
-    });
+    createReembolso.mutate(novoReembolso);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pendente':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'aprovado':
-        return 'bg-blue-100 text-blue-800';
-      case 'pago':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pendente':
-        return 'Pendente';
-      case 'aprovado':
-        return 'Aprovado';
-      case 'pago':
-        return 'Pago';
-      default:
-        return status;
-    }
-  };
   return (
     <MainLayout>
       <div className="space-y-6">
         <div data-tour="page-header">
-          <h1 className="text-3xl font-bold text-slate-900">Meus Relatórios</h1>
-          <p className="text-slate-600 mt-1">Acompanhe seus investimentos e histórico</p>
+          <h1 className="text-3xl font-bold text-foreground">Meus Relatórios</h1>
+          <p className="text-muted-foreground mt-1">Acompanhe seus investimentos e reembolsos</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="page-stats">
@@ -151,8 +130,8 @@ const MeusRelatorios = () => {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 0</div>
-              <p className="text-xs text-muted-foreground">Este ano</p>
+              <div className="text-2xl font-bold">{formatCurrency(investimentoTotal)}</div>
+              <p className="text-xs text-muted-foreground">Soma dos contratos</p>
             </CardContent>
           </Card>
 
@@ -162,61 +141,34 @@ const MeusRelatorios = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{obrasConcluidas}</div>
               <p className="text-xs text-muted-foreground">Concluídas</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Economia Gerada</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total de Reembolsos</CardTitle>
+              <Receipt className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">R$ 0</div>
-              <p className="text-xs text-muted-foreground">Em eficiência</p>
+              <div className="text-2xl font-bold text-primary">{formatCurrency(totalReembolsos)}</div>
+              <p className="text-xs text-muted-foreground">{reembolsos.length} solicitações</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Próximo Pagamento</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Obras Ativas</CardTitle>
+              <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 0</div>
-              <p className="text-xs text-muted-foreground">Nenhum pendente</p>
+              <div className="text-2xl font-bold">{obras.length - obrasConcluidas}</div>
+              <p className="text-xs text-muted-foreground">Em andamento ou agendadas</p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Investimentos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-slate-500">
-                <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhum investimento registrado</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatórios Disponíveis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-slate-500">
-                <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhum relatório disponível</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Seção de Reembolsos */}
         <Card data-tour="page-list">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -227,7 +179,7 @@ const MeusRelatorios = () => {
               <Button
                 onClick={() => setShowReembolsoModal(true)}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                disabled={obras.length === 0}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Reembolso
@@ -235,41 +187,31 @@ const MeusRelatorios = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {reembolsos.length === 0 ? (
-              <div className="text-center py-6 text-slate-500">
+            {loadingReembolsos ? (
+              <Skeleton className="h-32 w-full" />
+            ) : reembolsos.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
                 <Receipt className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>Nenhum reembolso registrado</p>
-                <p className="text-sm">Clique em "Novo Reembolso" para começar</p>
+                {obras.length === 0 && (
+                  <p className="text-sm mt-2">Você precisa ter uma obra vinculada para solicitar reembolso.</p>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
-                {reembolsos.map((reembolso) => (
-                  <div key={reembolso.id} className="border rounded-lg p-4 bg-slate-50">
-                    <div className="flex items-start justify-between mb-2">
+                {reembolsos.map((r: any) => (
+                  <div key={r.id} className="border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-slate-900">{reembolso.obraNome}</h4>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(reembolso.status)}`}>
-                            {getStatusText(reembolso.status)}
-                          </span>
+                          <h4 className="font-medium text-foreground">{obrasMap.get(r.obra_id) || 'Obra'}</h4>
+                          <Badge variant="secondary">Pendente</Badge>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-slate-600">
-                          <div className="flex items-center">
-                            <Building className="w-4 h-4 mr-1" />
-                            {tiposDespesa.find(t => t.value === reembolso.tiposDespesa)?.label}
-                          </div>
-                          <div className="flex items-center">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            R$ {reembolso.valor.toFixed(2).replace('.', ',')}
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" />
-                            {reembolso.dataLancamento}
-                          </div>
+                        <p className="text-sm text-muted-foreground">{r.descricao}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                          <span className="flex items-center"><DollarSign className="w-3 h-3 mr-1" />{formatCurrency(Number(r.valor))}</span>
+                          <span className="flex items-center"><Calendar className="w-3 h-3 mr-1" />{new Date(r.created_at).toLocaleDateString('pt-BR')}</span>
                         </div>
-                        <p className="text-sm text-slate-700 mt-2">
-                          <strong>Descrição:</strong> {reembolso.descricao}
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -281,105 +223,111 @@ const MeusRelatorios = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Análise de Performance</CardTitle>
+            <CardTitle className="flex items-center"><FileText className="w-5 h-5 mr-2" />Resumo das Obras</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center text-slate-500">
-              Gráfico de performance de investimentos será implementado aqui
-            </div>
+            {loadingObras ? (
+              <Skeleton className="h-32 w-full" />
+            ) : obras.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Building className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Nenhuma obra vinculada à sua conta</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {obras.map((o: any) => (
+                  <div key={o.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground">{o.nome}</p>
+                      <p className="text-xs text-muted-foreground">{o.endereco || 'Sem endereço'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-primary">{formatCurrency(Number(o.valor_contrato) || 0)}</p>
+                      <Badge variant={o.status === 'concluida' ? 'default' : 'secondary'} className="mt-1">
+                        {o.status === 'concluida' ? 'Concluída' : o.status === 'em_andamento' ? 'Em Andamento' : o.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Modal de Novo Reembolso */}
         <Dialog open={showReembolsoModal} onOpenChange={setShowReembolsoModal}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Registrar Novo Reembolso</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmitReembolso} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1 block">
-                  Obra *
-                </label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Obra *</label>
                 <select
-                  className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring"
                   value={novoReembolso.obraId}
-                  onChange={(e) => setNovoReembolso(prev => ({ ...prev, obraId: e.target.value }))}
+                  onChange={(e) => setNovoReembolso((p) => ({ ...p, obraId: e.target.value }))}
                   required
                 >
                   <option value="">Selecione a obra</option>
-                  {obras.map((obra) => (
-                    <option key={obra.id} value={obra.id}>
-                      {obra.nome}
-                    </option>
+                  {obras.map((o: any) => (
+                    <option key={o.id} value={o.id}>{o.nome}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1 block">
-                  Tipo de Despesa *
-                </label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Tipo de Despesa *</label>
                 <select
-                  className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  value={novoReembolso.tiposDespesa}
-                  onChange={(e) => setNovoReembolso(prev => ({ ...prev, tiposDespesa: e.target.value }))}
+                  className="w-full p-2 border border-input rounded-md bg-background text-foreground focus:ring-2 focus:ring-ring"
+                  value={novoReembolso.tipoDespesa}
+                  onChange={(e) => setNovoReembolso((p) => ({ ...p, tipoDespesa: e.target.value }))}
                   required
                 >
                   <option value="">Selecione o tipo</option>
-                  {tiposDespesa.map((tipo) => (
-                    <option key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </option>
+                  {TIPOS_DESPESA.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1 block">
-                  Valor (R$) *
-                </label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Valor (R$) *</label>
                 <Input
                   type="number"
                   step="0.01"
                   min="0.01"
                   placeholder="0,00"
                   value={novoReembolso.valor}
-                  onChange={(e) => setNovoReembolso(prev => ({ ...prev, valor: e.target.value }))}
+                  onChange={(e) => setNovoReembolso((p) => ({ ...p, valor: e.target.value }))}
                   required
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-1 block">
-                  Descrição *
-                </label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Descrição *</label>
                 <Textarea
                   placeholder="Descreva o motivo do reembolso..."
                   value={novoReembolso.descricao}
-                  onChange={(e) => setNovoReembolso(prev => ({ ...prev, descricao: e.target.value }))}
+                  onChange={(e) => setNovoReembolso((p) => ({ ...p, descricao: e.target.value }))}
                   rows={3}
                   required
                 />
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
+                  variant="outline"
                   onClick={() => {
                     setShowReembolsoModal(false);
-                    setNovoReembolso({ obraId: '', tiposDespesa: '', valor: '', descricao: '' });
+                    setNovoReembolso({ obraId: '', tipoDespesa: '', valor: '', descricao: '' });
                   }}
                 >
                   Cancelar
                 </Button>
-                <Button 
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700"
-                >
+                <Button type="submit" disabled={createReembolso.isPending}>
                   <Receipt className="w-4 h-4 mr-2" />
-                  Registrar Reembolso
+                  {createReembolso.isPending ? 'Enviando...' : 'Registrar Reembolso'}
                 </Button>
               </div>
             </form>

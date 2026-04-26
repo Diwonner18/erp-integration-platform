@@ -179,6 +179,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Rate-limit por IP (OWASP A07)
+    const ip = getClientIp(req)
+    if (!checkRateLimit(ip)) {
+      console.warn(`send-auth-email: rate limit exceeded for ip=${ip}`)
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: { ...secureHeaders, 'Retry-After': '60' },
+      })
+    }
+
+    // Limite de tamanho do payload (mitiga DoS — OWASP A05)
+    const contentLength = Number(req.headers.get('content-length') || '0')
+    if (!contentLength || contentLength > MAX_PAYLOAD_BYTES) {
+      console.warn(`send-auth-email: payload too large or missing content-length (${contentLength})`)
+      return new Response(JSON.stringify({ error: 'Payload too large' }), {
+        status: 413,
+        headers: secureHeaders,
+      })
+    }
+
     const payload = await req.text()
 
     // MANDATORY HMAC verification — never allow unauthenticated calls
@@ -187,7 +207,7 @@ Deno.serve(async (req) => {
       console.error('send-auth-email: SEND_EMAIL_HOOK_SECRET not configured — refusing to send')
       return new Response(JSON.stringify({ error: 'Hook secret not configured' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
     const signature = req.headers.get('x-supabase-webhook-signature') || ''
@@ -195,7 +215,7 @@ Deno.serve(async (req) => {
       console.warn('send-auth-email: Missing webhook signature header')
       return new Response(JSON.stringify({ error: 'Missing signature' }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
     const isValid = await verifyHMAC(payload, signature, hookSecret)
@@ -203,7 +223,7 @@ Deno.serve(async (req) => {
       console.warn('send-auth-email: Invalid HMAC signature')
       return new Response(JSON.stringify({ error: 'Invalid signature' }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
 
@@ -218,7 +238,7 @@ Deno.serve(async (req) => {
     if (!recipientEmail) {
       return new Response(JSON.stringify({ error: 'No recipient email' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
 
@@ -227,7 +247,7 @@ Deno.serve(async (req) => {
       console.error('RESEND_API_KEY not configured')
       return new Response(JSON.stringify({ error: 'Email service not configured' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
 
@@ -254,20 +274,20 @@ Deno.serve(async (req) => {
       console.error('Resend API error:', resendResult)
       return new Response(JSON.stringify({ error: 'Failed to send email' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: secureHeaders,
       })
     }
 
     console.log(`Email sent: type=${emailType}, to=${recipientEmail.substring(0, 3)}***`)
 
     return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: secureHeaders,
     })
   } catch (error) {
     console.error('send-auth-email error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: secureHeaders,
     })
   }
 })

@@ -87,6 +87,19 @@ const RelatorioDiarioObra = () => {
     const tempNum = parseFloat(formData.temperatura) || null;
 
     try {
+      // Mapear colaboradores com colaborador_id real (procurar por nome se houver)
+      // Aqui o nome é texto livre — o trigger usa funcionario=nome para deduplicar.
+      // Para que o trigger SQL gere HE com base no banco, enviamos colaboradores_horas
+      // contendo apenas os que têm horas registradas. Se um colaborador_id real não for fornecido,
+      // ainda enviamos pelo nome via campo extra para registro/auditoria.
+      const colaboradoresHoras = colaboradores
+        .filter(c => c.horas && c.horas > 0)
+        .map(c => ({
+          colaborador_id: /^[0-9a-f]{8}-/.test(c.id) ? c.id : null, // só envia uuid real
+          nome: c.nome,
+          horas: c.horas,
+        }));
+
       await createRelatorio.mutateAsync({
         obra_id: formData.obra,
         data: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
@@ -96,51 +109,26 @@ const RelatorioDiarioObra = () => {
         atividades: formData.atividades || null,
         ocorrencias: formData.observacoes || null,
         mao_de_obra_presente: colaboradores.length,
-      });
+        colaboradores_horas: colaboradoresHoras as any,
+      } as any);
 
-      // RDO → HE automation: generate overtime records for workers with excess hours
-      const reportDate = selectedDate || new Date();
-      const dayOfWeek = reportDate.getDay(); // 0=Sun, 5=Fri
-      const limitHours = (dayOfWeek === 5) ? 8 : 9; // Fri: 8h (16h limit), Mon-Thu: 9h (17h limit)
-      
-      const heRecords = colaboradores
-        .filter(c => c.horas && c.horas > limitHours)
-        .map(c => {
-          const extraHours = (c.horas || 0) - limitHours;
-          let tipoHE = 'Normal';
-          // Virada: worked past midnight (~15+ hours)
-          if ((c.horas || 0) >= 15) tipoHE = 'Virada';
-          // Dobra: worked until next morning (~23+ hours)
-          if ((c.horas || 0) >= 23) tipoHE = 'Dobra';
-          
-          return {
-            funcionario: c.nome,
-            horas: extraHours,
-            obra_id: formData.obra,
-            data: format(reportDate, 'yyyy-MM-dd'),
-            motivo: `Gerado automaticamente via RDO - ${tipoHE}`,
-            valor_hora: 30,
-            categoria: 'A',
-            tipo_hora_extra: tipoHE.toLowerCase(),
-            status: 'pendente',
-          };
-        });
-
-      if (heRecords.length > 0) {
-        await supabase.from('horas_extras').insert(heRecords as any);
-        toast({ 
-          title: "Horas extras geradas", 
-          description: `${heRecords.length} registro(s) de HE gerado(s) automaticamente`,
+      // O trigger 'trg_gerar_he_rdo' gera HE automaticamente para colaboradores com horas > 8.
+      // Não precisamos mais inserir HE manualmente aqui.
+      const totalGerado = colaboradoresHoras.filter(c => (c.horas || 0) > 8 && c.colaborador_id).length;
+      if (totalGerado > 0) {
+        toast({
+          title: 'Horas extras geradas',
+          description: `${totalGerado} registro(s) de HE criado(s) automaticamente para horas acima de 8h.`,
         });
       }
 
-      toast({ title: "Relatório salvo", description: "Relatório diário foi registrado com sucesso" });
+      toast({ title: 'Relatório salvo', description: 'Relatório diário foi registrado com sucesso.' });
 
       setFormData({ obra: '', responsavel: '', temperatura: '', condicaoClimatica: '', observacoes: '', atividades: '' });
       setColaboradores([]);
       setSelectedDate(new Date());
     } catch (error: any) {
-      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
     }
   };
 

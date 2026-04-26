@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { useCepLookup } from '@/hooks/useCepLookup';
+import { agendamentoInsertSchema, validateInput } from '@/lib/validationSchemas';
+import { getSafeErrorMessage } from '@/lib/errorMessages';
 
 const agendamentoSchema = z.object({
   nome: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres').max(200),
@@ -87,6 +89,8 @@ const SolicitarAgendamento = () => {
 
   const createAgendamento = useMutation({
     mutationFn: async (formData: AgendamentoFormData) => {
+      if (!user?.id) throw new Error('Sessão expirada. Faça login novamente.');
+
       const enderecoCompleto = [
         formData.logradouro,
         formData.numero ? `nº ${formData.numero}` : '',
@@ -96,8 +100,9 @@ const SolicitarAgendamento = () => {
         `CEP: ${formData.cep}`,
       ].filter(Boolean).join(', ');
 
-      const { error } = await supabase.from('agendamentos').insert({
-        user_id: user!.id,
+      // Validação server-bound (defense-in-depth) antes do INSERT
+      const payload = validateInput(agendamentoInsertSchema, {
+        user_id: user.id,
         nome: formData.nome,
         telefone: formData.telefone,
         email: formData.email,
@@ -106,11 +111,13 @@ const SolicitarAgendamento = () => {
         horario: formData.horario,
         endereco: enderecoCompleto,
         descricao: formData.descricao,
-        prioridade: formData.prioridade,
+        prioridade: formData.prioridade as 'baixa' | 'normal' | 'alta' | 'emergencia',
       });
+
+      const { error } = await supabase.from('agendamentos').insert(payload);
       if (error) throw error;
 
-      // Create notification for admin/obras
+      // Notificação interna (best-effort, não bloqueia)
       await supabase.from('notificacoes').insert({
         titulo: 'Nova solicitação de agendamento',
         mensagem: `${formData.nome} solicitou agendamento de ${formData.tipoServico} para ${new Date(formData.dataPreferida).toLocaleDateString('pt-BR')}`,
@@ -126,10 +133,10 @@ const SolicitarAgendamento = () => {
       });
       reset();
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: 'Erro',
-        description: error.message || 'Ocorreu um erro ao enviar a solicitação',
+        description: getSafeErrorMessage(error, 'Não foi possível enviar a solicitação. Verifique os dados.'),
         variant: 'destructive',
       });
     },

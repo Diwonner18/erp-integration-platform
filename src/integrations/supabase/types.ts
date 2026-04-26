@@ -1504,6 +1504,7 @@ export type Database = {
         Row: {
           atividades: string | null
           clima: string | null
+          colaboradores_horas: Json | null
           created_at: string
           created_by: string | null
           data: string
@@ -1518,6 +1519,7 @@ export type Database = {
         Insert: {
           atividades?: string | null
           clima?: string | null
+          colaboradores_horas?: Json | null
           created_at?: string
           created_by?: string | null
           data: string
@@ -1532,6 +1534,7 @@ export type Database = {
         Update: {
           atividades?: string | null
           clima?: string | null
+          colaboradores_horas?: Json | null
           created_at?: string
           created_by?: string | null
           data?: string
